@@ -1,14 +1,27 @@
-import { useState } from "react";
+/* import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import "./App.css";
+import "./App.css"; */
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Sidenav from "./layouts/Sidenav";
+import Home from './pages/Home';
+import About from './pages/About';
+import Settings from './pages/Settings';
 
 function App() {
-  const [count, setCount] = useState(0);
+  //const [count, setCount] = useState(0);
 
   return (
     <>
-      <div>
+      {/* <Sidenav /> */}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </BrowserRouter>
+      {/* <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
@@ -27,7 +40,7 @@ function App() {
       </div>
       <p className="read-the-docs">
         Prueba commits
-      </p>
+      </p> */}
     </>
   );
 }
