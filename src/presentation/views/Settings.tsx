@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import Sidebar from "../layouts/Sidebar";
 import Navbar from "../layouts/Navbar";
 import "../styles/main.css";
+import List from "../pages/settings/List";
 
 export default function About() {
   return (
@@ -11,7 +12,7 @@ export default function About() {
       <Box sx={{ display: "flex" }}>
         <Sidebar />
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-          <h1>Settings</h1>
+          <List />
         </Box>
       </Box>
     </div>
