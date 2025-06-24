@@ -1,10 +1,9 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import About from './pages/About';
-import Settings from './pages/Settings';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./views/Home";
+import About from "./views/About";
+import Settings from "./views/Settings";
 
 function App() {
-
   return (
     <>
       <BrowserRouter>
@@ -13,7 +12,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
-      </BrowserRouter>      
+      </BrowserRouter>
     </>
   );
 }
