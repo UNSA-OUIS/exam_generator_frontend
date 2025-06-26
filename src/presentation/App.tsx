@@ -9,7 +9,7 @@ import Settings from "./views/Settings";
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/exam_generator">
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/home" element={<Home />} />
