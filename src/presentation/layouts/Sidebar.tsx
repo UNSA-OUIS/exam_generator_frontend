@@ -99,7 +99,7 @@ export default function Sidebar() {
           <ListItem
             disablePadding
             sx={{ display: "block" }}
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/home")}
           >
             <ListItemButton
               sx={[
@@ -237,6 +237,57 @@ export default function Sidebar() {
               </ListItemIcon>
               <ListItemText
                 primary="Settings"
+                sx={[
+                  open
+                    ? {
+                        opacity: 1,
+                      }
+                    : {
+                        opacity: 0,
+                      },
+                ]}
+              />
+            </ListItemButton>
+          </ListItem>
+          <ListItem
+            disablePadding
+            sx={{ display: "block" }}
+            onClick={() => navigate("/level")}
+          >
+            <ListItemButton
+              sx={[
+                {
+                  minHeight: 48,
+                  px: 2.5,
+                },
+                open
+                  ? {
+                      justifyContent: "initial",
+                    }
+                  : {
+                      justifyContent: "center",
+                    },
+              ]}
+            >
+              <ListItemIcon
+                sx={[
+                  {
+                    minWidth: 0,
+                    justifyContent: "center",
+                  },
+                  open
+                    ? {
+                        mr: 3,
+                      }
+                    : {
+                        mr: "auto",
+                      },
+                ]}
+              >
+                <MailIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary="Niveles"
                 sx={[
                   open
                     ? {
