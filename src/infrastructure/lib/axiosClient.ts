@@ -1,11 +1,16 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  baseURL: 'https://desaoti.unsa.edu.pe/exam_generator_backend', // Cambiar por tu URL real
+  //baseURL: 'https://desaoti.unsa.edu.pe/exam_generator_backend', // Cambiar por tu URL real
+  baseURL: 'http://localhost:8000', // Cambiar por tu URL real
+  headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+    },
   withCredentials: true, // Requerido para que Laravel envíe/reciba cookies
+  withXSRFToken: true,
 });
 
-axiosClient.interceptors.response.use(
+/* axiosClient.interceptors.response.use(
     function (response) {
         return response;
     },
@@ -35,6 +40,6 @@ axiosClient.interceptors.response.use(
         }
         return Promise.reject(error);
     },
-);
+); */
 
 export default axiosClient;
