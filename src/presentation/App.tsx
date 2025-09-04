@@ -6,6 +6,7 @@ import Home from "./views/Home";
 import About from "./views/About";
 import Settings from "./views/Settings";
 import { Level } from './views/Level'; // Asegúrate de que la ruta sea correcta 
+import { Process } from "./views/Processes";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/level" element={<Level />} />   
+            <Route path="/process" element={<Process/>} />  
           </Route>          
         </Routes>
       </BrowserRouter>
