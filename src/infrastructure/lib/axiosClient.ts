@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const axiosClient = axios.create({
   //baseURL: 'https://desaoti.unsa.edu.pe/exam_generator_backend', // Cambiar por tu URL real
-  baseURL: 'http://localhost:8000', // Cambiar por tu URL real
+  baseURL: 'http://localhost:8000/api', // Cambiar por tu URL real
   headers: {
         'X-Requested-With': 'XMLHttpRequest',
     },
