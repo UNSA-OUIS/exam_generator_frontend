@@ -1,28 +1,129 @@
-import React, { useState } from 'react';
-import { TextField, Button, Box } from '@mui/material';
+import { useState } from "react";
+import { CreateLevel } from "../../../application/level/CreateLevel";
+import { UpdateLevel } from "../../../application/level/UpdateLevel";
+import {
+  TextField,
+  Button,
+  Box,
+  CircularProgress,
+  Alert,
+  Grid,
+} from "@mui/material";
+import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
-export function LevelForm() {
-  const [name, setName] = useState('');
+type Props = {
+  levelId?: number;
+  initialStage?: number;
+  initialName?: string;
+  onSuccess: () => void;
+};
+
+export default function Form({
+  levelId,
+  initialStage = 0,
+  initialName = "",
+  onSuccess,
+}: Props) {
+  const [name, setName] = useState(initialName);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí iría la lógica para enviar el nivel
-    console.log('Level name:', name);
-    setName('');
+
+    if (!name.trim()) {
+      setError("El nombre del nivel es requerido");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (levelId) {
+        // Para actualizar, solo enviamos el nombre (el stage se maneja por separado si es necesario)
+        await UpdateLevel(levelId, {
+          name: name.trim(),
+        });
+      } else {
+        // Para crear, solo enviamos el nombre (el stage se genera automáticamente en el backend)
+        await CreateLevel({
+          name: name.trim(),
+        });
+      }
+
+      setName("");
+      onSuccess();
+    } catch (err: any) {
+      setError(
+        err.response?.data?.error ||
+          "Error al guardar el nivel. Inténtalo nuevamente."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', gap: 2 }}>
-      <TextField
-        label="Level name"
-        variant="outlined"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />  
-      <Button type="submit" variant="contained" color="primary">
-        Create Level
-      </Button>
+    <Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing={2} alignItems="flex-end">
+          <Grid item xs={12} sm={9}>
+            <TextField
+              label="Nombre del nivel"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              fullWidth
+              variant="outlined"
+              size="medium"
+              error={!!error && !name.trim()}
+              helperText={
+                error && !name.trim() ? "Este campo es requerido" : ""
+              }
+              disabled={loading}
+              placeholder="Ingresa el nombre del nivel"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={3}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={loading || !name.trim()}
+              fullWidth
+              startIcon={
+                loading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : levelId ? (
+                  <EditIcon />
+                ) : (
+                  <AddIcon />
+                )
+              }
+              sx={{
+                height: 56,
+                borderRadius: 2,
+                fontWeight: 600,
+                textTransform: "none",
+                boxShadow: 2,
+                "&:hover": {
+                  boxShadow: 4,
+                },
+              }}
+            >
+              {levelId ? "Actualizar" : "Crear"}
+            </Button>
+          </Grid>
+        </Grid>
+      </form>
     </Box>
   );
 }

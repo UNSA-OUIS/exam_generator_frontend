@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
-import type { Level } from "../../../models/Level";
-import { GetLevels } from "../../../application/level/GetLevels";
-import { DeleteLevel } from "../../../application/level/DeleteLevel";
+import type { Block } from "../../../models/Block";
+import { GetBlocks } from "../../../application/block/GetBlocks";
+import { DeleteBlock } from "../../../application/block/DeleteBlock";
 import {
   Table,
   TableBody,
@@ -35,79 +35,74 @@ export type ListRef = {
 };
 
 const List = forwardRef<ListRef>((_, ref) => {
-  const [levels, setLevels] = useState<Level[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    level: Level | null;
-    error?: string;
-  }>({ open: false, level: null });
+    block: Block | null;
+  }>({ open: false, block: null });
   const [deleting, setDeleting] = useState(false);
   const [editDialog, setEditDialog] = useState<{
     open: boolean;
-    level: Level | null;
-  }>({ open: false, level: null });
+    block: Block | null;
+  }>({ open: false, block: null });
 
-  const fetchLevels = async () => {
+  const fetchBlocks = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await GetLevels();
-      setLevels(data);
+      const data = await GetBlocks();
+      setBlocks(data);
     } catch (err) {
-      setError("Error al cargar los niveles");
+      setError("Error al cargar los bloques");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteClick = (level: Level) => {
-    setDeleteDialog({ open: true, level, error: undefined });
+  const handleDeleteClick = (block: Block) => {
+    setDeleteDialog({ open: true, block });
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteDialog.level) return;
+    if (!deleteDialog.block) return;
 
     setDeleting(true);
     try {
-      await DeleteLevel(deleteDialog.level.id);
-      await fetchLevels();
-      setDeleteDialog({ open: false, level: null });
+      await DeleteBlock(deleteDialog.block.id);
+      await fetchBlocks();
+      setDeleteDialog({ open: false, block: null });
     } catch (err: any) {
-      setDeleteDialog({
-        open: true,
-        level: deleteDialog.level,
-        error: err.response?.data?.error || "Error al eliminar el nivel",
-      });
+      setError(err.response?.data?.error || "Error al eliminar el bloque");
     } finally {
       setDeleting(false);
     }
   };
 
   const handleDeleteCancel = () => {
-    setDeleteDialog({ open: false, level: null, error: undefined });
+    setDeleteDialog({ open: false, block: null });
   };
 
-  const handleEditClick = (level: Level) => {
-    setEditDialog({ open: true, level });
+  const handleEditClick = (block: Block) => {
+    setEditDialog({ open: true, block });
   };
 
   const handleEditClose = () => {
-    setEditDialog({ open: false, level: null });
+    setEditDialog({ open: false, block: null });
   };
 
   const handleEditSuccess = async () => {
-    await fetchLevels();
+    await fetchBlocks();
     handleEditClose();
   };
 
   useImperativeHandle(ref, () => ({
-    reload: fetchLevels,
+    reload: fetchBlocks,
   }));
 
   useEffect(() => {
-    fetchLevels();
+    fetchBlocks();
   }, []);
 
   if (loading) {
@@ -122,7 +117,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       >
         <CircularProgress size={40} />
         <Typography variant="body1" sx={{ ml: 2 }}>
-          Cargando niveles...
+          Cargando bloques...
         </Typography>
       </Box>
     );
@@ -134,7 +129,7 @@ const List = forwardRef<ListRef>((_, ref) => {
         <Alert
           severity="error"
           action={
-            <Button color="inherit" size="small" onClick={fetchLevels}>
+            <Button color="inherit" size="small" onClick={fetchBlocks}>
               Reintentar
             </Button>
           }
@@ -157,10 +152,10 @@ const List = forwardRef<ListRef>((_, ref) => {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Lista de Niveles
+            Lista de Bloques
           </Typography>
           <Chip
-            label={`${levels.length} nivel${levels.length !== 1 ? "es" : ""}`}
+            label={`${blocks.length} bloque${blocks.length !== 1 ? "s" : ""}`}
             color="primary"
             variant="outlined"
             size="small"
@@ -168,13 +163,13 @@ const List = forwardRef<ListRef>((_, ref) => {
         </Box>
       </Box>
 
-      {levels.length === 0 ? (
+      {blocks.length === 0 ? (
         <Box sx={{ p: 4, textAlign: "center" }}>
           <Typography variant="body1" color="text.secondary">
-            No hay niveles registrados
+            No hay bloques registrados
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Crea tu primer nivel usando el formulario de arriba
+            Crea tu primer bloque usando el formulario de arriba
           </Typography>
         </Box>
       ) : (
@@ -188,22 +183,22 @@ const List = forwardRef<ListRef>((_, ref) => {
                   ID
                 </TableCell>
                 <TableCell
-                  sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}
+                  sx={{ fontWeight: 600, fontSize: "0.875rem", width: 100 }}
                 >
-                  Stage
+                  Código
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
-                  Nombre del Nivel
+                  Nombre del Bloque
                 </TableCell>
                 <TableCell
-                  sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}
+                  sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}
                 >
-                  Creado
+                  Nivel
                 </TableCell>
                 <TableCell
-                  sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}
+                  sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}
                 >
-                  Actualizado
+                  Bloque Padre
                 </TableCell>
                 <TableCell
                   align="center"
@@ -214,9 +209,9 @@ const List = forwardRef<ListRef>((_, ref) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {levels.map((level, index) => (
+              {blocks.map((block, index) => (
                 <TableRow
-                  key={level.id}
+                  key={block.id}
                   sx={{
                     "&:hover": {
                       backgroundColor: "action.hover",
@@ -228,23 +223,26 @@ const List = forwardRef<ListRef>((_, ref) => {
                   <TableCell
                     sx={{ fontSize: "0.875rem", color: "text.secondary" }}
                   >
-                    #{level.id}
+                    #{block.id}
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
-                    {level.stage}
+                    {block.code}
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
-                    {level.name}
+                    {block.name}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.875rem" }}>
+                    {block.level
+                      ? `${block.level.name} (Stage ${block.level.stage})`
+                      : "N/A"}
                   </TableCell>
                   <TableCell
                     sx={{ fontSize: "0.875rem", color: "text.secondary" }}
                   >
-                    {new Date(level.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell
-                    sx={{ fontSize: "0.875rem", color: "text.secondary" }}
-                  >
-                    {new Date(level.updatedAt).toLocaleDateString()}
+                    {block.parent_block_id
+                      ? blocks.find((b) => b.id === block.parent_block_id)
+                          ?.name || `#${block.parent_block_id}`
+                      : "Ninguno"}
                   </TableCell>
                   <TableCell align="center">
                     <Box
@@ -262,10 +260,10 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
 
-                      <Tooltip title="Editar nivel">
+                      <Tooltip title="Editar bloque">
                         <IconButton
                           size="small"
-                          onClick={() => handleEditClick(level)}
+                          onClick={() => handleEditClick(block)}
                           sx={{
                             color: "warning.main",
                             "&:hover": { backgroundColor: "warning.lighter" },
@@ -275,10 +273,10 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
 
-                      <Tooltip title="Eliminar nivel">
+                      <Tooltip title="Eliminar bloque">
                         <IconButton
                           size="small"
-                          onClick={() => handleDeleteClick(level)}
+                          onClick={() => handleDeleteClick(block)}
                           sx={{
                             color: "error.main",
                             "&:hover": { backgroundColor: "error.lighter" },
@@ -307,22 +305,10 @@ const List = forwardRef<ListRef>((_, ref) => {
           Confirmar Eliminación
         </DialogTitle>
         <DialogContent>
-          {deleteDialog.error ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {deleteDialog.error}
-            </Alert>
-          ) : null}
           <DialogContentText>
-            ¿Estás seguro de que deseas eliminar el nivel{" "}
-            <strong>"{deleteDialog.level?.name}"</strong> (Stage{" "}
-            {deleteDialog.level?.stage})?
-            {deleteDialog.level?.blocks && deleteDialog.level.blocks > 0 && (
-              <>
-                <br />
-                <strong>Advertencia:</strong> Este nivel tiene{" "}
-                {deleteDialog.level.blocks} bloques asociados.
-              </>
-            )}
+            ¿Estás seguro de que deseas eliminar el bloque{" "}
+            <strong>"{deleteDialog.block?.name}"</strong> (Código:{" "}
+            {deleteDialog.block?.code})? Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>
@@ -351,20 +337,21 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog para editar nivel */}
+      {/* Dialog para editar bloque */}
       <Dialog
         open={editDialog.open}
         onClose={handleEditClose}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Editar Nivel</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>Editar Bloque</DialogTitle>
         <DialogContent>
-          {editDialog.level && (
+          {editDialog.block && (
             <Form
-              levelId={editDialog.level.id}
-              initialStage={editDialog.level.stage}
-              initialName={editDialog.level.name}
+              blockId={editDialog.block.id}
+              initialLevelId={editDialog.block.level_id}
+              initialName={editDialog.block.name}
+              initialParentBlockId={editDialog.block.parent_block_id}
               onSuccess={handleEditSuccess}
             />
           )}

@@ -1,6 +1,7 @@
-// models/Level.ts
 export interface Level {
   id: number;
-  //level_number: number;
+  stage: number;
   name: string;
+  createdAt: string;
+  updatedAt: string;
 }

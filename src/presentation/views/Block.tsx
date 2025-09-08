@@ -1,10 +1,10 @@
 import { useRef } from "react";
 import { Container, Typography, Paper, Box } from "@mui/material";
-import Form from "../pages/levels/Form";
-import type { ListRef } from "../pages/levels/List";
-import List from "../pages/levels/List";
+import Form from "../pages/blocks/Form";
+import type { ListRef } from "../pages/blocks/List";
+import List from "../pages/blocks/List";
 
-export default function Level() {
+export default function Block() {
   const listRef = useRef<ListRef>(null);
 
   return (
@@ -19,7 +19,7 @@ export default function Level() {
           mb: 4,
         }}
       >
-        Gestión de Niveles
+        Gestión de Bloques
       </Typography>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -32,7 +32,7 @@ export default function Level() {
           }}
         >
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Crear Nuevo Nivel
+            Crear Nuevo Bloque
           </Typography>
           <Form onSuccess={() => listRef.current?.reload()} />
         </Paper>
