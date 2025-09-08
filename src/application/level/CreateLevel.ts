@@ -1,6 +1,6 @@
-import { LevelApi } from '../../infrastructure/api/LevelApi';
-import type { Level } from '../../models/Level';
+import { createLevel } from "../../infrastructure/api/LevelApi";
+import type { Level } from "../../models/Level";
 
-export const CreateLevel = async (level: Omit<Level, 'id'>) => {
-  return await LevelApi.create(level);
+export const CreateLevel = async (data: Partial<Level>) => {
+  return await createLevel(data);
 };

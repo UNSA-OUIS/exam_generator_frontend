@@ -1,5 +1,5 @@
-import { LevelApi } from '../../infrastructure/api/LevelApi';
+import { deleteLevel } from "../../infrastructure/api/LevelApi";
 
 export const DeleteLevel = async (id: number) => {
-  await LevelApi.delete(id);
+  return await deleteLevel(id);
 };

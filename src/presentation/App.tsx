@@ -5,8 +5,9 @@ import Login from "./Login";
 import Home from "./views/Home";
 import About from "./views/About";
 import Settings from "./views/Settings";
-import { Level } from './views/Level'; // Asegúrate de que la ruta sea correcta 
-
+import Level from "./views/Level";
+import Process from "./views/Process";
+import Block from "./views/Block";
 function App() {
   return (
     <AuthProvider>
@@ -17,8 +18,10 @@ function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/level" element={<Level />} />   
-          </Route>          
+            <Route path="/level" element={<Level />} />
+            <Route path="/process" element={<Process />} />
+            <Route path="/block" element={<Block />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

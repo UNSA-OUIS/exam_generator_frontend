@@ -1,6 +1,5 @@
-export interface Level {
+export interface Process {
   id: number;
-  stage: number;
   name: string;
   created_at: string;
   updated_at: string;
