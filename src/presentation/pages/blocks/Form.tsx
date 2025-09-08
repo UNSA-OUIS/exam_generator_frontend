@@ -5,10 +5,10 @@ import { GetLevels } from "../../../application/level/GetLevels";
 import { GetBlocks } from "../../../application/block/GetBlocks";
 import type { Level } from "../../../models/Level";
 import type { Block } from "../../../models/Block";
-import {
-  TextField,
-  Button,
-  Box,
+import { 
+  TextField, 
+  Button, 
+  Box, 
   CircularProgress,
   Alert,
   Grid,
@@ -16,6 +16,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Typography
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
@@ -34,11 +35,9 @@ export default function Form({
   initialParentBlockId = null,
   onSuccess,
 }: Props) {
-  const [levelId, setLevelId] = useState<number>(initialLevelId);
+  const [levelId, setLevelId] = useState<number | "">(initialLevelId || "");
   const [name, setName] = useState(initialName);
-  const [parentBlockId, setParentBlockId] = useState<number | null>(
-    initialParentBlockId
-  );
+  const [parentBlockId, setParentBlockId] = useState<number | "">("");
   const [levels, setLevels] = useState<Level[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,7 +50,7 @@ export default function Form({
       try {
         const [levelsData, blocksData] = await Promise.all([
           GetLevels(),
-          GetBlocks(),
+          GetBlocks()
         ]);
         setLevels(levelsData);
         setBlocks(blocksData);
@@ -65,10 +64,23 @@ export default function Form({
     fetchData();
   }, []);
 
+  // Obtener el nivel seleccionado
+  const selectedLevel = typeof levelId === "number" ? levels.find(level => level.id === levelId) : null;
+  
+  // Obtener el nivel anterior (stage - 1)
+  const previousLevel = selectedLevel 
+    ? levels.find(level => level.stage === selectedLevel.stage - 1)
+    : null;
+
+  // Filtrar bloques que pertenecen al nivel anterior
+  const parentBlocks = previousLevel 
+    ? blocks.filter(block => block.level_id === previousLevel.id && block.id !== blockId)
+    : [];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!levelId) {
+    
+    if (!levelId || typeof levelId !== "number") {
       setError("Debe seleccionar un nivel");
       return;
     }
@@ -83,56 +95,52 @@ export default function Form({
 
     try {
       if (blockId) {
-        await UpdateBlock(blockId, {
-          name: name.trim(),
+        await UpdateBlock(blockId, { 
+          name: name.trim()
         });
       } else {
-        await CreateBlock({
+        await CreateBlock({ 
           level_id: levelId,
           name: name.trim(),
-          parent_block_id: parentBlockId,
+          parent_block_id: typeof parentBlockId === "number" ? parentBlockId : null
         });
       }
-
-      setLevelId(0);
+      
+      setLevelId("");
       setName("");
-      setParentBlockId(null);
+      setParentBlockId("");
       onSuccess();
     } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-          "Error al guardar el bloque. Inténtalo nuevamente."
-      );
+      setError(err.response?.data?.error || "Error al guardar el bloque. Inténtalo nuevamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredBlocks = blocks.filter(
-    (block) => block.level_id === levelId && block.id !== blockId
-  );
-
   return (
     <Box>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert 
+          severity="error" 
+          sx={{ mb: 2 }}
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
-
+      
       <form onSubmit={handleSubmit}>
         <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} sm={blockId ? 12 : 4}>
-            <FormControl
-              fullWidth
-              size="medium"
-              disabled={loading || loadingData || !!blockId}
-            >
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth size="medium" disabled={loading || loadingData || !!blockId}>
               <InputLabel id="level-select-label">Nivel</InputLabel>
               <Select
                 labelId="level-select-label"
-                value={levelId || ""}
-                onChange={(e) => setLevelId(Number(e.target.value))}
+                value={levelId}
+                onChange={(e) => {
+                  setLevelId(e.target.value === "" ? "" : Number(e.target.value));
+                  setParentBlockId(""); // Resetear bloque padre al cambiar nivel
+                }}
                 label="Nivel"
                 required
               >
@@ -145,39 +153,43 @@ export default function Form({
               </Select>
             </FormControl>
           </Grid>
-
-          {!blockId && (
-            <Grid item xs={12} sm={4}>
-              <FormControl
-                fullWidth
-                size="medium"
-                disabled={loading || loadingData || !levelId}
+          
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth size="medium" disabled={loading || loadingData || !levelId || typeof levelId !== "number"}>
+              <InputLabel id="parent-block-select-label">
+                {previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
+              </InputLabel>
+              <Select
+                labelId="parent-block-select-label"
+                value={parentBlockId}
+                onChange={(e) => setParentBlockId(e.target.value === "" ? "" : Number(e.target.value))}
+                label={previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
               >
-                <InputLabel id="parent-block-select-label">
-                  Bloque padre (opcional)
-                </InputLabel>
-                <Select
-                  labelId="parent-block-select-label"
-                  value={parentBlockId || ""}
-                  onChange={(e) =>
-                    setParentBlockId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  label="Bloque padre (opcional)"
-                >
-                  <MenuItem value="">Sin bloque padre</MenuItem>
-                  {filteredBlocks.map((block) => (
+                <MenuItem value="">Sin bloque padre</MenuItem>
+                {parentBlocks.length > 0 ? (
+                  parentBlocks.map((block) => (
                     <MenuItem key={block.id} value={block.id}>
                       {block.name} ({block.code})
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          )}
-
-          <Grid item xs={12} sm={blockId ? 8 : 4}>
+                  ))
+                ) : (
+                  <MenuItem value="" disabled>
+                    {previousLevel 
+                      ? `No hay bloques en el nivel ${previousLevel.stage}`
+                      : 'Selecciona un nivel primero'}
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
+            
+            {!previousLevel && levelId && typeof levelId === "number" && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                El nivel seleccionado no tiene niveles anteriores
+              </Typography>
+            )}
+          </Grid>
+          
+          <Grid item xs={12} sm={4}>
             <TextField
               label="Nombre del bloque"
               value={name}
@@ -187,21 +199,19 @@ export default function Form({
               variant="outlined"
               size="medium"
               error={!!error && !name.trim()}
-              helperText={
-                error && !name.trim() ? "Este campo es requerido" : ""
-              }
+              helperText={error && !name.trim() ? "Este campo es requerido" : ""}
               disabled={loading || loadingData}
               placeholder="Ingresa el nombre del bloque"
             />
           </Grid>
-
-          <Grid item xs={12} sm={blockId ? 4 : 12}>
-            <Button
-              type="submit"
-              variant="contained"
+          
+          <Grid item xs={12}>
+            <Button 
+              type="submit" 
+              variant="contained" 
               size="large"
-              disabled={loading || loadingData || !name.trim() || !levelId}
-              fullWidth={!blockId}
+              disabled={loading || loadingData || !name.trim() || !levelId || typeof levelId !== "number"}
+              fullWidth
               startIcon={
                 loading ? (
                   <CircularProgress size={20} color="inherit" />
@@ -215,11 +225,11 @@ export default function Form({
                 height: 56,
                 borderRadius: 2,
                 fontWeight: 600,
-                textTransform: "none",
+                textTransform: 'none',
                 boxShadow: 2,
-                "&:hover": {
+                '&:hover': {
                   boxShadow: 4,
-                },
+                }
               }}
             >
               {blockId ? "Actualizar" : "Crear bloque"}

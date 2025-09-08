@@ -4,8 +4,8 @@ export interface Block {
   code: string;
   name: string;
   parent_block_id: number | null;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
   level?: Level;
   parentBlock?: Block;
 }

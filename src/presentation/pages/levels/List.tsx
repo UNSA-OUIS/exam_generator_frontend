@@ -61,7 +61,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       setLoading(false);
     }
   };
-
+  console.log("este es el ref", levels);
   const handleDeleteClick = (level: Level) => {
     setDeleteDialog({ open: true, level, error: undefined });
   };
@@ -239,12 +239,12 @@ const List = forwardRef<ListRef>((_, ref) => {
                   <TableCell
                     sx={{ fontSize: "0.875rem", color: "text.secondary" }}
                   >
-                    {new Date(level.createdAt).toLocaleDateString()}
+                    {new Date(level.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell
                     sx={{ fontSize: "0.875rem", color: "text.secondary" }}
                   >
-                    {new Date(level.updatedAt).toLocaleDateString()}
+                    {new Date(level.updated_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell align="center">
                     <Box
