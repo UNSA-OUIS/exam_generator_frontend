@@ -132,7 +132,7 @@ export default function Form({
       <form onSubmit={handleSubmit}>
         <Grid container spacing={2} alignItems="flex-end">
           <Grid item xs={12} sm={4}>
-            <FormControl fullWidth size="medium" disabled={loading || loadingData || !!blockId}>
+            <FormControl fullWidth size="medium" disabled={loading || loadingData || !!blockId} sx={{ minWidth: 200 }}>
               <InputLabel id="level-select-label">Nivel</InputLabel>
               <Select
                 labelId="level-select-label"
@@ -155,7 +155,7 @@ export default function Form({
           </Grid>
           
           <Grid item xs={12} sm={4}>
-            <FormControl fullWidth size="medium" disabled={loading || loadingData || !levelId || typeof levelId !== "number"}>
+            <FormControl fullWidth size="medium" disabled={loading || loadingData || !levelId || typeof levelId !== "number"} sx={{ minWidth: 200 }}>
               <InputLabel id="parent-block-select-label">
                 {previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
               </InputLabel>

@@ -8,6 +8,7 @@ import Settings from "./views/Settings";
 import Level from "./views/Level";
 import Process from "./views/Process";
 import Block from "./views/Block";
+import Matrix from "./views/Matrix";
 function App() {
   return (
     <AuthProvider>
@@ -21,6 +22,7 @@ function App() {
             <Route path="/level" element={<Level />} />
             <Route path="/process" element={<Process />} />
             <Route path="/block" element={<Block />} />
+            <Route path="/matrices" element={<Matrix />} />
           </Route>
         </Routes>
       </BrowserRouter>
