@@ -9,6 +9,7 @@ import Level from "./views/Level";
 import Process from "./views/Process";
 import Block from "./views/Block";
 import Matrix from "./views/Matrix";
+import Confinement from "./views/Confinement";
 function App() {
   return (
     <AuthProvider>
@@ -23,6 +24,7 @@ function App() {
             <Route path="/process" element={<Process />} />
             <Route path="/block" element={<Block />} />
             <Route path="/matrices" element={<Matrix />} />
+            <Route path="/confinements" element={<Confinement />} />
           </Route>
         </Routes>
       </BrowserRouter>
