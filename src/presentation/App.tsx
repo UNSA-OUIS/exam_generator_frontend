@@ -10,6 +10,8 @@ import Process from "./views/Process";
 import Block from "./views/Block";
 import Matrix from "./views/Matrix";
 import Confinement from "./views/Confinement";
+import RequirementsPage from './pages/confinements/requirements/Index';
+import TextsPage from './pages/confinements/texts/Index';
 function App() {
   return (
     <AuthProvider>
@@ -25,6 +27,8 @@ function App() {
             <Route path="/block" element={<Block />} />
             <Route path="/matrices" element={<Matrix />} />
             <Route path="/confinements" element={<Confinement />} />
+            <Route path="/confinements/:id/requirements" element={<RequirementsPage />} />
+            <Route path="/confinements/:id/texts" element={<TextsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

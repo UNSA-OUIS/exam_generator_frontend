@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Confinement } from "../../../models/Confinement";
 import { GetConfinements } from "../../../application/confinement/GetConfinements";
 import { DeleteConfinement } from "../../../application/confinement/DeleteConfinement";
@@ -26,7 +27,9 @@ import {
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
+  Assignment as AssignmentIcon,   // 🔹 Icono para requerimientos
+  Description as DescriptionIcon  // 🔹 Icono para textos
 } from "@mui/icons-material";
 import Form from './Form';
 
@@ -47,6 +50,8 @@ const List = forwardRef<ListRef>((_, ref) => {
     open: boolean;
     confinement: Confinement | null;
   }>({ open: false, confinement: null });
+
+  const navigate = useNavigate(); // 🔹 Hook para navegación
 
   const fetchConfinements = async () => {
     try {
@@ -97,13 +102,24 @@ const List = forwardRef<ListRef>((_, ref) => {
     handleEditClose();
   };
 
+  // 🔹 Función para navegar a requerimientos
+  const handleRequirementsClick = (confinement: Confinement) => {
+    navigate(`/confinements/${confinement.id}/requirements`);
+  };
+
+  // 🔹 Función para navegar a textos
+  const handleTextsClick = (confinement: Confinement) => {
+    navigate(`/confinements/${confinement.id}/texts`);
+  };
+
   const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   useImperativeHandle(ref, () => ({
     reload: fetchConfinements,
   }));
@@ -187,7 +203,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                 </TableCell>
                 <TableCell 
                   align="center" 
-                  sx={{ fontWeight: 600, fontSize: '0.875rem', minWidth: 160 }}
+                  sx={{ fontWeight: 600, fontSize: '0.875rem', minWidth: 240 }} // 🔹 Aumentado el ancho
                 >
                   Acciones
                 </TableCell>
@@ -211,11 +227,11 @@ const List = forwardRef<ListRef>((_, ref) => {
                     {confinement.total}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                    {formatDate(confinement.start_date)} {/* Cambiado de start_date a started_at */}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                    {formatDate(confinement.end_date)}   {/* Cambiado de end_date a ended_at */}
-                    </TableCell>
+                    {formatDate(confinement.start_date)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    {formatDate(confinement.end_date)}
+                  </TableCell>
                   <TableCell sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                     {formatDate(confinement.created_at)}
                   </TableCell>
@@ -230,6 +246,34 @@ const List = forwardRef<ListRef>((_, ref) => {
                           }}
                         >
                           <ViewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      
+                      {/* 🔹 Icono: Editar Requerimientos */}
+                      <Tooltip title="Editar requerimientos">
+                        <IconButton 
+                          size="small"
+                          onClick={() => handleRequirementsClick(confinement)}
+                          sx={{ 
+                            color: 'secondary.main',
+                            '&:hover': { backgroundColor: 'secondary.lighter' }
+                          }}
+                        >
+                          <AssignmentIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      {/* 🔹 Icono: Editar Textos */}
+                      <Tooltip title="Editar textos">
+                        <IconButton 
+                          size="small"
+                          onClick={() => handleTextsClick(confinement)}
+                          sx={{ 
+                            color: 'success.main',
+                            '&:hover': { backgroundColor: 'success.lighter' }
+                          }}
+                        >
+                          <DescriptionIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       
@@ -320,8 +364,8 @@ const List = forwardRef<ListRef>((_, ref) => {
                 confinementId={editDialog.confinement.id}
                 initialName={editDialog.confinement.name}
                 initialTotal={editDialog.confinement.total}
-                initialStartDate={new Date(editDialog.confinement.start_date)} // Cambiado
-                initialEndDate={new Date(editDialog.confinement.end_date)}     // Cambiado
+                initialStartDate={new Date(editDialog.confinement.start_date)}
+                initialEndDate={new Date(editDialog.confinement.end_date)}
                 onSuccess={handleEditSuccess}
             />
             )}
