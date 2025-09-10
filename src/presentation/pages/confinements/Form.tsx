@@ -1,0 +1,223 @@
+import { useState } from "react";
+import { CreateConfinement } from "../../../application/confinement/CreateConfinement";
+import { UpdateConfinement } from "../../../application/confinement/UpdateConfinement";
+import { 
+  TextField, 
+  Button, 
+  Box, 
+  CircularProgress,
+  Alert,
+  Grid
+} from "@mui/material";
+import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { es } from "date-fns/locale";
+
+type Props = {
+  confinementId?: string;
+  initialName?: string;
+  initialTotal?: number;
+  initialStartDate?: Date | null;
+  initialEndDate?: Date | null;
+  onSuccess: () => void;
+};
+
+export default function Form({
+  confinementId,
+  initialName = "",
+  initialTotal = 0,
+  initialStartDate = null,
+  initialEndDate = null,
+  onSuccess,
+}: Props) {
+  const [name, setName] = useState(initialName);
+  const [total, setTotal] = useState<number>(initialTotal);
+  const [startDate, setStartDate] = useState<Date | null>(initialStartDate);
+  const [endDate, setEndDate] = useState<Date | null>(initialEndDate);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name.trim()) {
+      setError("El nombre del internamiento es requerido");
+      return;
+    }
+
+    if (!total || total < 1) {
+      setError("El total debe ser mayor a 0");
+      return;
+    }
+
+    if (!startDate) {
+      setError("La fecha de inicio es requerida");
+      return;
+    }
+
+    if (!endDate) {
+      setError("La fecha de fin es requerida");
+      return;
+    }
+
+    if (endDate <= startDate) {
+      setError("La fecha de fin debe ser posterior a la fecha de inicio");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Usar los nombres de campo que espera el backend (started_at y ended_at)
+     const confinementData = {
+  name: name.trim(),
+  total: total,
+  start_date: startDate.toISOString(),  // Usar start_date
+  end_date: endDate.toISOString(),      // Usar end_date
+};
+
+      console.log('Enviando datos:', confinementData);
+
+      if (confinementId) {
+        await UpdateConfinement(confinementId, confinementData);
+      } else {
+        await CreateConfinement(confinementData);
+      }
+      
+      setName("");
+      setTotal(0);
+      setStartDate(null);
+      setEndDate(null);
+      onSuccess();
+    } catch (err: any) {
+      console.error('Error completo:', err);
+      setError(err.response?.data?.error || "Error al guardar el internamiento. Inténtalo nuevamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+      <Box>
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: 2 }}
+            onClose={() => setError(null)}
+          >
+            {error}
+          </Alert>
+        )}
+        
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2} alignItems="flex-end">
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Nombre del internamiento"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                error={!!error && !name.trim()}
+                helperText={error && !name.trim() ? "Este campo es requerido" : ""}
+                disabled={loading}
+                placeholder="Ingresa el nombre del internamiento"
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={2}>
+              <TextField
+                label="Total"
+                type="number"
+                value={total || ""}
+                onChange={(e) => setTotal(Number(e.target.value))}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                inputProps={{ min: 1 }}
+                error={!!error && (!total || total < 1)}
+                helperText={error && (!total || total < 1) ? "Debe ser mayor a 0" : ""}
+                disabled={loading}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={2}>
+              <DatePicker
+                label="Fecha de inicio"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    fullWidth: true,
+                    error: !!error && !startDate,
+                    helperText: error && !startDate ? "Este campo es requerido" : "",
+                    disabled: loading
+                  }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={2}>
+              <DatePicker
+                label="Fecha de fin"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                minDate={startDate || undefined}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    fullWidth: true,
+                    error: !!error && (!endDate || (startDate && endDate <= startDate)),
+                    helperText: error && (!endDate || (startDate && endDate <= startDate)) 
+                      ? "Debe ser posterior a la fecha de inicio" 
+                      : "",
+                    disabled: loading
+                  }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={2}>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                size="large"
+                disabled={loading || !name.trim() || !total || !startDate || !endDate || endDate <= startDate}
+                fullWidth
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : confinementId ? (
+                    <EditIcon />
+                  ) : (
+                    <AddIcon />
+                  )
+                }
+                sx={{
+                  height: 56,
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: 2,
+                  '&:hover': {
+                    boxShadow: 4,
+                  }
+                }}
+              >
+                {confinementId ? "Actualizar" : "Crear"}
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Box>
+    </LocalizationProvider>
+  );
+}
