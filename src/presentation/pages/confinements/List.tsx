@@ -103,9 +103,9 @@ const List = forwardRef<ListRef>((_, ref) => {
   };
 
   // 🔹 Función para navegar a requerimientos
-  const handleRequirementsClick = (confinement: Confinement) => {
-    navigate(`/confinements/${confinement.id}/requirements`);
-  };
+const handleRequirementsClick = (confinement: Confinement) => {
+  navigate(`/confinements/${confinement.id}/requirements`);
+};
 
   // 🔹 Función para navegar a textos
   const handleTextsClick = (confinement: Confinement) => {
