@@ -1,6 +1,7 @@
 export interface ConfinementBlock {
+  confinement: any;
   id?: number;
-  confinement_id?: number;
+  confinement_id?: string;
   block_id?: number;
   questions_to_do: number;
   level_id?: number;

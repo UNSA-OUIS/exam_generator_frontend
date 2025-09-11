@@ -104,7 +104,7 @@ export default function RequirementsList() {
                   <TableCell>
                     {row.confinement.name}
                   </TableCell>
-                  <TableCell>{row.block?.name ?? row.block_id}</TableCell>
+                  <TableCell>{row.block.name}</TableCell>
                   <TableCell>{row.questions_to_do}</TableCell>
                   <TableCell align="right">
                     <IconButton

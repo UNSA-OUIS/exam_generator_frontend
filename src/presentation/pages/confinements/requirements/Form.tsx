@@ -27,7 +27,7 @@ export default function RequirementForm() {
   const [initialLoading, setInitialLoading] = useState(Boolean(id));
 
   const [form, setForm] = useState<Partial<ConfinementBlock>>({
-    confinement_id: confinementId ? Number(confinementId) : undefined, // 👈 inicializamos con el valor de la URL
+    confinement_id: confinementId ? confinementId : undefined,
     block_id: undefined,
     questions_to_do: 0,
   });
@@ -71,32 +71,32 @@ export default function RequirementForm() {
   }, [id]);
 
   const handleSubmit = async () => {
-  setLoading(true);
-  try {
-    const block_id = selectedPath[selectedPath.length - 1];
-    if (!block_id) throw new Error("Debe seleccionar un bloque");
+    setLoading(true);
+    try {
+      const block_id = selectedPath[selectedPath.length - 1];
+      if (!block_id) throw new Error("Debe seleccionar un bloque");
 
-    const payload = {
-      ...form,
-      confinement_id: confinementId ?? undefined,
-      block_id,
-    };
+      const payload = {
+        ...form,
+        confinement_id: confinementId ?? undefined,
+        block_id,
+      };
 
-    if (id) {
-      await UpdateConfinementBlock(Number(id), payload);
-      alert("Actualizado");
-    } else {
-      await CreateConfinementBlock(payload);
-      alert("Creado");
+      if (id) {
+        await UpdateConfinementBlock(Number(id), payload);
+        alert("Actualizado");
+      } else {
+        await CreateConfinementBlock(payload);
+        alert("Creado");
+      }
+      navigate(-1);
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.message ?? "Error al guardar");
+    } finally {
+      setLoading(false);
     }
-    navigate(-1);
-  } catch (err: any) {
-    console.error(err);
-    alert(err?.response?.data?.message ?? "Error al guardar");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Función auxiliar: obtiene hijos de un bloque
   const getChildren = (parentId?: number) =>
@@ -111,54 +111,56 @@ export default function RequirementForm() {
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>
+      <Typography variant="h4" sx={{ mb: 4, textAlign: "center", fontWeight: "bold" }}>
         {id ? "Editar Requerimiento" : "Crear Requerimiento"}
       </Typography>
 
-      {/* Selects dinámicos en cascada */}
-      {selectedPath.map((blockId, idx) => {
-        const children = getChildren(blockId);
-        if (!children.length) return null;
-        return (
-          <FormControl fullWidth sx={{ mb: 2 }} key={`level-${idx + 2}`}>
-            <InputLabel>{`Nivel ${idx + 2}`}</InputLabel>
-            <Select
-              value={selectedPath[idx + 1] ?? ""}
-              onChange={(e) => {
-                const newPath = selectedPath.slice(0, idx + 1);
-                if (e.target.value) newPath.push(Number(e.target.value));
-                setSelectedPath(newPath);
-              }}
-            >
-              <MenuItem value="">Selecciona un bloque</MenuItem>
-              {children.map((b) => (
-                <MenuItem key={b.id} value={b.id}>
-                  {b.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        );
-      })}
+      <Box sx={{ mb: 4 }}>
+        {/* Primer nivel fijo */}
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <InputLabel>Nivel 1</InputLabel>
+          <Select
+            value={selectedPath[0] ?? ""}
+            onChange={(e) => {
+              const value = e.target.value ? [Number(e.target.value)] : [];
+              setSelectedPath(value);
+            }}
+          >
+            <MenuItem value="">Selecciona un bloque</MenuItem>
+            {getChildren().map((b) => (
+              <MenuItem key={b.id} value={b.id}>
+                {b.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      {/* Primer nivel fijo */}
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Nivel 1</InputLabel>
-        <Select
-          value={selectedPath[0] ?? ""}
-          onChange={(e) => {
-            const value = e.target.value ? [Number(e.target.value)] : [];
-            setSelectedPath(value);
-          }}
-        >
-          <MenuItem value="">Selecciona un bloque</MenuItem>
-          {getChildren().map((b) => (
-            <MenuItem key={b.id} value={b.id}>
-              {b.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+        {/* Selects dinámicos en cascada - ahora se renderizan DESPUÉS del primer nivel */}
+        {selectedPath.map((blockId, idx) => {
+          const children = getChildren(blockId);
+          if (!children.length) return null;
+          return (
+            <FormControl fullWidth sx={{ mb: 3 }} key={`level-${idx + 2}`}>
+              <InputLabel>{`Nivel ${idx + 2}`}</InputLabel>
+              <Select
+                value={selectedPath[idx + 1] ?? ""}
+                onChange={(e) => {
+                  const newPath = selectedPath.slice(0, idx + 1);
+                  if (e.target.value) newPath.push(Number(e.target.value));
+                  setSelectedPath(newPath);
+                }}
+              >
+                <MenuItem value="">Selecciona un bloque</MenuItem>
+                {children.map((b) => (
+                  <MenuItem key={b.id} value={b.id}>
+                    {b.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          );
+        })}
+      </Box>
 
       {/* Total */}
       <TextField
@@ -172,14 +174,31 @@ export default function RequirementForm() {
             questions_to_do: parseInt(e.target.value || "0"),
           }))
         }
-        sx={{ mb: 3 }}
+        sx={{ mb: 4 }}
+        variant="outlined"
       />
 
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <Button variant="outlined" onClick={() => navigate(-1)}>
+      <Box sx={{ 
+        display: "flex", 
+        gap: 2, 
+        justifyContent: "center",
+        mt: 4 
+      }}>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate(-1)}
+          size="large"
+          sx={{ minWidth: 120 }}
+        >
           Cancelar
         </Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+        <Button 
+          variant="contained" 
+          onClick={handleSubmit} 
+          disabled={loading}
+          size="large"
+          sx={{ minWidth: 120 }}
+        >
           {loading ? "Guardando..." : id ? "Actualizar" : "Crear"}
         </Button>
       </Box>
