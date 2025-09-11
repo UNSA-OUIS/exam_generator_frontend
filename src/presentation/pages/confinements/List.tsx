@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Confinement } from "../../../models/Confinement";
 import { GetConfinements } from "../../../application/confinement/GetConfinements";
 import { DeleteConfinement } from "../../../application/confinement/DeleteConfinement";
+import { ExportBlocks } from "../../../application/confinement/ExportBlocks"; // 🔹 Import nuevo
 import {
   Table,
   TableBody,
@@ -29,7 +30,8 @@ import {
   Edit as EditIcon,
   Visibility as ViewIcon,
   Assignment as AssignmentIcon,   // 🔹 Icono para requerimientos
-  Description as DescriptionIcon  // 🔹 Icono para textos
+  Description as DescriptionIcon,  // 🔹 Icono para textos
+  Download as DownloadIcon        // 🔹 Nuevo icono para exportar
 } from "@mui/icons-material";
 import Form from './Form';
 
@@ -103,13 +105,25 @@ const List = forwardRef<ListRef>((_, ref) => {
   };
 
   // 🔹 Función para navegar a requerimientos
-const handleRequirementsClick = (confinement: Confinement) => {
-  navigate(`/confinements/${confinement.id}/requirements`);
-};
+  const handleRequirementsClick = (confinement: Confinement) => {
+    navigate(`/confinements/${confinement.id}/requirements`);
+  };
 
   // 🔹 Función para navegar a textos
   const handleTextsClick = (confinement: Confinement) => {
     navigate(`/confinements/${confinement.id}/texts`);
+  };
+
+  // 🔹 Nueva función para exportar bloques
+  const handleExportClick = async (confinement: Confinement) => {
+    try {
+      setLoading(true);
+      await ExportBlocks(confinement.id);
+    } catch (err: any) {
+      setError(err.message || "Error al exportar los bloques");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -203,7 +217,7 @@ const handleRequirementsClick = (confinement: Confinement) => {
                 </TableCell>
                 <TableCell 
                   align="center" 
-                  sx={{ fontWeight: 600, fontSize: '0.875rem', minWidth: 240 }} // 🔹 Aumentado el ancho
+                  sx={{ fontWeight: 600, fontSize: '0.875rem', minWidth: 280 }} // 🔹 Aumentado el ancho para más botones
                 >
                   Acciones
                 </TableCell>
@@ -274,6 +288,20 @@ const handleRequirementsClick = (confinement: Confinement) => {
                           }}
                         >
                           <DescriptionIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      {/* 🔹 Nuevo: Exportar Bloques */}
+                      <Tooltip title="Exportar bloques (Excel)">
+                        <IconButton 
+                          size="small"
+                          onClick={() => handleExportClick(confinement)}
+                          sx={{ 
+                            color: 'primary.main',
+                            '&:hover': { backgroundColor: 'primary.lighter' }
+                          }}
+                        >
+                          <DownloadIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       

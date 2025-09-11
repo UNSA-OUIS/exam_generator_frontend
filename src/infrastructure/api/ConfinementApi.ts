@@ -1,3 +1,4 @@
+// infrastructure/api/ConfinementApi.ts
 import axiosClient from "../lib/axiosClient";
 import type { Confinement } from "../../models/Confinement";
 
@@ -28,4 +29,21 @@ export const deleteConfinement = async (id: string): Promise<void> => {
 export const getConfinement = async (id: string): Promise<Confinement> => {
   const response = await axiosClient.get(`/confinements/${id}`);
   return response.data;
+};
+
+// 🔹 Nuevo método para exportar bloques
+export const exportBlocks = async (confinementId: number): Promise<void> => {
+  const response = await axiosClient.get(`/confinement/${confinementId}/export`, {
+    responseType: 'blob'
+  });
+  
+  // Crear enlace para descargar el archivo
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `blocks-${confinementId}.xlsx`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
