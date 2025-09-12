@@ -111,7 +111,7 @@ const List = forwardRef<ListRef>((_, ref) => {
 
   // 🔹 Función para navegar a textos
   const handleTextsClick = (confinement: Confinement) => {
-    navigate(`/confinements/${confinement.id}/texts`);
+      navigate(`/confinements/${confinement.id}/texts`);
   };
 
   // 🔹 Nueva función para exportar bloques

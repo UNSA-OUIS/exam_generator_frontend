@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext"; // Asegúrate de que la ruta sea correcta
-import MainLayout from "./layouts/MainLayout"; // Asegúrate de que la ruta sea correcta
+import { AuthProvider } from "./context/AuthContext";
+import MainLayout from "./layouts/MainLayout";
 import Login from "./Login";
 import Home from "./views/Home";
 import About from "./views/About";
@@ -10,8 +10,12 @@ import Process from "./views/Process";
 import Block from "./views/Block";
 import Matrix from "./views/Matrix";
 import Confinement from "./views/Confinement";
-import RequirementForm from ".//pages/confinements/requirements/Form";
+import RequirementForm from "./pages/confinements/requirements/Form";
 import RequirementsList from "./pages/confinements/requirements/List";
+// 🔹 Importar los nuevos componentes de textos
+import ConfinementTextsList from "./pages/confinements/texts/List";
+import ConfinementTextForm from "./pages/confinements/texts/Form";
+
 function App() {
   return (
     <AuthProvider>
@@ -27,6 +31,8 @@ function App() {
             <Route path="/block" element={<Block />} />
             <Route path="/matrices" element={<Matrix />} />
             <Route path="/confinements" element={<Confinement />} />
+            
+            {/* Rutas para requerimientos */}
             <Route
               path="/confinements/:confinementId/requirements"
               element={<RequirementsList />}
@@ -34,6 +40,20 @@ function App() {
             <Route
               path="/confinements/:confinementId/requirements/new"
               element={<RequirementForm />}
+            />
+            
+            {/* 🔹 Nuevas rutas para textos */}
+            <Route
+              path="/confinements/:id/texts"
+              element={<ConfinementTextsList />}
+            />
+            <Route
+              path="/confinements/:id/texts/create"
+              element={<ConfinementTextForm mode="create" />}
+            />
+            <Route
+              path="/confinements/:id/texts/edit/:textId"
+              element={<ConfinementTextForm mode="edit" />}
             />
           </Route>
         </Routes>
