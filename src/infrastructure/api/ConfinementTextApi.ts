@@ -32,7 +32,14 @@ export const ConfinementTextApi = {
 
   // 🔹 Método para obtener textos por confinamiento (usando UUID)
   async getByConfinement(confinementId: string): Promise<ConfinementText[]> {
-    const response = await axiosClient.get(`/confinements/${confinementId}/texts`);
-    return response.data;
+    console.log("🌐 API Call: GET", `/confinements/${confinementId}/texts`);
+    try {
+      const response = await axiosClient.get(`/confinements/${confinementId}/texts`);
+      console.log("✅ API Response:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ API Error:", error.response?.data || error.message);
+      throw error;
+    }
   }
 };

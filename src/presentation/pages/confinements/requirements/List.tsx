@@ -129,7 +129,7 @@ export default function RequirementsList() {
               {rows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.block?.name || "N/A"}</TableCell>
+                  <TableCell>{row.block ? row.block.name : ""}</TableCell>
                   <TableCell>{row.questions_to_do}</TableCell>
                   <TableCell align="right">
                     <IconButton

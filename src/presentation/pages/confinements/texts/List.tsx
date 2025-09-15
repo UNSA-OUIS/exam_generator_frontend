@@ -23,10 +23,11 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  Refresh as RefreshIcon
 } from "@mui/icons-material";
 import type { ConfinementText } from "../../../../models/ConfinementText";
-import { GetConfinementText } from "../../../../application/confinement/GetConfinementTexts";
+import { GetConfinementTexts } from "../../../../application/confinement/GetConfinementTexts";
 import { DeleteConfinementText } from "../../../../application/confinement/DeleteConfinementText";
 
 const ConfinementTextsList = () => {
@@ -38,20 +39,31 @@ const ConfinementTextsList = () => {
   const [confinementName, setConfinementName] = useState("");
 
   const fetchTexts = async () => {
-    if (!id) return;
+    if (!id) {
+      setError("ID de internamiento no proporcionado");
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
-      const data = await GetConfinementText(id);
+      console.log("🔄 Loading texts for confinement ID:", id);
+      const data = await GetConfinementTexts(id);
       setTexts(data);
       
       // Obtener el nombre del confinamiento desde el primer texto (si existe)
       if (data.length > 0 && data[0].confinement) {
         setConfinementName(data[0].confinement.name);
+      } else {
+        setConfinementName("Internamiento");
       }
-    } catch (err) {
-      setError("Error al cargar los textos");
+    } catch (err: any) {
+      console.error("Error loading texts:", err);
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          "Error al cargar los textos";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -64,7 +76,10 @@ const ConfinementTextsList = () => {
       await DeleteConfinementText(textId);
       await fetchTexts();
     } catch (err: any) {
-      setError("Error al eliminar el texto");
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          "Error al eliminar el texto";
+      setError(errorMessage);
     }
   };
 
@@ -91,14 +106,33 @@ const ConfinementTextsList = () => {
     return (
       <Box sx={{ p: 3 }}>
         <Alert 
-          severity="error" 
+          severity="error"
           action={
-            <Button color="inherit" size="small" onClick={fetchTexts}>
-              Reintentar
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={fetchTexts}
+                startIcon={<RefreshIcon />}
+              >
+                Reintentar
+              </Button>
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={handleBack}
+              >
+                Volver
+              </Button>
+            </Box>
           }
         >
-          {error}
+          <Typography variant="body1" fontWeight="bold">
+            Error: {error}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            ID del internamiento: {id}
+          </Typography>
         </Alert>
       </Box>
     );
@@ -108,14 +142,14 @@ const ConfinementTextsList = () => {
     <Box sx={{ p: 3 }}>
       {/* Breadcrumbs para navegación */}
       <Breadcrumbs sx={{ mb: 2 }}>
-        <Link
-          color="inherit"
+        <Box
+          component="span"
+          sx={{ cursor: "pointer", display: "flex", alignItems: "center", color: "inherit" }}
           onClick={handleBack}
-          sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
         >
           <ArrowBackIcon sx={{ mr: 0.5, fontSize: 20 }} />
           Internamientos
-        </Link>
+        </Box>
         <Typography color="text.primary">
           Textos {confinementName && `- ${confinementName}`}
         </Typography>
@@ -158,6 +192,7 @@ const ConfinementTextsList = () => {
           <Table sx={{ minWidth: 650 }}>
             <TableHead sx={{ backgroundColor: 'grey.50' }}>
               <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Bloque</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="center">Textos a Realizar</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="center">Preguntas por Texto</TableCell>
@@ -168,6 +203,7 @@ const ConfinementTextsList = () => {
             <TableBody>
               {texts.map((text) => (
                 <TableRow key={text.id}>
+                  <TableCell>{text.id}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
                       {text.block?.name || `Bloque ${text.block_id}`}

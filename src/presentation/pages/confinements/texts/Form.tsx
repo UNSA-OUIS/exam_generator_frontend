@@ -7,16 +7,20 @@ import {
   TextField,
   Button,
   Paper,
-  Grid,
   Alert,
   CircularProgress,
-  MenuItem
+  MenuItem,
+  Grid
 } from "@mui/material";
+
+import { Card, CardContent } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { CreateConfinementText } from "../../../../application/confinement/CreateConfinementText";
 import { UpdateConfinementText } from "../../../../application/confinement/UpdateConfinementText";
+import { GetConfinementTexts } from "../../../../application/confinement/GetConfinementTexts";
 import { GetBlocks } from "../../../../application/block/GetBlocks";
 import type { Block } from "../../../../models/Block";
+import type { ConfinementText } from "../../../../models/ConfinementText";
 
 interface Props {
   mode: 'create' | 'edit';
@@ -46,6 +50,27 @@ const ConfinementTextForm = ({ mode, textId }: Props) => {
     }
   };
 
+  const fetchTextData = async (id: number) => {
+    try {
+      setLoading(true);
+      const texts: ConfinementText[] = await GetConfinementTexts(id.toString());
+      const textData = texts.find(text => text.id === textId);
+      if (textData) {
+        setFormData({
+          block_id: textData.block_id.toString(),
+          texts_to_do: textData.texts_to_do.toString(),
+          questions_per_text: textData.questions_per_text.toString()
+        });
+      } else {
+        setError("No se encontró el texto para editar");
+      }
+    } catch (err) {
+      setError("Error al cargar los datos del texto");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
@@ -55,7 +80,7 @@ const ConfinementTextForm = ({ mode, textId }: Props) => {
 
     try {
       const data = {
-        confinement_id: parseInt(id),
+        confinement_id: id,
         block_id: parseInt(formData.block_id),
         texts_to_do: parseInt(formData.texts_to_do),
         questions_per_text: parseInt(formData.questions_per_text)
@@ -84,7 +109,22 @@ const ConfinementTextForm = ({ mode, textId }: Props) => {
 
   useEffect(() => {
     fetchBlocks();
-  }, []);
+    
+    if (mode === 'edit' && textId) {
+      fetchTextData(textId);
+    }
+  }, [mode, textId]);
+
+  if (loading && mode === 'edit') {
+    return (
+      <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ ml: 2 }}>
+          Cargando datos del texto...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3, maxWidth: 800, margin: '0 auto' }}>
@@ -103,82 +143,78 @@ const ConfinementTextForm = ({ mode, textId }: Props) => {
         </Typography>
       </Box>
 
-      <Paper sx={{ p: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                select
-                fullWidth
-                label="Bloque"
-                name="block_id"
-                value={formData.block_id}
-                onChange={handleChange}
-                required
-                disabled={mode === 'edit'}
-              >
-                {blocks.map((block) => (
-                  <MenuItem key={block.id} value={block.id}>
-                    {block.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+      <Card>
+  <CardContent>
+    <form onSubmit={handleSubmit}>
+      <Grid container spacing={3}>
+        
+          <TextField
+            select
+            fullWidth
+            label="Bloque"
+            name="block_id"
+            value={formData.block_id}
+            onChange={handleChange}
+            required
+            disabled={mode === 'edit'}
+            sx={{ width: '100%', minWidth: 100 }}
+          >
+            {blocks.map((block) => (
+              <MenuItem key={block.id} value={block.id}>
+                {block.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Textos a Realizar"
-                name="texts_to_do"
-                value={formData.texts_to_do}
-                onChange={handleChange}
-                required
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
+          <TextField
+            fullWidth
+            type="number"
+            label="Textos a Realizar"
+            name="texts_to_do"
+            value={formData.texts_to_do}
+            onChange={handleChange}
+            required
+            inputProps={{ min: 0 }}
+          />
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Preguntas por Texto"
-                name="questions_per_text"
-                value={formData.questions_per_text}
-                onChange={handleChange}
-                required
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
+          <TextField
+            fullWidth
+            type="number"
+            label="Preguntas por Texto"
+            name="questions_per_text"
+            value={formData.questions_per_text}
+            onChange={handleChange}
+            required
+            inputProps={{ min: 0 }}
+          />
 
-            {error && (
-              <Grid item xs={12}>
-                <Alert severity="error">{error}</Alert>
-              </Grid>
-            )}
+        {error && (
+            <Alert severity="error">{error}</Alert>
+        )}
 
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={20} /> : null}
-                >
-                  {saving ? 'Guardando...' : 'Guardar'}
-                </Button>
-                <Button
-                  component={Link}
-                  to={`/confinements/${id}/texts`}
-                  variant="outlined"
-                >
-                  Cancelar
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
-      </Paper>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={saving}
+              startIcon={saving ? <CircularProgress size={20} /> : null}
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
+            </Button>
+            <Button
+              component={Link}
+              to={`/confinements/${id}/texts`}
+              variant="outlined"
+            >
+              Cancelar
+            </Button>
+          </Box>
+        </Grid>
+    </form>
+  </CardContent>
+</Card>
+
     </Box>
   );
 };

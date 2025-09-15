@@ -41,20 +41,10 @@ function App() {
               path="/confinements/:confinementId/requirements/new"
               element={<RequirementForm />}
             />
-            
-            {/* 🔹 Nuevas rutas para textos */}
-            <Route
-              path="/confinements/:id/texts"
-              element={<ConfinementTextsList />}
-            />
-            <Route
-              path="/confinements/:id/texts/create"
-              element={<ConfinementTextForm mode="create" />}
-            />
-            <Route
-              path="/confinements/:id/texts/edit/:textId"
-              element={<ConfinementTextForm mode="edit" />}
-            />
+            // En tu archivo de rutas principal
+<Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
+<Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
+<Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
           </Route>
         </Routes>
       </BrowserRouter>
