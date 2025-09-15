@@ -118,7 +118,7 @@ const List = forwardRef<ListRef>((_, ref) => {
   const handleExportClick = async (confinement: Confinement) => {
     try {
       setLoading(true);
-      await ExportBlocks(confinement.id);
+      await ExportBlocks(Number(confinement.id));
     } catch (err: any) {
       setError(err.message || "Error al exportar los bloques");
     } finally {

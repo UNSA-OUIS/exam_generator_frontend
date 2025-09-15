@@ -1,6 +1,6 @@
 // presentation/pages/confinements/texts/List.tsx
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -16,7 +16,8 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
-  Paper
+  Paper,
+  Breadcrumbs
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -25,14 +26,16 @@ import {
   ArrowBack as ArrowBackIcon
 } from "@mui/icons-material";
 import type { ConfinementText } from "../../../../models/ConfinementText";
-import { GetConfinementTexts } from "../../../../application/confinement/GetConfinementTexts";
+import { GetConfinementText } from "../../../../application/confinement/GetConfinementTexts";
 import { DeleteConfinementText } from "../../../../application/confinement/DeleteConfinementText";
 
 const ConfinementTextsList = () => {
-  const { id } = useParams<{ id: string }>(); // 🔹 id es string (UUID)
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [texts, setTexts] = useState<ConfinementText[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confinementName, setConfinementName] = useState("");
 
   const fetchTexts = async () => {
     if (!id) return;
@@ -40,8 +43,13 @@ const ConfinementTextsList = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await GetConfinementTexts(id); // 🔹 Pasa el UUID directamente
+      const data = await GetConfinementText(id);
       setTexts(data);
+      
+      // Obtener el nombre del confinamiento desde el primer texto (si existe)
+      if (data.length > 0 && data[0].confinement) {
+        setConfinementName(data[0].confinement.name);
+      }
     } catch (err) {
       setError("Error al cargar los textos");
     } finally {
@@ -58,6 +66,10 @@ const ConfinementTextsList = () => {
     } catch (err: any) {
       setError("Error al eliminar el texto");
     }
+  };
+
+  const handleBack = () => {
+    navigate("/confinements");
   };
 
   useEffect(() => {
@@ -94,21 +106,26 @@ const ConfinementTextsList = () => {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Breadcrumbs para navegación */}
+      <Breadcrumbs sx={{ mb: 2 }}>
+        <Link
+          color="inherit"
+          onClick={handleBack}
+          sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+        >
+          <ArrowBackIcon sx={{ mr: 0.5, fontSize: 20 }} />
+          Internamientos
+        </Link>
+        <Typography color="text.primary">
+          Textos {confinementName && `- ${confinementName}`}
+        </Typography>
+      </Breadcrumbs>
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Button
-            component={Link}
-            to="/confinements"
-            startIcon={<ArrowBackIcon />}
-            variant="outlined"
-          >
-            Volver a Internamientos
-          </Button>
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            Textos del Internamiento
-          </Typography>
-        </Box>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          Textos {confinementName && `- ${confinementName}`}
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

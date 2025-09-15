@@ -11,7 +11,10 @@ export const ConfinementBlockApi = {
     const response = await axiosClient.get(`/confinement_blocks/${id}`);
     return response.data;
   },
-
+  async getByConfinement(confinementId: string): Promise<ConfinementBlock[]> {
+      const response = await axiosClient.get(`/confinements/${confinementId}/blocks`);
+      return response.data;
+    },
   async create(data: Partial<ConfinementBlock>): Promise<ConfinementBlock> {
     const response = await axiosClient.post("/confinement_blocks", data);
     return response.data;

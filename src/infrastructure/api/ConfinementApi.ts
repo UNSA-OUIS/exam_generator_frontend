@@ -1,4 +1,3 @@
-// infrastructure/api/ConfinementApi.ts
 import axiosClient from "../lib/axiosClient";
 import type { Confinement } from "../../models/Confinement";
 
