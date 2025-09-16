@@ -34,7 +34,7 @@ export const getConfinementBlocks = async (confinementId: string) => {
   return response.data;
 };
 // 🔹 Nuevo método para exportar bloques
-export const exportBlocks = async (confinementId: number): Promise<void> => {
+export const exportBlocks = async (confinementId: string): Promise<void> => {
   const response = await axiosClient.get(`/confinement/${confinementId}/export`, {
     responseType: 'blob'
   });

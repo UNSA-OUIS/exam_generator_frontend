@@ -3,7 +3,7 @@ import type { Confinement } from "./Confinement";
 
 export interface ConfinementText {
   id: number;
-  confinement_id: number;
+  confinement_id: string;
   block_id: number;
   texts_to_do: number;
   questions_per_text: number;

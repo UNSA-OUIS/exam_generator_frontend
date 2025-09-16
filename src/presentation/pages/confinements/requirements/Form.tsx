@@ -11,6 +11,8 @@ import {
   Select,
   Box,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { CreateConfinementBlock } from "../../../../application/confinement/CreateConfinementBlock";
 import { UpdateConfinementBlock } from "../../../../application/confinement/UpdateConfinementBlock";
@@ -35,6 +37,10 @@ export default function RequirementForm() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
 
+  // snackbar success / error
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       try {
@@ -42,7 +48,7 @@ export default function RequirementForm() {
         setBlocks(blocksData);
       } catch (err) {
         console.error(err);
-        alert("Error al cargar bloques");
+        setErrorMessage("Error al cargar bloques");
       }
     })();
   }, []);
@@ -58,11 +64,10 @@ export default function RequirementForm() {
           block_id: data.block_id,
           questions_to_do: data.questions_to_do,
         });
-        // en edición, inicializamos el path con el block_id
         if (data.block_id) setSelectedPath([data.block_id]);
       } catch (err) {
         console.error(err);
-        alert("No se pudo cargar el requerimiento");
+        setErrorMessage("No se pudo cargar el requerimiento");
         navigate(-1);
       } finally {
         setInitialLoading(false);
@@ -84,21 +89,28 @@ export default function RequirementForm() {
 
       if (id) {
         await UpdateConfinementBlock(Number(id), payload);
-        alert("Actualizado");
       } else {
         await CreateConfinementBlock(payload);
-        alert("Creado");
       }
-      navigate(-1);
-    } catch (err: any) {
-      console.error(err);
-      alert(err?.response?.data?.message ?? "Error al guardar");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Función auxiliar: obtiene hijos de un bloque
+      // mostrar success y redirigir
+      setSuccessOpen(true);
+      setTimeout(() => {
+        navigate(-1);
+      }, 500);
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message;
+
+      if (message.includes("23505") || message.includes("llave duplicada")) {
+        setErrorMessage("⚠️ Ya existe un bloque con estos datos.");
+      } else {
+        setErrorMessage("❌ Ocurrió un error al guardar el bloque.");
+      }
+
+      setOpenError(true);
+    }
+  };  
+
   const getChildren = (parentId?: number) =>
     blocks.filter((b) => (parentId ? b.parent_block_id === parentId : !b.parent_block_id));
 
@@ -115,8 +127,8 @@ export default function RequirementForm() {
         {id ? "Editar Requerimiento" : "Crear Requerimiento"}
       </Typography>
 
+      {/* selects de bloques en cascada */}
       <Box sx={{ mb: 4 }}>
-        {/* Primer nivel fijo */}
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel>Nivel 1</InputLabel>
           <Select
@@ -135,7 +147,6 @@ export default function RequirementForm() {
           </Select>
         </FormControl>
 
-        {/* Selects dinámicos en cascada - ahora se renderizan DESPUÉS del primer nivel */}
         {selectedPath.map((blockId, idx) => {
           const children = getChildren(blockId);
           if (!children.length) return null;
@@ -162,7 +173,7 @@ export default function RequirementForm() {
         })}
       </Box>
 
-      {/* Total */}
+      {/* total */}
       <TextField
         fullWidth
         type="number"
@@ -178,23 +189,14 @@ export default function RequirementForm() {
         variant="outlined"
       />
 
-      <Box sx={{ 
-        display: "flex", 
-        gap: 2, 
-        justifyContent: "center",
-        mt: 4 
-      }}>
-        <Button 
-          variant="outlined" 
-          onClick={() => navigate(-1)}
-          size="large"
-          sx={{ minWidth: 120 }}
-        >
+      {/* botones */}
+      <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 4 }}>
+        <Button variant="outlined" onClick={() => navigate(-1)} size="large" sx={{ minWidth: 120 }}>
           Cancelar
         </Button>
-        <Button 
-          variant="contained" 
-          onClick={handleSubmit} 
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
           disabled={loading}
           size="large"
           sx={{ minWidth: 120 }}
@@ -202,6 +204,30 @@ export default function RequirementForm() {
           {loading ? "Guardando..." : id ? "Actualizar" : "Crear"}
         </Button>
       </Box>
+
+      {/* snackbar éxito */}
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={500}
+        onClose={() => setSuccessOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" sx={{ width: "100%" }}>
+          {id ? "Actualizado exitosamente" : "Creado exitosamente"}
+        </Alert>
+      </Snackbar>
+
+      {/* snackbar error */}
+      <Snackbar
+        open={Boolean(errorMessage)}
+        autoHideDuration={2000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="error" sx={{ width: "100%" }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
