@@ -13,6 +13,10 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
 } from "@mui/material";
 import { CreateConfinementBlock } from "../../../../application/confinement/CreateConfinementBlock";
 import { UpdateConfinementBlock } from "../../../../application/confinement/UpdateConfinementBlock";
@@ -107,7 +111,7 @@ export default function RequirementForm() {
         setErrorMessage("❌ Ocurrió un error al guardar el bloque.");
       }
     }
-  };  
+  };
 
   const getChildren = (parentId?: number) =>
     blocks.filter((b) => (parentId ? b.parent_block_id === parentId : !b.parent_block_id));
@@ -121,87 +125,109 @@ export default function RequirementForm() {
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4, textAlign: "center", fontWeight: "bold" }}>
-        {id ? "Editar Requerimiento" : "Crear Requerimiento"}
-      </Typography>
+      <Card
+        sx={{
+          borderRadius: 3,
+          boxShadow: 6,
+          background: "linear-gradient(145deg, #f9f9f9, #ffffff)",
+        }}
+      >
+        <CardHeader
+          title={
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main", textAlign: "center" }}>
+              {id ? "Editar Requerimiento" : "Crear Requerimiento"}
+            </Typography>
+          }
+        />
+        <Divider />
+        <CardContent>
+          {/* selects de bloques en cascada */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              select
+              label="Nivel 1"
+              value={selectedPath[0] ?? ""}
+              onChange={(e) => {
+                const value = e.target.value ? [Number(e.target.value)] : [];
+                setSelectedPath(value);
+              }}
+              fullWidth
+              sx={{ mb: 3 }}
+            >
+              <MenuItem value="">Selecciona un bloque</MenuItem>
+              {getChildren().map((b) => (
+                <MenuItem key={b.id} value={b.id}>
+                  {b.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
-      {/* selects de bloques en cascada */}
-      <Box sx={{ mb: 4 }}>
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>Nivel 1</InputLabel>
-          <Select
-            value={selectedPath[0] ?? ""}
-            onChange={(e) => {
-              const value = e.target.value ? [Number(e.target.value)] : [];
-              setSelectedPath(value);
-            }}
-          >
-            <MenuItem value="">Selecciona un bloque</MenuItem>
-            {getChildren().map((b) => (
-              <MenuItem key={b.id} value={b.id}>
-                {b.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
 
-        {selectedPath.map((blockId, idx) => {
-          const children = getChildren(blockId);
-          if (!children.length) return null;
-          return (
-            <FormControl fullWidth sx={{ mb: 3 }} key={`level-${idx + 2}`}>
-              <InputLabel>{`Nivel ${idx + 2}`}</InputLabel>
-              <Select
-                value={selectedPath[idx + 1] ?? ""}
-                onChange={(e) => {
-                  const newPath = selectedPath.slice(0, idx + 1);
-                  if (e.target.value) newPath.push(Number(e.target.value));
-                  setSelectedPath(newPath);
-                }}
-              >
-                <MenuItem value="">Selecciona un bloque</MenuItem>
-                {children.map((b) => (
-                  <MenuItem key={b.id} value={b.id}>
-                    {b.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          );
-        })}
-      </Box>
+            {selectedPath.map((blockId, idx) => {
+              const children = getChildren(blockId);
+              if (!children.length) return null;
+              return (
+                <FormControl fullWidth sx={{ mb: 3 }} key={`level-${idx + 2}`}>
+                  <InputLabel>{`Nivel ${idx + 2}`}</InputLabel>
+                  <Select
+                    value={selectedPath[idx + 1] ?? ""}
+                    onChange={(e) => {
+                      const newPath = selectedPath.slice(0, idx + 1);
+                      if (e.target.value) newPath.push(Number(e.target.value));
+                      setSelectedPath(newPath);
+                    }}
+                  >
+                    <MenuItem value="">Selecciona un bloque</MenuItem>
+                    {children.map((b) => (
+                      <MenuItem key={b.id} value={b.id}>
+                        {b.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              );
+            })}
+          </Box>
 
-      {/* total */}
-      <TextField
-        fullWidth
-        type="number"
-        label="Total (valor numérico)"
-        value={form.questions_to_do ?? 0}
-        onChange={(e) =>
-          setForm((prev) => ({
-            ...prev,
-            questions_to_do: parseInt(e.target.value || "0"),
-          }))
-        }
-        sx={{ mb: 4 }}
-        variant="outlined"
-      />
+          {/* total */}
+          <TextField
+            fullWidth
+            type="number"
+            label="Total (valor numérico)"
+            value={form.questions_to_do ?? 0}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                questions_to_do: parseInt(e.target.value || "0"),
+              }))
+            }
+            sx={{ mb: 3 }}
+            variant="outlined"
+          />
 
-      {/* botones */}
-      <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 4 }}>
-        <Button variant="outlined" onClick={() => navigate(-1)} size="large" sx={{ minWidth: 120 }}>
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading}
-          size="large"
-          sx={{ minWidth: 120 }}
-        >
-          {loading ? "Guardando..." : id ? "Actualizar" : "Crear"}
-        </Button>
-      </Box>
+          {/* botones */}
+          <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 3 }}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(-1)}
+              size="large"
+              sx={{ minWidth: 120, borderRadius: 2 }}
+              color="secondary"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={loading}
+              size="large"
+              sx={{ minWidth: 120, borderRadius: 2, backgroundColor: "#1976d2" }}
+            >
+              {loading ? "Guardando..." : id ? "Actualizar" : "Crear"}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* snackbar éxito */}
       <Snackbar

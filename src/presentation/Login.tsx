@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import bgimage from "../../public/img_bg.jpeg";
 import {
   Avatar,
   Box,
@@ -62,14 +63,14 @@ export default function Login() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          backgroundImage: "url('img_bg.jpeg')",
+          backgroundImage: `url(${bgimage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
         <CssBaseline />
         <Grow in timeout={800}>
-          <Card sx={{ maxWidth: 400, width: "100%", p: 2, boxShadow: 6 }}>
+          <Card sx={{ maxWidth: 400, width: "100%", px:2, py:3, boxShadow: 20, borderRadius: 3 }}>
             <CardContent>
               <Box
                 sx={{
@@ -135,7 +136,7 @@ export default function Login() {
                     type="submit"
                     fullWidth
                     variant="contained"
-                    sx={{ mt: 3, mb: 2 }}
+                    sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2 }}
                   >
                     Validar
                   </AnimatedButton>
