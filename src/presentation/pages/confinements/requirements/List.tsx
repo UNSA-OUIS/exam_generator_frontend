@@ -1,5 +1,5 @@
 // presentation/pages/confinements/requirements/List.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,

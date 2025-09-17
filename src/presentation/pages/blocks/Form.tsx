@@ -15,7 +15,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Typography
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
@@ -31,7 +30,6 @@ export default function Form({
   blockId,
   initialLevelId = 0,
   initialName = "",
-  initialParentBlockId = null,
   onSuccess,
 }: Props) {
   const [levelId, setLevelId] = useState<number | "">(initialLevelId || "");

@@ -3,14 +3,12 @@ import { CreateMatrix } from "../../../application/matrix/CreateMatrix";
 import { UpdateMatrix } from "../../../application/matrix/UpdateMatrix";
 import { GetProcesses } from "../../../application/process/GetProcesses";
 import type { Process } from "../../../models/Process";
-import type { Matrix } from "../../../models/Matrix";
 import { 
   TextField, 
   Button, 
   Box, 
   CircularProgress,
   Alert,
-  Grid,
   MenuItem,
   FormControl,
   InputLabel,
@@ -120,96 +118,126 @@ export default function Form({
       )}
       
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth size="medium" disabled={loading || loadingData} sx={{ minWidth: 150 }}>
-              <InputLabel id="year-select-label">Año</InputLabel>
-              <Select
-                labelId="year-select-label"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                label="Año"
-                required
-              >
-                <MenuItem value="">Seleccionar año</MenuItem>
-                {yearOptions.map((yearOption) => (
-                  <MenuItem key={yearOption} value={yearOption.toString()}>
-                    {yearOption}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid item xs={12} sm={3}>
-            <TextField
-              label="Total de alternativas"
-              type="number"
-              value={totalAlternatives || ""}
-              onChange={(e) => setTotalAlternatives(Number(e.target.value))}
-              required
-              fullWidth
-              variant="outlined"
-              size="medium"
-              inputProps={{ min: 1 }}
-              error={!!error && (!totalAlternatives || totalAlternatives < 1)}
-              helperText={error && (!totalAlternatives || totalAlternatives < 1) ? "Debe ser mayor a 0" : ""}
-              disabled={loading || loadingData}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth size="medium" disabled={loading || loadingData} sx={{ minWidth: 200 }}>
-              <InputLabel id="process-select-label">Proceso</InputLabel>
-              <Select
-                labelId="process-select-label"
-                value={processId}
-                onChange={(e) => setProcessId(e.target.value === "" ? "" : Number(e.target.value))}
-                label="Proceso"
-                required
-              >
-                <MenuItem value="">Seleccionar proceso</MenuItem>
-                {processes.map((process) => (
-                  <MenuItem key={process.id} value={process.id}>
-                    {process.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid item xs={12} sm={3}>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              size="large"
-              disabled={loading || loadingData || !year || !totalAlternatives || !processId}
-              fullWidth
-              startIcon={
-                loading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : matrixId ? (
-                  <EditIcon />
-                ) : (
-                  <AddIcon />
-                )
-              }
-              sx={{
-                height: 56,
-                borderRadius: 2,
-                fontWeight: 600,
-                textTransform: 'none',
-                boxShadow: 2,
-                '&:hover': {
-                  boxShadow: 4,
-                }
-              }}
-            >
-              {matrixId ? "Actualizar" : "Crear matriz"}
-            </Button>
-          </Grid>
-        </Grid>
-      </form>
+  <Box
+    sx={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 2,
+      alignItems: "flex-end",
+    }}
+  >
+    {/* Año */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+      <FormControl
+        fullWidth
+        size="medium"
+        disabled={loading || loadingData}
+        sx={{ minWidth: 150 }}
+      >
+        <InputLabel id="year-select-label">Año</InputLabel>
+        <Select
+          labelId="year-select-label"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          label="Año"
+          required
+        >
+          <MenuItem value="">Seleccionar año</MenuItem>
+          {yearOptions.map((yearOption) => (
+            <MenuItem key={yearOption} value={yearOption.toString()}>
+              {yearOption}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
+
+    {/* Total de alternativas */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+      <TextField
+        label="Total de alternativas"
+        type="number"
+        value={totalAlternatives || ""}
+        onChange={(e) => setTotalAlternatives(Number(e.target.value))}
+        required
+        fullWidth
+        variant="outlined"
+        size="medium"
+        inputProps={{ min: 1 }}
+        error={!!error && (!totalAlternatives || totalAlternatives < 1)}
+        helperText={
+          error && (!totalAlternatives || totalAlternatives < 1)
+            ? "Debe ser mayor a 0"
+            : ""
+        }
+        disabled={loading || loadingData}
+      />
+    </Box>
+
+    {/* Proceso */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+      <FormControl
+        fullWidth
+        size="medium"
+        disabled={loading || loadingData}
+        sx={{ minWidth: 200 }}
+      >
+        <InputLabel id="process-select-label">Proceso</InputLabel>
+        <Select
+          labelId="process-select-label"
+          value={processId}
+          onChange={(e) =>
+            setProcessId( Number(e.target.value))
+          }
+          label="Proceso"
+          required
+        >
+          <MenuItem value="">Seleccionar proceso</MenuItem>
+          {processes.map((process) => (
+            <MenuItem key={process.id} value={process.id}>
+              {process.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
+
+    {/* Botón */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+      <Button
+        type="submit"
+        variant="contained"
+        size="large"
+        disabled={
+          loading || loadingData || !year || !totalAlternatives || !processId
+        }
+        fullWidth
+        startIcon={
+          loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : matrixId ? (
+            <EditIcon />
+          ) : (
+            <AddIcon />
+          )
+        }
+        sx={{
+          height: 56,
+          borderRadius: 2,
+          fontWeight: 600,
+          textTransform: "none",
+          boxShadow: 2,
+          "&:hover": {
+            boxShadow: 4,
+          },
+        }}
+      >
+        {matrixId ? "Actualizar" : "Crear matriz"}
+      </Button>
+    </Box>
+  </Box>
+</form>
+
     </Box>
   );
 }

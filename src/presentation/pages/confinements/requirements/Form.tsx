@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
@@ -106,8 +106,6 @@ export default function RequirementForm() {
       } else {
         setErrorMessage("❌ Ocurrió un error al guardar el bloque.");
       }
-
-      setOpenError(true);
     }
   };  
 
