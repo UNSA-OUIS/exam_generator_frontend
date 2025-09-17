@@ -317,7 +317,7 @@ const List = forwardRef<ListRef>((_, ref) => {
           <DialogContentText>
             ¿Estás seguro de que deseas eliminar el nivel{" "}
             <strong>"{deleteDialog.level?.name}"</strong> (Stage{" "}
-            {deleteDialog.level?.stage})?
+            {deleteDialog.level?.stage})
             
           </DialogContentText>
         </DialogContent>
