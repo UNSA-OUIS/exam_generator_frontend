@@ -7,7 +7,6 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Grid,
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
@@ -20,7 +19,6 @@ type Props = {
 
 export default function Form({
   levelId,
-  initialStage = 0,
   initialName = "",
   onSuccess,
 }: Props) {
@@ -73,57 +71,65 @@ export default function Form({
       )}
 
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} sm={9}>
-            <TextField
-              label="Nombre del nivel"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              fullWidth
-              variant="outlined"
-              size="medium"
-              error={!!error && !name.trim()}
-              helperText={
-                error && !name.trim() ? "Este campo es requerido" : ""
-              }
-              disabled={loading}
-              placeholder="Ingresa el nombre del nivel"
-            />
-          </Grid>
+  <Box
+    sx={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 2,
+      alignItems: "flex-end",
+    }}
+  >
+    {/* Nombre del nivel */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 75%" } }}>
+      <TextField
+        label="Nombre del nivel"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+        fullWidth
+        variant="outlined"
+        size="medium"
+        error={!!error && !name.trim()}
+        helperText={error && !name.trim() ? "Este campo es requerido" : ""}
+        disabled={loading}
+        placeholder="Ingresa el nombre del nivel"
+      />
+    </Box>
 
-          <Grid item xs={12} sm={3}>
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={loading || !name.trim()}
-              fullWidth
-              startIcon={
-                loading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : levelId ? (
-                  <EditIcon />
-                ) : (
-                  <AddIcon />
-                )
-              }
-              sx={{
-                height: 56,
-                borderRadius: 2,
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: 2,
-                "&:hover": {
-                  boxShadow: 4,
-                },
-              }}
-            >
-              {levelId ? "Actualizar" : "Crear"}
-            </Button>
-          </Grid>
-        </Grid>
-      </form>
+    {/* Botón */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+      <Button
+        type="submit"
+        variant="contained"
+        size="large"
+        disabled={loading || !name.trim()}
+        fullWidth
+        startIcon={
+          loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : levelId ? (
+            <EditIcon />
+          ) : (
+            <AddIcon />
+          )
+        }
+        sx={{
+          height: 56,
+          borderRadius: 2,
+          fontWeight: 600,
+          textTransform: "none",
+          boxShadow: 2,
+          "&:hover": {
+            boxShadow: 4,
+          },
+        }}
+      >
+        {levelId ? "Actualizar" : "Crear"}
+      </Button>
+    </Box>
+  </Box>
+</form>
+
     </Box>
   );
 }

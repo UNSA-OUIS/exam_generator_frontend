@@ -11,12 +11,10 @@ import {
   Box, 
   CircularProgress,
   Alert,
-  Grid,
   MenuItem,
   FormControl,
   InputLabel,
   Select,
-  Typography
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
@@ -32,7 +30,6 @@ export default function Form({
   blockId,
   initialLevelId = 0,
   initialName = "",
-  initialParentBlockId = null,
   onSuccess,
 }: Props) {
   const [levelId, setLevelId] = useState<number | "">(initialLevelId || "");
@@ -64,15 +61,11 @@ export default function Form({
     fetchData();
   }, []);
 
-  // Obtener el nivel seleccionado
   const selectedLevel = typeof levelId === "number" ? levels.find(level => level.id === levelId) : null;
-  
-  // Obtener el nivel anterior (stage - 1)
   const previousLevel = selectedLevel 
     ? levels.find(level => level.stage === selectedLevel.stage - 1)
     : null;
 
-  // Filtrar bloques que pertenecen al nivel anterior
   const parentBlocks = previousLevel 
     ? blocks.filter(block => block.level_id === previousLevel.id && block.id !== blockId)
     : [];
@@ -95,9 +88,7 @@ export default function Form({
 
     try {
       if (blockId) {
-        await UpdateBlock(blockId, { 
-          name: name.trim()
-        });
+        await UpdateBlock(blockId, { name: name.trim() });
       } else {
         await CreateBlock({ 
           level_id: levelId,
@@ -130,112 +121,115 @@ export default function Form({
       )}
       
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth size="medium" disabled={loading || loadingData || !!blockId} sx={{ minWidth: 200 }}>
-              <InputLabel id="level-select-label">Nivel</InputLabel>
-              <Select
-                labelId="level-select-label"
-                value={levelId}
-                onChange={(e) => {
-                  setLevelId(e.target.value === "" ? "" : Number(e.target.value));
-                  setParentBlockId(""); // Resetear bloque padre al cambiar nivel
-                }}
-                label="Nivel"
-                required
-              >
-                <MenuItem value="">Seleccionar nivel</MenuItem>
-                {levels.map((level) => (
-                  <MenuItem key={level.id} value={level.id}>
-                    {level.name} (Stage {level.stage})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+        {/* Contenedor principal de inputs */}
+        <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
           
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth size="medium" disabled={loading || loadingData || !levelId || typeof levelId !== "number"} sx={{ minWidth: 200 }}>
-              <InputLabel id="parent-block-select-label">
-                {previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
-              </InputLabel>
-              <Select
-                labelId="parent-block-select-label"
-                value={parentBlockId}
-                onChange={(e) => setParentBlockId(e.target.value === "" ? "" : Number(e.target.value))}
-                label={previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
-              >
-                <MenuItem value="">Sin bloque padre</MenuItem>
-                {parentBlocks.length > 0 ? (
-                  parentBlocks.map((block) => (
-                    <MenuItem key={block.id} value={block.id}>
-                      {block.name} ({block.code})
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="" disabled>
-                    {previousLevel 
-                      ? `No hay bloques en el nivel ${previousLevel.stage}`
-                      : 'Selecciona un nivel primero'}
-                  </MenuItem>
-                )}
-              </Select>
-            </FormControl>
-            
-            {!previousLevel && levelId && typeof levelId === "number" && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                El nivel seleccionado no tiene niveles anteriores
-              </Typography>
-            )}
-          </Grid>
-          
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Nombre del bloque"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              fullWidth
-              variant="outlined"
-              size="medium"
-              error={!!error && !name.trim()}
-              helperText={error && !name.trim() ? "Este campo es requerido" : ""}
-              disabled={loading || loadingData}
-              placeholder="Ingresa el nombre del bloque"
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              size="large"
-              disabled={loading || loadingData || !name.trim() || !levelId || typeof levelId !== "number"}
-              fullWidth
-              startIcon={
-                loading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : blockId ? (
-                  <EditIcon />
-                ) : (
-                  <AddIcon />
-                )
-              }
-              sx={{
-                height: 56,
-                borderRadius: 2,
-                fontWeight: 600,
-                textTransform: 'none',
-                boxShadow: 2,
-                '&:hover': {
-                  boxShadow: 4,
-                }
+          {/* Select de Nivel */}
+          <FormControl 
+            fullWidth 
+            size="medium" 
+            disabled={loading || loadingData || !!blockId} 
+            sx={{ minWidth: 200, flex: "1 1 30%" }}
+          >
+            <InputLabel id="level-select-label">Nivel</InputLabel>
+            <Select
+              labelId="level-select-label"
+              value={levelId}
+              onChange={(e) => {
+                setLevelId( Number(e.target.value));
+                setParentBlockId("");
               }}
+              label="Nivel"
+              required
             >
-              {blockId ? "Actualizar" : "Crear bloque"}
-            </Button>
-          </Grid>
-        </Grid>
+              <MenuItem value="">Seleccionar nivel</MenuItem>
+              {levels.map((level) => (
+                <MenuItem key={level.id} value={level.id}>
+                  {level.name} (Stage {level.stage})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Select de Bloque Padre */}
+          <FormControl 
+            fullWidth 
+            size="medium" 
+            disabled={loading || loadingData || !levelId || typeof levelId !== "number"} 
+            sx={{ minWidth: 200, flex: "1 1 30%" }}
+          >
+            <InputLabel id="parent-block-select-label">
+              {previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
+            </InputLabel>
+            <Select
+              labelId="parent-block-select-label"
+              value={parentBlockId}
+              onChange={(e) => setParentBlockId( Number(e.target.value))}
+              label={previousLevel ? `Bloque padre (Nivel ${previousLevel.stage})` : 'Bloque padre'}
+            >
+              <MenuItem value="">Sin bloque padre</MenuItem>
+              {parentBlocks.length > 0 ? (
+                parentBlocks.map((block) => (
+                  <MenuItem key={block.id} value={block.id}>
+                    {block.name} ({block.code})
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem value="" disabled>
+                  {previousLevel 
+                    ? `No hay bloques en el nivel ${previousLevel.stage}`
+                    : 'Selecciona un nivel primero'}
+                </MenuItem>
+              )}
+            </Select>
+          </FormControl>
+
+          {/* Input de Nombre */}
+          <TextField
+            label="Nombre del bloque"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            fullWidth
+            variant="outlined"
+            size="medium"
+            error={!!error && !name.trim()}
+            helperText={error && !name.trim() ? "Este campo es requerido" : ""}
+            disabled={loading || loadingData}
+            placeholder="Ingresa el nombre del bloque"
+            sx={{ flex: "1 1 30%" }}
+          />
+        </Box>
+
+        {/* Botón */}
+        <Button 
+          type="submit" 
+          variant="contained" 
+          size="large"
+          disabled={loading || loadingData || !name.trim() || !levelId || typeof levelId !== "number"}
+          fullWidth
+          startIcon={
+            loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : blockId ? (
+              <EditIcon />
+            ) : (
+              <AddIcon />
+            )
+          }
+          sx={{
+            height: 56,
+            borderRadius: 2,
+            fontWeight: 600,
+            textTransform: 'none',
+            boxShadow: 2,
+            '&:hover': {
+              boxShadow: 4,
+            }
+          }}
+        >
+          {blockId ? "Actualizar" : "Crear bloque"}
+        </Button>
       </form>
     </Box>
   );

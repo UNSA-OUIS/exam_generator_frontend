@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Level } from "../../../models/Level";
+import type { Block } from "../../../models/Block";
 import { GetLevels } from "../../../application/level/GetLevels";
 import { DeleteLevel } from "../../../application/level/DeleteLevel";
 import {
@@ -41,6 +42,7 @@ const List = forwardRef<ListRef>((_, ref) => {
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     level: Level | null;
+    blocks?: Block|null;
     error?: string;
   }>({ open: false, level: null });
   const [deleting, setDeleting] = useState(false);
@@ -316,13 +318,7 @@ const List = forwardRef<ListRef>((_, ref) => {
             ¿Estás seguro de que deseas eliminar el nivel{" "}
             <strong>"{deleteDialog.level?.name}"</strong> (Stage{" "}
             {deleteDialog.level?.stage})?
-            {deleteDialog.level?.blocks && deleteDialog.level.blocks > 0 && (
-              <>
-                <br />
-                <strong>Advertencia:</strong> Este nivel tiene{" "}
-                {deleteDialog.level.blocks} bloques asociados.
-              </>
-            )}
+            
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>
