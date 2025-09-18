@@ -25,7 +25,7 @@ import { GetBlocks } from "../../../../application/block/GetBlocks";
 import type { ConfinementBlock } from "../../../../models/ConfinementBlock";
 import type { Block } from "../../../../models/Block";
 
-export default function RequirementForm({ initialId, initialConfinementId, onSuccess }: {
+export default function RequirementForm({ initialId, initialConfinementId }: {
   initialId?: string;
   initialConfinementId?: string;
   onSuccess?: () => void;

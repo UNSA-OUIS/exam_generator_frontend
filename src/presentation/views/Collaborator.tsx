@@ -1,6 +1,6 @@
 // presentation/pages/collaborators/Collaborator.tsx
 import { useRef } from "react";
-import { Container, Typography, Paper, Box } from "@mui/material";
+import { Container, Typography, Paper } from "@mui/material";
 import type { ListRef } from "../pages/collaborators/List";
 import List from "../pages/collaborators/List";
 
