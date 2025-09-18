@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import bgimage from "../../public/img_bg.jpeg";
 import {
   Avatar,
@@ -9,12 +9,14 @@ import {
   CssBaseline,
   TextField,
   Typography,
-  Link as MuiLink,
   IconButton,
   InputAdornment,
   Fade,
   Alert,
   Grow,
+  CircularProgress,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import {
   LockOutlined,
@@ -44,16 +46,53 @@ export default function Login() {
   const [pass, setPass] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ user?: string; pass?: string }>({});
+
+  useEffect(() => {
+    const remembered = localStorage.getItem("rememberMe");
+    if (remembered === "true") {
+      setRememberMe(true);
+    }
+  }, []);
+
+  const validateForm = () => {
+    const errors: { user?: string; pass?: string } = {};
+    if (!user.trim()) {
+      errors.user = "El usuario es requerido";
+    }
+    if (!pass) {
+      errors.pass = "La contraseña es requerida";
+    } else if (pass.length < 6) {
+      errors.pass = "La contraseña debe tener al menos 6 caracteres";
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    setLoading(true);
     setSubmitted(true);
-    const success = await login(user, pass);
-    if (success) navigate("/home");
+    try {
+      const success = await login(user.trim(), pass);
+      if (success) {
+        localStorage.setItem("rememberMe", rememberMe.toString());
+        navigate("/home");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClickShowPassword = () =>
     setShowPassword((prev) => !prev);
+
+  const clearError = () => {
+    setSubmitted(false);
+  };
 
   return (
     <Fade in timeout={1000}>
@@ -93,7 +132,7 @@ export default function Login() {
                 >
                   {submitted && error && (
                     <Fade in>
-                      <Alert severity="error" sx={{ mb: 1 }}>
+                      <Alert severity="error" sx={{ mb: 1 }} onClose={clearError}>
                         {error}
                       </Alert>
                     </Fade>
@@ -107,7 +146,11 @@ export default function Login() {
                     name="user"
                     value={user}
                     onChange={(e) => setUser(e.target.value)}
+                    error={Boolean(fieldErrors.user)}
+                    helperText={fieldErrors.user}
                     autoFocus
+                    disabled={loading}
+                    inputProps={{ "aria-label": "usuario" }}
                   />
                   <TextField
                     margin="normal"
@@ -119,12 +162,18 @@ export default function Login() {
                     id="password"
                     value={pass}
                     onChange={(e) => setPass(e.target.value)}
+                    error={Boolean(fieldErrors.pass)}
+                    helperText={fieldErrors.pass}
+                    disabled={loading}
+                    inputProps={{ "aria-label": "contraseña" }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
                           <IconButton
                             onClick={handleClickShowPassword}
                             edge="end"
+                            disabled={loading}
+                            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                           >
                             {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
@@ -132,13 +181,15 @@ export default function Login() {
                       ),
                     }}
                   />
+                 
                   <AnimatedButton
                     type="submit"
                     fullWidth
                     variant="contained"
+                    disabled={loading}
                     sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2 }}
                   >
-                    Validar
+                    {loading ? <CircularProgress size={24} color="inherit" /> : "Validar"}
                   </AnimatedButton>
                  
                 </Box>

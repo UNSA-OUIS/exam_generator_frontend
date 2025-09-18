@@ -50,6 +50,10 @@ const List = forwardRef<ListRef>((_, ref) => {
     open: boolean;
     level: Level | null;
   }>({ open: false, level: null });
+  const [viewDialog, setViewDialog] = useState<{
+    open: boolean;
+    level: Level | null;
+  }>({ open: false, level: null });
 
   const fetchLevels = async () => {
     try {
@@ -102,6 +106,14 @@ const List = forwardRef<ListRef>((_, ref) => {
   const handleEditSuccess = async () => {
     await fetchLevels();
     handleEditClose();
+  };
+
+  const handleViewClick = (level: Level) => {
+    setViewDialog({ open: true, level });
+  };
+
+  const handleViewClose = () => {
+    setViewDialog({ open: false, level: null });
   };
 
   useImperativeHandle(ref, () => ({
@@ -255,6 +267,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                       <Tooltip title="Ver detalles">
                         <IconButton
                           size="small"
+                          onClick={() => handleViewClick(level)}
                           sx={{
                             color: "info.main",
                             "&:hover": { backgroundColor: "info.lighter" },
@@ -367,6 +380,40 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={handleEditClose}>Cancelar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog para ver detalles del nivel */}
+      <Dialog
+        open={viewDialog.open}
+        onClose={handleViewClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Detalles del Nivel</DialogTitle>
+        <DialogContent>
+          {viewDialog.level && (
+            <Box sx={{ pt: 2 }}>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>ID:</strong> #{viewDialog.level.id}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Stage:</strong> {viewDialog.level.stage}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Nombre:</strong> {viewDialog.level.name}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Creado:</strong> {new Date(viewDialog.level.created_at).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Actualizado:</strong> {new Date(viewDialog.level.updated_at).toLocaleDateString()}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleViewClose}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>

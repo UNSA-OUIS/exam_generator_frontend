@@ -16,6 +16,10 @@ import {
   Box,
   Breadcrumbs,
   Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -26,6 +30,7 @@ import {
 import { GetConfinementBlocks } from "../../../../application/confinement/GetConfinementBlocks";
 import { DeleteConfinementBlock } from "../../../../application/confinement/DeleteConfinementBlock";
 import type { ConfinementBlock } from "../../../../models/ConfinementBlock";
+import Form from './Form';
 
 export default function RequirementsList() {
   const navigate = useNavigate();
@@ -33,6 +38,10 @@ export default function RequirementsList() {
   const [rows, setRows] = useState<ConfinementBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [confinementName, setConfinementName] = useState("");
+  const [editDialog, setEditDialog] = useState<{
+    open: boolean;
+    confinementBlock: ConfinementBlock | null;
+  }>({ open: false, confinementBlock: null });
 
   const load = async (id: string) => {
     setLoading(true);
@@ -67,6 +76,21 @@ export default function RequirementsList() {
       console.error(err);
       alert("Error al eliminar");
     }
+  };
+
+  const handleEditClick = (confinementBlock: ConfinementBlock) => {
+    setEditDialog({ open: true, confinementBlock });
+  };
+
+  const handleEditClose = () => {
+    setEditDialog({ open: false, confinementBlock: null });
+  };
+
+  const handleEditSuccess = async () => {
+    if (confinementId) {
+      await load(confinementId);
+    }
+    handleEditClose();
   };
 
   const handleBack = () => {
@@ -132,12 +156,12 @@ export default function RequirementsList() {
                   <TableCell>{row.block ? row.block.name : ""}</TableCell>
                   <TableCell>{row.questions_to_do}</TableCell>
                   <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigate(String(row.id))}
-                    >
-                      <EditIcon />
-                    </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEditClick(row)}
+                  >
+                    <EditIcon />
+                  </IconButton>
                     <IconButton
                       size="small"
                       color="error"
@@ -169,6 +193,32 @@ export default function RequirementsList() {
           </Table>
         )}
       </Paper>
+
+      {/* Dialog para editar requerimiento */}
+      <Dialog
+        open={editDialog.open}
+        onClose={handleEditClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          Editar Requerimiento
+        </DialogTitle>
+        <DialogContent>
+          {editDialog.confinementBlock && (
+            <Form
+              initialId={editDialog.confinementBlock.id?.toString()}
+              initialConfinementId={confinementId}
+              onSuccess={handleEditSuccess}
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleEditClose}>
+            Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

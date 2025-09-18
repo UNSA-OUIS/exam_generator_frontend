@@ -25,9 +25,17 @@ import { GetBlocks } from "../../../../application/block/GetBlocks";
 import type { ConfinementBlock } from "../../../../models/ConfinementBlock";
 import type { Block } from "../../../../models/Block";
 
-export default function RequirementForm() {
+export default function RequirementForm({ initialId, initialConfinementId, onSuccess }: {
+  initialId?: string;
+  initialConfinementId?: string;
+  onSuccess?: () => void;
+} = {}) {
   const navigate = useNavigate();
-  const { id, confinementId } = useParams<{ id?: string; confinementId: string }>();
+  const { id: urlId, confinementId: urlConfinementId } = useParams<{ id?: string; confinementId: string }>();
+
+  // Use props if provided, otherwise use URL params
+  const id = initialId || urlId;
+  const confinementId = initialConfinementId || urlConfinementId;
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(Boolean(id));
