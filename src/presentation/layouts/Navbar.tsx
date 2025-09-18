@@ -95,7 +95,7 @@ export default function Navbar() {
       <AppBar
         position="fixed"
         elevation={0}
-        sx={{ background: "#64001D", color: "#fff" }}
+        sx={{ background: "#64001D", color: "#fff"}}
       >
         <Toolbar>
           {/* Botón del menú */}
@@ -117,7 +117,7 @@ export default function Navbar() {
               alt="Logo UNSA"
               style={{ height: 40, marginRight: 12 }}
             />
-            <Typography variant="h6" noWrap component="div">
+            <Typography variant="h5" noWrap component="div" >
               UNIVERSIDAD NACIONAL DE SAN AGUSTÍN DE AREQUIPA
             </Typography>
           </Box>

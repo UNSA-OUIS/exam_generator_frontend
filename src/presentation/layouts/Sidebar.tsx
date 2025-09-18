@@ -1,5 +1,6 @@
 import { styled, useTheme } from "@mui/material/styles";
 import type { Theme, CSSObject } from "@mui/material/styles";
+import { useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
@@ -83,10 +84,19 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
+const selectedItemSx = {
+  "&.Mui-selected": {
+    backgroundColor: "#444", // sombreado más claro
+    "&:hover": {
+      backgroundColor: "#555", // hover un poco más claro
+    },
+  },
+};
+
 export default function Sidebar() {
   const theme = useTheme();
-  //const [open, setOpen] = React.useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const open = useAppStore((state) => state.dopen);
   const [openConfig, setOpenConfig] = useState(false);
 
@@ -94,133 +104,54 @@ export default function Sidebar() {
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
       <Box height={30} />
-      <Drawer 
-        variant="permanent" 
+      <Drawer
+        variant="permanent"
         open={open}
         sx={{
-          '& .MuiDrawer-paper': {
-            backgroundColor: '#2E2E2E', 
-            color: '#ffffff',
-            '& .MuiListItemIcon-root': {
-              color: '#ffffff'  // Esto hace que los iconos sean blancos
-            }
-          }
+          "& .MuiDrawer-paper": {
+            backgroundColor: "#2E2E2E",
+            color: "#ffffff",
+            "& .MuiListItemIcon-root": {
+              color: "#ffffff",
+            },
+          },
         }}
       >
         <DrawerHeader>
-          <IconButton sx={{ color: '#fff' }}>  {/* Esto hace que el icono del header sea blanco */}
-            {theme.direction === "rtl" ? (
-              <ChevronRightIcon />
-            ) : (
-              <ChevronLeftIcon />
-            )}
+          <IconButton sx={{ color: "#fff" }}>
+            {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
         </DrawerHeader>
         <Divider />
+
         <List>
-          <ListItem
-            disablePadding
-            sx={{ display: "block" }}
-            onClick={() => navigate("/home")}
-          >
+          {/* Home */}
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/home")}>
             <ListItemButton
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                },
-                open
-                  ? {
-                      justifyContent: "initial",
-                    }
-                  : {
-                      justifyContent: "center",
-                    },
-              ]}
+              selected={location.pathname === "/home"}
+              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
             >
-              <ListItemIcon
-                sx={[
-                  {
-                    minWidth: 0,
-                    justifyContent: "center",
-                  },
-                  open
-                    ? {
-                        mr: 3,
-                      }
-                    : {
-                        mr: "auto",
-                      },
-                ]}
-              >
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
                 <HomeIcon />
               </ListItemIcon>
-              <ListItemText
-                primary="Home"
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
+              <ListItemText primary="Home" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
-          {/* Configuration item with submenu */}
-          <ListItem
-            disablePadding
-            sx={{ display: "block" }}
-            onClick={() => navigate("/confinements")}
-          >
+
+          {/* Internamientos */}
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/confinements")}>
             <ListItemButton
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                },
-                open
-                  ? {
-                      justifyContent: "initial",
-                    }
-                  : {
-                      justifyContent: "center",
-                    },
-              ]}
+              selected={location.pathname === "/confinements"}
+              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
             >
-              <ListItemIcon
-                sx={[
-                  {
-                    minWidth: 0,
-                    justifyContent: "center",
-                  },
-                  open
-                    ? {
-                        mr: 3,
-                      }
-                    : {
-                        mr: "auto",
-                      },
-                ]}
-              >
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
                 <SchoolIcon />
               </ListItemIcon>
-              <ListItemText
-                primary="Internamientos"
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
+              <ListItemText primary="Internamientos" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
+
+          {/* Configuración */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpenConfig(!openConfig)}>
               <ListItemIcon>
@@ -230,45 +161,63 @@ export default function Sidebar() {
               {openConfig ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
           </ListItem>
+
+          {/* Submenú */}
           <Collapse in={openConfig} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItem disablePadding>
-                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/process")}>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedItemSx }}
+                  selected={location.pathname === "/process"}
+                  onClick={() => navigate("/process")}
+                >
                   <ListItemIcon>
                     <SpellcheckSharpIcon />
                   </ListItemIcon>
                   <ListItemText primary="Modalidades" />
                 </ListItemButton>
               </ListItem>
-               <ListItem disablePadding>
-                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/matrices")}>
+
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedItemSx }}
+                  selected={location.pathname === "/matrices"}
+                  onClick={() => navigate("/matrices")}
+                >
                   <ListItemIcon>
                     <TableChartIcon />
                   </ListItemIcon>
                   <ListItemText primary="Matrices" />
                 </ListItemButton>
               </ListItem>
+
               <ListItem disablePadding>
-                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/level")}>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedItemSx }}
+                  selected={location.pathname === "/level"}
+                  onClick={() => navigate("/level")}
+                >
                   <ListItemIcon>
                     <FormatListNumberedSharpIcon />
                   </ListItemIcon>
                   <ListItemText primary="Niveles" />
                 </ListItemButton>
               </ListItem>
+
               <ListItem disablePadding>
-                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/block")}>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedItemSx }}
+                  selected={location.pathname === "/block"}
+                  onClick={() => navigate("/block")}
+                >
                   <ListItemIcon>
                     <AssignmentAddIcon />
                   </ListItemIcon>
                   <ListItemText primary="Bloques" />
                 </ListItemButton>
               </ListItem>
-             
-              
             </List>
           </Collapse>
-          
         </List>
       </Drawer>
     </Box>
