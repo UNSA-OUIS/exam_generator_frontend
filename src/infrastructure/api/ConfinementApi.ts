@@ -34,7 +34,7 @@ export const getConfinementBlocks = async (confinementId: string) => {
   return response.data;
 };
 // 🔹 Nuevo método para exportar bloques
-export const exportBlocks = async (confinementId: string): Promise<void> => {
+export const exportBlocks = async (confinementId: string, confinementName?: string): Promise<void> => {
   const response = await axiosClient.get(`/confinements/${confinementId}/export`, {
     responseType: 'blob'
   });
@@ -42,7 +42,8 @@ export const exportBlocks = async (confinementId: string): Promise<void> => {
   const url = window.URL.createObjectURL(new Blob([response.data]));
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', `blocks-${confinementId}.xlsx`);
+  const fileName = confinementName ? `matriz_${confinementName}.xlsx` : `blocks-${confinementId}.xlsx`;
+  link.setAttribute('download', fileName);
   document.body.appendChild(link);
   link.click();
   link.remove();

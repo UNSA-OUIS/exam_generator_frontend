@@ -52,6 +52,10 @@ const List = forwardRef<ListRef>((_, ref) => {
     open: boolean;
     confinement: Confinement | null;
   }>({ open: false, confinement: null });
+  const [viewDialog, setViewDialog] = useState<{
+    open: boolean;
+    confinement: Confinement | null;
+  }>({ open: false, confinement: null });
 
   const navigate = useNavigate(); // 🔹 Hook para navegación
 
@@ -102,6 +106,14 @@ const List = forwardRef<ListRef>((_, ref) => {
   const handleEditSuccess = async () => {
     await fetchConfinements();
     handleEditClose();
+  };
+
+  const handleViewClick = (confinement: Confinement) => {
+    setViewDialog({ open: true, confinement });
+  };
+
+  const handleViewClose = () => {
+    setViewDialog({ open: false, confinement: null });
   };
 
   // 🔹 Función para navegar a requerimientos
@@ -252,9 +264,10 @@ const List = forwardRef<ListRef>((_, ref) => {
                   <TableCell align="center">
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       <Tooltip title="Ver detalles">
-                        <IconButton 
+                        <IconButton
                           size="small"
-                          sx={{ 
+                          onClick={() => handleViewClick(confinement)}
+                          sx={{
                             color: 'info.main',
                             '&:hover': { backgroundColor: 'info.lighter' }
                           }}
@@ -402,6 +415,46 @@ const List = forwardRef<ListRef>((_, ref) => {
           <Button onClick={handleEditClose}>
             Cancelar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog para ver detalles del internamiento */}
+      <Dialog
+        open={viewDialog.open}
+        onClose={handleViewClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Detalles del Internamiento</DialogTitle>
+        <DialogContent>
+          {viewDialog.confinement && (
+            <Box sx={{ pt: 2 }}>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>ID:</strong> #{viewDialog.confinement.id}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Nombre:</strong> {viewDialog.confinement.name}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Total:</strong> {viewDialog.confinement.total}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Fecha Inicio:</strong> {formatDate(viewDialog.confinement.start_date)}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Fecha Fin:</strong> {formatDate(viewDialog.confinement.end_date)}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Creado:</strong> {formatDate(viewDialog.confinement.created_at)}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                <strong>Actualizado:</strong> {formatDate(viewDialog.confinement.updated_at)}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleViewClose}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>

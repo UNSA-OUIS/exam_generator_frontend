@@ -15,6 +15,8 @@ import RequirementsList from "./pages/confinements/requirements/List";
 // 🔹 Importar los nuevos componentes de textos
 import ConfinementTextsList from "./pages/confinements/texts/List";
 import ConfinementTextForm from "./pages/confinements/texts/Form";
+import Collaborator from "./pages/collaborators/List";
+
 
 function App() {
   return (
@@ -45,6 +47,8 @@ function App() {
 <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
 <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
 <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
+          <Route path="/collaborators" element={<Collaborator />} />
+
           </Route>
         </Routes>
       </BrowserRouter>
