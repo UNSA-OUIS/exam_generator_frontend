@@ -46,7 +46,7 @@ export default function Form({
         const processesData = await GetProcesses();
         setProcesses(processesData);
       } catch (err) {
-        setError("Error al cargar los procesos");
+        setError("Error al cargar los modalidades");
       } finally {
         setLoadingData(false);
       }
@@ -69,7 +69,7 @@ export default function Form({
     }
 
     if (!processId || typeof processId !== "number") {
-      setError("Debe seleccionar un proceso");
+      setError("Debe seleccionar un Modalidad");
       return;
     }
 
@@ -174,7 +174,7 @@ export default function Form({
       />
     </Box>
 
-    {/* Proceso */}
+    {/* Modalidad */}
     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
       <FormControl
         fullWidth
@@ -182,17 +182,17 @@ export default function Form({
         disabled={loading || loadingData}
         sx={{ minWidth: 200 }}
       >
-        <InputLabel id="process-select-label">Proceso</InputLabel>
+        <InputLabel id="process-select-label">Modalidad</InputLabel>
         <Select
           labelId="process-select-label"
           value={processId}
           onChange={(e) =>
             setProcessId( Number(e.target.value))
           }
-          label="Proceso"
+          label="Modalidad"
           required
         >
-          <MenuItem value="">Seleccionar proceso</MenuItem>
+          <MenuItem value="">Seleccionar Modalidad</MenuItem>
           {processes.map((process) => (
             <MenuItem key={process.id} value={process.id}>
               {process.name}

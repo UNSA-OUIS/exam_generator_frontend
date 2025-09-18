@@ -16,9 +16,15 @@ import AssignmentAddIcon from '@mui/icons-material/AssignmentAdd';
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import FormatListNumberedSharpIcon from '@mui/icons-material/FormatListNumberedSharp';
-import SpellcheckSharpIcon from '@mui/icons-material/SpellcheckSharp';import HomeIcon from '@mui/icons-material/Home';
+import SpellcheckSharpIcon from '@mui/icons-material/SpellcheckSharp';
+import HomeIcon from '@mui/icons-material/Home';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import Collapse from '@mui/material/Collapse';
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../stores/appStore";
+import { useState } from "react";
 
 const drawerWidth = 240;
 
@@ -82,6 +88,7 @@ export default function Sidebar() {
   //const [open, setOpen] = React.useState(true);
   const navigate = useNavigate();
   const open = useAppStore((state) => state.dopen);
+  const [openConfig, setOpenConfig] = useState(false);
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -92,10 +99,10 @@ export default function Sidebar() {
         open={open}
         sx={{
           '& .MuiDrawer-paper': {
-            backgroundColor: '#f5f5f5', 
-            color: '#000000',
+            backgroundColor: '#2E2E2E', 
+            color: '#ffffff',
             '& .MuiListItemIcon-root': {
-              color: '#000000'  // Esto hace que los iconos sean blancos
+              color: '#ffffff'  // Esto hace que los iconos sean blancos
             }
           }
         }}
@@ -161,211 +168,8 @@ export default function Sidebar() {
                 ]}
               />
             </ListItemButton>
-          </ListItem> 
-          <ListItem
-            disablePadding
-            sx={{ display: "block" }}
-            onClick={() => navigate("/level")}
-          >
-            <ListItemButton
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                },
-                open
-                  ? {
-                      justifyContent: "initial",
-                    }
-                  : {
-                      justifyContent: "center",
-                    },
-              ]}
-            >
-              <ListItemIcon
-                sx={[
-                  {
-                    minWidth: 0,
-                    justifyContent: "center",
-                  },
-                  open
-                    ? {
-                        mr: 3,
-                      }
-                    : {
-                        mr: "auto",
-                      },
-                ]}
-              >
-                <FormatListNumberedSharpIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Niveles"
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
-            </ListItemButton>
           </ListItem>
-          <ListItem
-            disablePadding
-            sx={{ display: "block" }}
-            onClick={() => navigate("/process")}
-          >
-            <ListItemButton
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                },
-                open
-                  ? {
-                      justifyContent: "initial",
-                    }
-                  : {
-                      justifyContent: "center",
-                    },
-              ]}
-            >
-              <ListItemIcon
-                sx={[
-                  {
-                    minWidth: 0,
-                    justifyContent: "center",
-                  },
-                  open
-                    ? {
-                        mr: 3,
-                      }
-                    : {
-                        mr: "auto",
-                      },
-                ]}
-              >
-                <SpellcheckSharpIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Procesos"
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
-            </ListItemButton>
-          </ListItem>
-          <ListItem
-            disablePadding
-            sx={{ display: "block" }}
-            onClick={() => navigate("/block")}
-          >
-            <ListItemButton
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                },
-                open
-                  ? {
-                      justifyContent: "initial",
-                    }
-                  : {
-                      justifyContent: "center",
-                    },
-              ]}
-            >
-              <ListItemIcon
-                sx={[
-                  {
-                    minWidth: 0,
-                    justifyContent: "center",
-                  },
-                  open
-                    ? {
-                        mr: 3,
-                      }
-                    : {
-                        mr: "auto",
-                      },
-                ]}
-              >
-                <AssignmentAddIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Bloques"
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
-            </ListItemButton>
-          </ListItem>
-          <ListItem
-            disablePadding
-            sx={{ display: "matrices" }}
-            onClick={() => navigate("/matrices")}
-          >
-            <ListItemButton
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                },
-                open
-                  ? {
-                      justifyContent: "initial",
-                    }
-                  : {
-                      justifyContent: "center",
-                    },
-              ]}
-            >
-              <ListItemIcon
-                sx={[
-                  {
-                    minWidth: 0,
-                    justifyContent: "center",
-                  },
-                  open
-                    ? {
-                        mr: 3,
-                      }
-                    : {
-                        mr: "auto",
-                      },
-                ]}
-              >
-                <TableChartIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Matrices"
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
-            </ListItemButton>
-          </ListItem>
+          {/* Configuration item with submenu */}
           <ListItem
             disablePadding
             sx={{ display: "block" }}
@@ -417,6 +221,54 @@ export default function Sidebar() {
               />
             </ListItemButton>
           </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setOpenConfig(!openConfig)}>
+              <ListItemIcon>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Configuración" sx={{ opacity: open ? 1 : 0 }} />
+              {openConfig ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openConfig} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/process")}>
+                  <ListItemIcon>
+                    <SpellcheckSharpIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Modalidades" />
+                </ListItemButton>
+              </ListItem>
+               <ListItem disablePadding>
+                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/matrices")}>
+                  <ListItemIcon>
+                    <TableChartIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Matrices" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/level")}>
+                  <ListItemIcon>
+                    <FormatListNumberedSharpIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Niveles" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton sx={{ pl: 4 }} onClick={() => navigate("/block")}>
+                  <ListItemIcon>
+                    <AssignmentAddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Bloques" />
+                </ListItemButton>
+              </ListItem>
+             
+              
+            </List>
+          </Collapse>
+          
         </List>
       </Drawer>
     </Box>

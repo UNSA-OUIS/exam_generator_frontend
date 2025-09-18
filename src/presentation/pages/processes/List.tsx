@@ -55,7 +55,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       const data = await GetProcesses();
       setProcesses(data);
     } catch (err) {
-      setError("Error al cargar los procesos");
+      setError("Error al cargar los modalidades");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       await fetchProcesses();
       setDeleteDialog({ open: false, process: null });
     } catch (err) {
-      setError("Error al eliminar el proceso");
+      setError("Error al eliminar el Modalidad");
     } finally {
       setDeleting(false);
     }
@@ -110,7 +110,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <CircularProgress size={40} />
         <Typography variant="body1" sx={{ ml: 2 }}>
-          Cargando procesos...
+          Cargando modalidades...
         </Typography>
       </Box>
     );
@@ -138,10 +138,10 @@ const List = forwardRef<ListRef>((_, ref) => {
       <Box sx={{ p: 3, pb: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Lista de Procesos
+            Lista de modalidades
           </Typography>
           <Chip 
-            label={`${processes.length} proceso${processes.length !== 1 ? 's' : ''}`}
+            label={`${processes.length} Modalidad${processes.length !== 1 ? 's' : ''}`}
             color="primary"
             variant="outlined"
             size="small"
@@ -152,10 +152,10 @@ const List = forwardRef<ListRef>((_, ref) => {
       {processes.length === 0 ? (
         <Box sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color="text.secondary">
-            No hay procesos registrados
+            No hay modalidades registrados
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Crea tu primer proceso usando el formulario de arriba
+            Crea tu primer Modalidad usando el formulario de arriba
           </Typography>
         </Box>
       ) : (
@@ -167,7 +167,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                   ID
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                  Nombre del Proceso
+                  Nombre del Modalidad
                 </TableCell>
                 <TableCell 
                   align="center" 
@@ -208,7 +208,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
                       
-                      <Tooltip title="Editar proceso">
+                      <Tooltip title="Editar Modalidad">
                         <IconButton 
                           size="small"
                           onClick={() => handleEditClick(process)}
@@ -221,7 +221,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
                       
-                      <Tooltip title="Eliminar proceso">
+                      <Tooltip title="Eliminar Modalidad">
                         <IconButton 
                           size="small"
                           onClick={() => handleDeleteClick(process)}
@@ -254,7 +254,7 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro de que deseas eliminar el proceso{' '}
+            ¿Estás seguro de que deseas eliminar el Modalidad{' '}
             <strong>"{deleteDialog.process?.name}"</strong>?
             Esta acción no se puede deshacer.
           </DialogContentText>
@@ -279,7 +279,7 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog para editar proceso */}
+      {/* Dialog para editar Modalidad */}
       <Dialog
         open={editDialog.open}
         onClose={handleEditClose}
@@ -287,7 +287,7 @@ const List = forwardRef<ListRef>((_, ref) => {
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
-          Editar Proceso
+          Editar Modalidad
         </DialogTitle>
         <DialogContent>
           {editDialog.process && (

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { styled } from "@mui/material/styles";
+import logo_unsa from "../../../public/logo_unsa.png";
 import MuiAppBar, { type AppBarProps } from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -8,6 +9,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircle from "@mui/icons-material/AccountCircle";
+import Typography from "@mui/material/Typography";
 import { useAppStore } from "../stores/appStore";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +19,6 @@ const AppBar = styled(MuiAppBar, {
 })<AppBarProps>(({ theme }) => ({
   zIndex: theme.zIndex.drawer + 1,
 }));
-
 
 export default function Navbar() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -66,8 +67,6 @@ export default function Navbar() {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
       <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
     </Menu>
   );
@@ -88,22 +87,7 @@ export default function Navbar() {
       }}
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
-    >
-     
-      
-      <MenuItem onClick={handleProfileMenuOpen}>
-        <IconButton
-          size="large"
-          aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          aria-haspopup="true"
-          color="inherit"
-        >
-          <AccountCircle />
-        </IconButton>
-        <p>Profile</p>
-      </MenuItem>
-    </Menu>
+    ></Menu>
   );
 
   return (
@@ -114,6 +98,7 @@ export default function Navbar() {
         sx={{ background: "#64001D", color: "#fff" }}
       >
         <Toolbar>
+          {/* Botón del menú */}
           <IconButton
             size="large"
             edge="start"
@@ -124,12 +109,23 @@ export default function Navbar() {
           >
             <MenuIcon />
           </IconButton>
-        
-          
+
+          {/* Logo + Nombre universidad */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <img
+              src={logo_unsa}
+              alt="Logo UNSA"
+              style={{ height: 40, marginRight: 12 }}
+            />
+            <Typography variant="h6" noWrap component="div">
+              UNIVERSIDAD NACIONAL DE SAN AGUSTÍN DE AREQUIPA
+            </Typography>
+          </Box>
+
           <Box sx={{ flexGrow: 1 }} />
+
+          {/* Perfil */}
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
-            
-            
             <IconButton
               size="large"
               edge="end"
@@ -142,7 +138,6 @@ export default function Navbar() {
               <AccountCircle />
             </IconButton>
           </Box>
-         
         </Toolbar>
       </AppBar>
       {renderMobileMenu}

@@ -29,7 +29,7 @@ export default function Form({
     e.preventDefault();
     
     if (!name.trim()) {
-      setError("El nombre del proceso es requerido");
+      setError("El nombre del Modalidad es requerido");
       return;
     }
 
@@ -46,7 +46,7 @@ export default function Form({
       setName("");
       onSuccess();
     } catch (err) {
-      setError("Error al guardar el proceso. Inténtalo nuevamente.");
+      setError("Error al guardar el Modalidad. Inténtalo nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function Form({
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
           <TextField
-            label="Nombre del proceso"
+            label="Nombre del Modalidad"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required

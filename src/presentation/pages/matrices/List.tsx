@@ -51,7 +51,7 @@ const List = forwardRef<ListRef>((_, ref) => {
 
   const getProcessName = (processId: number): string => {
     const process = processes.find(p => p.id === processId);
-    return process ? process.name : `Proceso #${processId}`;
+    return process ? process.name : `Modalidad #${processId}`;
   };
 
   const fetchMatrices = async () => {
@@ -172,7 +172,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 100 }}>ID</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>Año</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}>Alternativas</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>Proceso</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>Modalidad</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>Creado</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 240 }}>
                   Acciones
