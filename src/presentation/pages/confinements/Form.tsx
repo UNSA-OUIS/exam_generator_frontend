@@ -37,45 +37,50 @@ export default function Form({
   const [endDate, setEndDate] = useState<Date | null>(initialEndDate);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; total?: string; startDate?: string; endDate?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const errors: { name?: string; total?: string; startDate?: string; endDate?: string } = {};
+
     if (!name.trim()) {
-      setError("El nombre del internamiento es requerido");
-      return;
+      errors.name = "El nombre del internamiento es requerido";
     }
 
     if (!total || total < 1) {
-      setError("El total debe ser mayor a 0");
-      return;
+      errors.total = "El total debe ser mayor a 0";
     }
 
     if (!startDate) {
-      setError("La fecha de inicio es requerida");
-      return;
+      errors.startDate = "La fecha de inicio es requerida";
     }
 
     if (!endDate) {
-      setError("La fecha de fin es requerida");
-      return;
+      errors.endDate = "La fecha de fin es requerida";
     }
 
-    if (endDate <= startDate) {
-      setError("La fecha de fin debe ser posterior a la fecha de inicio");
+    if (startDate && endDate && endDate <= startDate) {
+      errors.endDate = "La fecha de fin debe ser posterior a la fecha de inicio";
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
     setLoading(true);
     setError(null);
+    setFieldErrors({});
 
     try {
       // Usar los nombres de campo que espera el backend (started_at y ended_at)
      const confinementData = {
   name: name.trim(),
   total: total,
-  start_date: startDate.toISOString(),  // Usar start_date
-  end_date: endDate.toISOString(),      // Usar end_date
+  start_date: startDate!.toISOString(),  // Usar start_date
+  end_date: endDate!.toISOString(),      // Usar end_date
 };
 
       console.log('Enviando datos:', confinementData);
@@ -131,8 +136,8 @@ export default function Form({
         fullWidth
         variant="outlined"
         size="medium"
-        error={!!error && !name.trim()}
-        helperText={error && !name.trim() ? "Este campo es requerido" : ""}
+        error={!!fieldErrors.name}
+        helperText={fieldErrors.name || ""}
         disabled={loading}
         placeholder="Ingresa el nombre del internamiento"
       />
@@ -150,8 +155,8 @@ export default function Form({
         variant="outlined"
         size="medium"
         inputProps={{ min: 1 }}
-        error={!!error && (!total || total < 1)}
-        helperText={error && (!total || total < 1) ? "Debe ser mayor a 0" : ""}
+        error={!!fieldErrors.total}
+        helperText={fieldErrors.total || ""}
         disabled={loading}
       />
     </Box>
@@ -166,8 +171,8 @@ export default function Form({
           textField: {
             required: true,
             fullWidth: true,
-            error: !!error && !startDate,
-            helperText: error && !startDate ? "Este campo es requerido" : "",
+            error: !!fieldErrors.startDate,
+            helperText: fieldErrors.startDate || "",
             disabled: loading,
           },
         }}
@@ -185,7 +190,8 @@ export default function Form({
           textField: {
             required: true,
             fullWidth: true,
-           
+            error: !!fieldErrors.endDate,
+            helperText: fieldErrors.endDate || "",
             disabled: loading,
           },
         }}
@@ -198,14 +204,7 @@ export default function Form({
         type="submit"
         variant="contained"
         size="large"
-        disabled={
-          loading ||
-          !name.trim() ||
-          !total ||
-          !startDate ||
-          !endDate ||
-          endDate <= startDate
-        }
+        disabled={loading}
         fullWidth
         startIcon={
           loading ? (

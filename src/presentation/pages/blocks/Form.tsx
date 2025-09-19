@@ -206,7 +206,6 @@ export default function Form({
           type="submit" 
           variant="contained" 
           size="large"
-          disabled={loading || loadingData || !name.trim() || !levelId || typeof levelId !== "number"}
           fullWidth
           startIcon={
             loading ? (

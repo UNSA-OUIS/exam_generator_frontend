@@ -204,13 +204,11 @@ export default function Form({
 
     {/* Botón */}
     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-      <Button
+     <Button
         type="submit"
         variant="contained"
         size="large"
-        disabled={
-          loading || loadingData || !year || !totalAlternatives || !modalityId
-        }
+        disabled={loading || loadingData} // 🔹 solo por carga, no por inputs
         fullWidth
         startIcon={
           loading ? (
@@ -234,6 +232,7 @@ export default function Form({
       >
         {matrixId ? "Actualizar" : "Crear matriz"}
       </Button>
+
     </Box>
   </Box>
 </form>

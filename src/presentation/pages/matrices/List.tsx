@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Matrix } from "../../../models/Matrix";
 import type { Modality } from "../../../models/Modality";
 import { getMatrices, deleteMatrix, exportBlocks } from "../../../infrastructure/api/MatrixApi";
@@ -29,7 +30,8 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   List as DetailsIcon,
-  Download as DownloadIcon
+  Download as DownloadIcon,
+  Add as AddIcon
 } from "@mui/icons-material";
 import Form from "./Form";
 
@@ -38,6 +40,7 @@ export type ListRef = {
 };
 
 const List = forwardRef<ListRef>((_, ref) => {
+  const navigate = useNavigate();
   const [matrices, setMatrices] = useState<Matrix[]>([]);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,6 +203,15 @@ const List = forwardRef<ListRef>((_, ref) => {
                       <Tooltip title="Ver detalles">
                         <IconButton size="small" sx={{ color: "info.main", "&:hover": { backgroundColor: "info.lighter" } }}>
                           <DetailsIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Agregar detalles">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/matrices/${matrix.id}/details`)}
+                          sx={{ color: "primary.main", "&:hover": { backgroundColor: "primary.lighter" } }}
+                        >
+                          <AddIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Exportar bloques">

@@ -75,7 +75,7 @@ export default function Form({
             variant="outlined"
             size="medium"
             error={!!error && !name.trim()}
-            helperText={error && !name.trim() ? "Este campo es requerido" : ""}
+  helperText={!name.trim() ? "⚠️ Debes ingresar un nombre para continuar" : ""} // 🔹 mensaje personalizado
             disabled={loading}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -85,33 +85,34 @@ export default function Form({
           />
           
           <Button 
-            type="submit" 
-            variant="contained" 
-            size="large"
-            disabled={loading || !name.trim()}
-            startIcon={
-              loading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : modalityId ? (
-                <EditIcon />
-              ) : (
-                <AddIcon />
-              )
-            }
-            sx={{
-              minWidth: 140,
-              height: 56,
-              borderRadius: 2,
-              fontWeight: 600,
-              textTransform: 'none',
-              boxShadow: 2,
-              '&:hover': {
-                boxShadow: 4,
-              }
-            }}
-          >
-            {modalityId ? "Actualizar" : "Crear"}
-          </Button>
+  type="submit" 
+  variant="contained" 
+  size="large"
+  disabled={loading} // 🔹 ya no depende de name
+  startIcon={
+    loading ? (
+      <CircularProgress size={20} color="inherit" />
+    ) : modalityId ? (
+      <EditIcon />
+    ) : (
+      <AddIcon />
+    )
+  }
+  sx={{
+    minWidth: 140,
+    height: 56,
+    borderRadius: 2,
+    fontWeight: 600,
+    textTransform: 'none',
+    boxShadow: 2,
+    '&:hover': {
+      boxShadow: 4,
+    }
+  }}
+>
+  {modalityId ? "Actualizar" : "Crear"}
+</Button>
+
         </Box>
       </form>
     </Box>
