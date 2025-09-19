@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CreateProcess } from "../../../application/process/CreateProcess";
-import { UpdateProcess } from "../../../application/process/UpdateProcess";
+import { CreateModality } from "../../../application/modality/CreateModality";
+import { UpdateModality } from "../../../application/modality/UpdateModality";
 import { 
   TextField, 
   Button, 
@@ -11,13 +11,13 @@ import {
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
 type Props = {
-  processId?: number;
+  modalityId?: number;
   initialName?: string;
   onSuccess: () => void;
 };
 
 export default function Form({
-  processId,
+  modalityId,
   initialName = "",
   onSuccess,
 }: Props) {
@@ -29,7 +29,7 @@ export default function Form({
     e.preventDefault();
     
     if (!name.trim()) {
-      setError("El nombre del proceso es requerido");
+      setError("El nombre del Modalidad es requerido");
       return;
     }
 
@@ -37,16 +37,16 @@ export default function Form({
     setError(null);
 
     try {
-      if (processId) {
-        await UpdateProcess(processId, { name: name.trim() });
+      if (modalityId) {
+        await UpdateModality(modalityId, { name: name.trim() });
       } else {
-        await CreateProcess({ name: name.trim() });
+        await CreateModality({ name: name.trim() });
       }
       
       setName("");
       onSuccess();
     } catch (err) {
-      setError("Error al guardar el proceso. Inténtalo nuevamente.");
+      setError("Error al guardar el Modalidad. Inténtalo nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function Form({
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
           <TextField
-            label="Nombre del proceso"
+            label="Nombre del Modalidad"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -92,7 +92,7 @@ export default function Form({
             startIcon={
               loading ? (
                 <CircularProgress size={20} color="inherit" />
-              ) : processId ? (
+              ) : modalityId ? (
                 <EditIcon />
               ) : (
                 <AddIcon />
@@ -110,7 +110,7 @@ export default function Form({
               }
             }}
           >
-            {processId ? "Actualizar" : "Crear"}
+            {modalityId ? "Actualizar" : "Crear"}
           </Button>
         </Box>
       </form>

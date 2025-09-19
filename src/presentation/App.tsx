@@ -6,7 +6,7 @@ import Home from "./views/Home";
 import About from "./views/About";
 import Settings from "./views/Settings";
 import Level from "./views/Level";
-import Process from "./views/Process";
+import Modality from "./views/Modality";
 import Block from "./views/Block";
 import Matrix from "./views/Matrix";
 import Confinement from "./views/Confinement";
@@ -29,12 +29,10 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/level" element={<Level />} />
-            <Route path="/process" element={<Process />} />
+            <Route path="/modality" element={<Modality />} />
             <Route path="/block" element={<Block />} />
             <Route path="/matrices" element={<Matrix />} />
             <Route path="/confinements" element={<Confinement />} />
-            
-            {/* Rutas para requerimientos */}
             <Route
               path="/confinements/:confinementId/requirements"
               element={<RequirementsList />}
@@ -43,12 +41,10 @@ function App() {
               path="/confinements/:confinementId/requirements/new"
               element={<RequirementForm />}
             />
-            // En tu archivo de rutas principal
-<Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
-<Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
-<Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
+          <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
+          <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
+          <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
           <Route path="/collaborators" element={<Collaborator />} />
-
           </Route>
         </Routes>
       </BrowserRouter>

@@ -4,14 +4,14 @@ export interface Matrix {
   id: number;
   year: string;
   total_alternatives: number;
-  process_id: number;
+  modality_id: number;
   created_at: string;
   updated_at: string;
-  process?: Process;
+  modality?: Modality;
   details?: MatrixDetail[];
 }
 
-export interface Process {
+export interface Modality {
   id: number;
   name: string;
   created_at: string;

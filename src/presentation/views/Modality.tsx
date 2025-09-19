@@ -1,10 +1,10 @@
 import { useRef } from "react";
 import { Container, Typography, Paper, Box } from "@mui/material";
-import Form from "../pages/processes/Form";
-import type { ListRef } from "../pages/processes/List";
-import List from "../pages/processes/List";
+import Form from "../pages/modalities/Form";
+import type { ListRef } from "../pages/modalities/List";
+import List from "../pages/modalities/List";
 
-export default function Process() {
+export default function Modality() {
   const listRef = useRef<ListRef>(null);
 
   return (
@@ -19,7 +19,7 @@ export default function Process() {
           mb: 4
         }}
       >
-        Gestión de Procesos
+        Gestión de modalidades
       </Typography>
       
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -32,7 +32,7 @@ export default function Process() {
           }}
         >
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Crear Nuevo Proceso
+            Crear Nuevo Modalidad
           </Typography>
           <Form onSuccess={() => listRef.current?.reload()} />
         </Paper>

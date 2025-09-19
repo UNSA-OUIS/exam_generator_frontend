@@ -1,4 +1,4 @@
-export interface Process {
+export interface Modality {
   id: number;
   name: string;
   created_at: string;

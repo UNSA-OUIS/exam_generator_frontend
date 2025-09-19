@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
-import type { Process } from "../../../models/Process";
-import { GetProcesses } from "../../../application/process/GetProcesses";
-import { DeleteProcess } from "../../../application/process/DeleteProcess";
+import type { Modality } from "../../../models/Modality";
+import { GetModalities } from "../../../application/modality/GetModalities";
+import { DeleteModality } from "../../../application/modality/DeleteModality";
 import {
   Table,
   TableBody,
@@ -35,74 +35,74 @@ export type ListRef = {
 };
 
 const List = forwardRef<ListRef>((_, ref) => {
-  const [processes, setProcesses] = useState<Process[]>([]);
+  const [modalities, setModalities] = useState<Modality[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    process: Process | null;
-  }>({ open: false, process: null });
+    modality: Modality | null;
+  }>({ open: false, modality: null });
   const [deleting, setDeleting] = useState(false);
   const [editDialog, setEditDialog] = useState<{
     open: boolean;
-    process: Process | null;
-  }>({ open: false, process: null });
+    modality: Modality | null;
+  }>({ open: false, modality: null });
 
-  const fetchProcesses = async () => {
+  const fetchModalities = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await GetProcesses();
-      setProcesses(data);
+      const data = await GetModalities();
+      setModalities(data);
     } catch (err) {
-      setError("Error al cargar los procesos");
+      setError("Error al cargar los modalidades");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteClick = (process: Process) => {
-    setDeleteDialog({ open: true, process });
+  const handleDeleteClick = (modality: Modality) => {
+    setDeleteDialog({ open: true, modality });
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteDialog.process) return;
+    if (!deleteDialog.modality) return;
 
     setDeleting(true);
     try {
-      await DeleteProcess(deleteDialog.process.id);
-      await fetchProcesses();
-      setDeleteDialog({ open: false, process: null });
+      await DeleteModality(deleteDialog.modality.id);
+      await fetchModalities();
+      setDeleteDialog({ open: false, modality: null });
     } catch (err) {
-      setError("Error al eliminar el proceso");
+      setError("Error al eliminar el Modalidad");
     } finally {
       setDeleting(false);
     }
   };
 
   const handleDeleteCancel = () => {
-    setDeleteDialog({ open: false, process: null });
+    setDeleteDialog({ open: false, modality: null });
   };
 
-  const handleEditClick = (process: Process) => {
-    setEditDialog({ open: true, process });
+  const handleEditClick = (modality: Modality) => {
+    setEditDialog({ open: true, modality });
   };
 
   const handleEditClose = () => {
-    setEditDialog({ open: false, process: null });
+    setEditDialog({ open: false, modality: null });
   };
 
   const handleEditSuccess = async () => {
-    await fetchProcesses();
+    await fetchModalities();
     handleEditClose();
   };
 
   useImperativeHandle(ref, () => ({
-    reload: fetchProcesses,
+    reload: fetchModalities,
   }));
 
   useEffect(() => {
-    fetchProcesses();
+    fetchModalities();
   }, []);
 
   if (loading) {
@@ -110,7 +110,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <CircularProgress size={40} />
         <Typography variant="body1" sx={{ ml: 2 }}>
-          Cargando procesos...
+          Cargando modalidades...
         </Typography>
       </Box>
     );
@@ -122,7 +122,7 @@ const List = forwardRef<ListRef>((_, ref) => {
         <Alert 
           severity="error" 
           action={
-            <Button color="inherit" size="small" onClick={fetchProcesses}>
+            <Button color="inherit" size="small" onClick={fetchModalities}>
               Reintentar
             </Button>
           }
@@ -138,10 +138,10 @@ const List = forwardRef<ListRef>((_, ref) => {
       <Box sx={{ p: 3, pb: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Lista de Procesos
+            Lista de modalidades
           </Typography>
           <Chip 
-            label={`${processes.length} proceso${processes.length !== 1 ? 's' : ''}`}
+            label={`${modalities.length} Modalidad${modalities.length !== 1 ? 's' : ''}`}
             color="primary"
             variant="outlined"
             size="small"
@@ -149,13 +149,13 @@ const List = forwardRef<ListRef>((_, ref) => {
         </Box>
       </Box>
 
-      {processes.length === 0 ? (
+      {modalities.length === 0 ? (
         <Box sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color="text.secondary">
-            No hay procesos registrados
+            No hay modalidades registrados
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Crea tu primer proceso usando el formulario de arriba
+            Crea tu primer Modalidad usando el formulario de arriba
           </Typography>
         </Box>
       ) : (
@@ -167,7 +167,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                   ID
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                  Nombre del Proceso
+                  Nombre del Modalidad
                 </TableCell>
                 <TableCell 
                   align="center" 
@@ -178,9 +178,9 @@ const List = forwardRef<ListRef>((_, ref) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {processes.map((process, index) => (
+              {modalities.map((modality, index) => (
                 <TableRow 
-                  key={process.id}
+                  key={modality.id}
                   sx={{ 
                     '&:hover': { 
                       backgroundColor: 'action.hover' 
@@ -189,10 +189,10 @@ const List = forwardRef<ListRef>((_, ref) => {
                   }}
                 >
                   <TableCell sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                    #{process.id}
+                    #{modality.id}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                    {process.name}
+                    {modality.name}
                   </TableCell>
                   <TableCell align="center">
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
@@ -208,10 +208,10 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
                       
-                      <Tooltip title="Editar proceso">
+                      <Tooltip title="Editar Modalidad">
                         <IconButton 
                           size="small"
-                          onClick={() => handleEditClick(process)}
+                          onClick={() => handleEditClick(modality)}
                           sx={{ 
                             color: 'warning.main',
                             '&:hover': { backgroundColor: 'warning.lighter' }
@@ -221,10 +221,10 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
                       
-                      <Tooltip title="Eliminar proceso">
+                      <Tooltip title="Eliminar Modalidad">
                         <IconButton 
                           size="small"
-                          onClick={() => handleDeleteClick(process)}
+                          onClick={() => handleDeleteClick(modality)}
                           sx={{ 
                             color: 'error.main',
                             '&:hover': { backgroundColor: 'error.lighter' }
@@ -254,8 +254,8 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro de que deseas eliminar el proceso{' '}
-            <strong>"{deleteDialog.process?.name}"</strong>?
+            ¿Estás seguro de que deseas eliminar el Modalidad{' '}
+            <strong>"{deleteDialog.modality?.name}"</strong>?
             Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
@@ -279,7 +279,7 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog para editar proceso */}
+      {/* Dialog para editar Modalidad */}
       <Dialog
         open={editDialog.open}
         onClose={handleEditClose}
@@ -287,13 +287,13 @@ const List = forwardRef<ListRef>((_, ref) => {
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
-          Editar Proceso
+          Editar Modalidad
         </DialogTitle>
         <DialogContent>
-          {editDialog.process && (
+          {editDialog.modality && (
             <Form
-              processId={editDialog.process.id}
-              initialName={editDialog.process.name}
+              modalityId={editDialog.modality.id}
+              initialName={editDialog.modality.name}
               onSuccess={handleEditSuccess}
             />
           )}
