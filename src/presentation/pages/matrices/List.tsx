@@ -205,15 +205,15 @@ const List = forwardRef<ListRef>((_, ref) => {
                           <DetailsIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Agregar detalles">
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/matrices/${matrix.id}/details`)}
-                          sx={{ color: "primary.main", "&:hover": { backgroundColor: "primary.lighter" } }}
-                        >
-                          <AddIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                    <Tooltip title="Agregar detalles">
+                      <IconButton
+                        size="small"
+                        onClick={() => navigate(`/matrices/${matrix.id}/details`)}
+                        sx={{ color: "primary.main", "&:hover": { backgroundColor: "primary.lighter" } }}
+                      >
+                        <AddIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                       <Tooltip title="Exportar bloques">
                         <IconButton
                           size="small"
