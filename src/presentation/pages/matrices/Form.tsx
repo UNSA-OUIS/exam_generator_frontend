@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { CreateMatrix } from "../../../application/matrix/CreateMatrix";
 import { UpdateMatrix } from "../../../application/matrix/UpdateMatrix";
-import { GetProcesses } from "../../../application/process/GetProcesses";
-import type { Process } from "../../../models/Process";
+import { GetModalities } from "../../../application/modality/GetModalities";
+import type { Modality } from "../../../models/Modality";
 import { 
   TextField, 
   Button, 
@@ -20,7 +20,7 @@ type Props = {
   matrixId?: number;
   initialYear?: string;
   initialTotalAlternatives?: number;
-  initialProcessId?: number;
+  initialModalityId?: number;
   onSuccess: () => void;
 };
 
@@ -28,23 +28,23 @@ export default function Form({
   matrixId,
   initialYear = "",
   initialTotalAlternatives = 0,
-  initialProcessId = 0,
+  initialModalityId = 0,
   onSuccess,
 }: Props) {
   const [year, setYear] = useState<string>(initialYear);
   const [totalAlternatives, setTotalAlternatives] = useState<number>(initialTotalAlternatives);
-  const [processId, setProcessId] = useState<number | "">(initialProcessId || "");
-  const [processes, setProcesses] = useState<Process[]>([]);
+  const [modalityId, setModalityId] = useState<number | "">(initialModalityId || "");
+  const [modalities, setModalities] = useState<Modality[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProcesses = async () => {
+    const fetchModalities = async () => {
       setLoadingData(true);
       try {
-        const processesData = await GetProcesses();
-        setProcesses(processesData);
+        const modalitiesData = await GetModalities();
+        setModalities(modalitiesData);
       } catch (err) {
         setError("Error al cargar los modalidades");
       } finally {
@@ -52,7 +52,7 @@ export default function Form({
       }
     };
 
-    fetchProcesses();
+    fetchModalities();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +68,7 @@ export default function Form({
       return;
     }
 
-    if (!processId || typeof processId !== "number") {
+    if (!modalityId || typeof modalityId !== "number") {
       setError("Debe seleccionar un Modalidad");
       return;
     }
@@ -81,19 +81,19 @@ export default function Form({
         await UpdateMatrix(matrixId, { 
           year,
           total_alternatives: totalAlternatives,
-          process_id: processId
+          modality_id: modalityId
         });
       } else {
         await CreateMatrix({ 
           year,
           total_alternatives: totalAlternatives,
-          process_id: processId
+          modality_id: modalityId
         });
       }
       
       setYear("");
       setTotalAlternatives(0);
-      setProcessId("");
+      setModalityId("");
       onSuccess();
     } catch (err: any) {
       setError(err.response?.data?.error || "Error al guardar la matriz. Inténtalo nuevamente.");
@@ -182,20 +182,20 @@ export default function Form({
         disabled={loading || loadingData}
         sx={{ minWidth: 200 }}
       >
-        <InputLabel id="process-select-label">Modalidad</InputLabel>
+        <InputLabel id="modality-select-label">Modalidad</InputLabel>
         <Select
-          labelId="process-select-label"
-          value={processId}
+          labelId="modality-select-label"
+          value={modalityId}
           onChange={(e) =>
-            setProcessId( Number(e.target.value))
+            setModalityId( Number(e.target.value))
           }
           label="Modalidad"
           required
         >
           <MenuItem value="">Seleccionar Modalidad</MenuItem>
-          {processes.map((process) => (
-            <MenuItem key={process.id} value={process.id}>
-              {process.name}
+          {modalities.map((modality) => (
+            <MenuItem key={modality.id} value={modality.id}>
+              {modality.name}
             </MenuItem>
           ))}
         </Select>
@@ -209,7 +209,7 @@ export default function Form({
         variant="contained"
         size="large"
         disabled={
-          loading || loadingData || !year || !totalAlternatives || !processId
+          loading || loadingData || !year || !totalAlternatives || !modalityId
         }
         fullWidth
         startIcon={

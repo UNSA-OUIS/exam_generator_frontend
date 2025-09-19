@@ -1,10 +1,10 @@
 import { useRef } from "react";
 import { Container, Typography, Paper, Box } from "@mui/material";
-import Form from "../pages/processes/Form";
-import type { ListRef } from "../pages/processes/List";
-import List from "../pages/processes/List";
+import Form from "../pages/modalities/Form";
+import type { ListRef } from "../pages/modalities/List";
+import List from "../pages/modalities/List";
 
-export default function Process() {
+export default function Modality() {
   const listRef = useRef<ListRef>(null);
 
   return (

@@ -1,8 +1,8 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Matrix } from "../../../models/Matrix";
-import type { Process } from "../../../models/Process";
+import type { Modality } from "../../../models/Modality";
 import { getMatrices, deleteMatrix, exportBlocks } from "../../../infrastructure/api/MatrixApi";
-import { GetProcesses } from "../../../application/process/GetProcesses";
+import { GetModalities } from "../../../application/modality/GetModalities";
 import {
   Table,
   TableBody,
@@ -39,9 +39,9 @@ export type ListRef = {
 
 const List = forwardRef<ListRef>((_, ref) => {
   const [matrices, setMatrices] = useState<Matrix[]>([]);
-  const [processes, setProcesses] = useState<Process[]>([]);
+  const [modalities, setModalities] = useState<Modality[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingProcesses, setLoadingProcesses] = useState(true);
+  const [loadingModalities, setLoadingModalities] = useState(true);
   const [exporting, setExporting] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -49,9 +49,9 @@ const List = forwardRef<ListRef>((_, ref) => {
   const [deleting, setDeleting] = useState(false);
   const [editDialog, setEditDialog] = useState<{ open: boolean; matrix: Matrix | null }>({ open: false, matrix: null });
 
-  const getProcessName = (processId: number): string => {
-    const process = processes.find(p => p.id === processId);
-    return process ? process.name : `Modalidad #${processId}`;
+  const getModalityName = (modalityId: number): string => {
+    const modality = modalities.find(p => p.id === modalityId);
+    return modality ? modality.name : `Modalidad #${modalityId}`;
   };
 
   const fetchMatrices = async () => {
@@ -67,13 +67,13 @@ const List = forwardRef<ListRef>((_, ref) => {
     }
   };
 
-  const fetchProcesses = async () => {
+  const fetchModalities = async () => {
     try {
-      setLoadingProcesses(true);
-      const processesData = await GetProcesses();
-      setProcesses(processesData);
+      setLoadingModalities(true);
+      const modalitiesData = await GetModalities();
+      setModalities(modalitiesData);
     } finally {
-      setLoadingProcesses(false);
+      setLoadingModalities(false);
     }
   };
 
@@ -124,11 +124,11 @@ const List = forwardRef<ListRef>((_, ref) => {
 
   useEffect(() => {
     (async () => {
-      await Promise.all([fetchMatrices(), fetchProcesses()]);
+      await Promise.all([fetchMatrices(), fetchModalities()]);
     })();
   }, []);
 
-  if (loading || loadingProcesses) {
+  if (loading || loadingModalities) {
     return (
       <Box sx={{ p: 4, display: "flex", justifyContent: "center", alignItems: "center" }}>
         <CircularProgress size={40} />
@@ -191,7 +191,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                   <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>#{matrix.id}</TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{matrix.year}</TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{matrix.total_alternatives}</TableCell>
-                  <TableCell sx={{ fontSize: "0.875rem" }}>{getProcessName(matrix.process_id)}</TableCell>
+                  <TableCell sx={{ fontSize: "0.875rem" }}>{getModalityName(matrix.modality_id)}</TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                     {new Date(matrix.created_at).toLocaleDateString()}
                   </TableCell>
@@ -288,7 +288,7 @@ const List = forwardRef<ListRef>((_, ref) => {
               matrixId={editDialog.matrix.id}
               initialYear={editDialog.matrix.year}
               initialTotalAlternatives={editDialog.matrix.total_alternatives}
-              initialProcessId={editDialog.matrix.process_id}
+              initialModalityId={editDialog.matrix.modality_id}
               onSuccess={handleEditSuccess}
             />
           )}

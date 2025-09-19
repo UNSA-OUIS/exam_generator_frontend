@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CreateProcess } from "../../../application/process/CreateProcess";
-import { UpdateProcess } from "../../../application/process/UpdateProcess";
+import { CreateModality } from "../../../application/modality/CreateModality";
+import { UpdateModality } from "../../../application/modality/UpdateModality";
 import { 
   TextField, 
   Button, 
@@ -11,13 +11,13 @@ import {
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
 type Props = {
-  processId?: number;
+  modalityId?: number;
   initialName?: string;
   onSuccess: () => void;
 };
 
 export default function Form({
-  processId,
+  modalityId,
   initialName = "",
   onSuccess,
 }: Props) {
@@ -37,10 +37,10 @@ export default function Form({
     setError(null);
 
     try {
-      if (processId) {
-        await UpdateProcess(processId, { name: name.trim() });
+      if (modalityId) {
+        await UpdateModality(modalityId, { name: name.trim() });
       } else {
-        await CreateProcess({ name: name.trim() });
+        await CreateModality({ name: name.trim() });
       }
       
       setName("");
@@ -92,7 +92,7 @@ export default function Form({
             startIcon={
               loading ? (
                 <CircularProgress size={20} color="inherit" />
-              ) : processId ? (
+              ) : modalityId ? (
                 <EditIcon />
               ) : (
                 <AddIcon />
@@ -110,7 +110,7 @@ export default function Form({
               }
             }}
           >
-            {processId ? "Actualizar" : "Crear"}
+            {modalityId ? "Actualizar" : "Crear"}
           </Button>
         </Box>
       </form>
