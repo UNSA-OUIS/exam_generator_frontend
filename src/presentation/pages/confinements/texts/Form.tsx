@@ -159,11 +159,13 @@ const ConfinementTextForm = ({ mode, textId }: Props) => {
             disabled={mode === 'edit'}
             sx={{ width: '100%', minWidth: 100 }}
           >
-            {blocks.map((block) => (
-              <MenuItem key={block.id} value={block.id}>
-                {block.name}
-              </MenuItem>
-            ))}
+           {blocks
+    .filter((block) => block.has_text) // 👈 solo bloques con has_text = true
+    .map((block) => (
+      <MenuItem key={block.id} value={block.id}>
+        {block.name}
+      </MenuItem>
+    ))}
           </TextField>
         
 
