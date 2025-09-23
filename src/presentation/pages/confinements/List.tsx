@@ -1,6 +1,8 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Confinement } from "../../../models/Confinement";
+import { ExportTexts } from "../../../application/confinement/ExportTexts"; // 🔹 Import nuevo
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { GetConfinements } from "../../../application/confinement/GetConfinements";
 import { DeleteConfinement } from "../../../application/confinement/DeleteConfinement";
 import { ExportBlocks } from "../../../application/confinement/ExportBlocks"; // 🔹 Import nuevo
@@ -137,7 +139,16 @@ const List = forwardRef<ListRef>((_, ref) => {
       setLoading(false);
     }
   };
-
+const handleExportTextsClick = async (confinement: Confinement) => {
+  try {
+    setLoading(true);
+    await ExportTexts(confinement.id);
+  } catch (err: any) {
+    setError(err.message || "Error al exportar los textos");
+  } finally {
+    setLoading(false);
+  }
+};
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -317,7 +328,18 @@ const List = forwardRef<ListRef>((_, ref) => {
                           <DownloadIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      
+                      <Tooltip title="Exportar textos (Excel)">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleExportTextsClick(confinement)}
+                      sx={{
+                        color: 'primary.dark',
+                        '&:hover': { backgroundColor: 'primary.lighter' }
+                      }}
+                    >
+                      <UploadFileIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                       <Tooltip title="Editar internamiento">
                         <IconButton 
                           size="small"

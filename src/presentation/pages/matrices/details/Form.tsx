@@ -29,6 +29,13 @@ const mockBlocks = [
   { id: 8, name: "Geometría Espacial", parent_block_id: 2 },
 ];
 
+// Opciones de dificultad y su mapeo a cantidad de alternativas
+const difficultyOptions = [
+  { value: "facil", label: "Fácil", alternatives: 3 },
+  { value: "medio", label: "Medio", alternatives: 4 },
+  { value: "dificil", label: "Difícil", alternatives: 5 },
+];
+
 export default function MatrixDetailForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -37,16 +44,31 @@ export default function MatrixDetailForm() {
   const [form, setForm] = useState({
     block_id: "",
     questions_count: 0,
-    alternatives_count: 0,
+    difficulty: "medio", // valor por defecto
   });
 
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
 
+  // Calcular cantidad de alternativas basado en la dificultad seleccionada
+  const getAlternativesCount = () => {
+    const selectedDifficulty = difficultyOptions.find(
+      (option) => option.value === form.difficulty
+    );
+    return selectedDifficulty ? selectedDifficulty.alternatives : 4;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simular envío de formulario
+
+    // Simular envío de formulario con la cantidad de alternativas calculada
+    const formData = {
+      ...form,
+      alternatives_count: getAlternativesCount(),
+    };
+
+    console.log("Datos del formulario:", formData);
+
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
@@ -82,7 +104,7 @@ export default function MatrixDetailForm() {
               Detalle creado exitosamente (simulación)
             </Alert>
           )}
-          
+
           <form onSubmit={handleSubmit}>
             {/* selects de bloques en cascada */}
             <Box sx={{ mb: 3 }}>
@@ -147,22 +169,28 @@ export default function MatrixDetailForm() {
               variant="outlined"
             />
 
-            {/* Alternativas */}
-            <TextField
-              fullWidth
-              type="number"
-              label="Cantidad de Alternativas"
-              value={form.alternatives_count}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  alternatives_count: parseInt(e.target.value || "0"),
-                }))
-              }
-              sx={{ mb: 3 }}
-              variant="outlined"
-            />
+            {/* Dificultad */}
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Dificultad</InputLabel>
+              <Select
+                value={form.difficulty}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    difficulty: e.target.value,
+                  }))
+                }
+                label="Dificultad"
+              >
+                {difficultyOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label} 
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+  
             {/* botones */}
             <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 3 }}>
               <Button

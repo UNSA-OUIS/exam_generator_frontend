@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Typography,
@@ -36,7 +36,6 @@ const mockMatrixDetails = [
 
 export default function MatrixDetailsList() {
   const navigate = useNavigate();
-  const { matrixId } = useParams<{ matrixId: string }>();
   const [rows, setRows] = useState(mockMatrixDetails);
   const [matrixName] = useState("2023");
   const [editDialog, setEditDialog] = useState<{
@@ -112,7 +111,6 @@ export default function MatrixDetailsList() {
               <TableCell>ID</TableCell>
               <TableCell>Bloque</TableCell>
               <TableCell>Preguntas</TableCell>
-              <TableCell>Alternativas</TableCell>
               <TableCell align="right">Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -122,7 +120,6 @@ export default function MatrixDetailsList() {
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.block.name}</TableCell>
                 <TableCell>{row.questions_count}</TableCell>
-                <TableCell>{row.alternatives_count}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"

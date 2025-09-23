@@ -151,6 +151,19 @@ export default function Sidebar() {
             </ListItemButton>
           </ListItem>
 
+          {/* Examenes */}
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/exams")}>
+            <ListItemButton
+              selected={location.pathname === "/exams"}
+              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
+                <SchoolIcon />
+              </ListItemIcon>
+              <ListItemText primary="Examenes" sx={{ opacity: open ? 1 : 0 }} />
+            </ListItemButton>
+          </ListItem>
+
           {/* Configuración */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpenConfig(!openConfig)}>

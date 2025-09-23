@@ -17,6 +17,8 @@ import ConfinementTextForm from "./pages/confinements/texts/Form";
 import Collaborator from "./pages/collaborators/List";
 import MatrixDetailsList from "./pages/matrices/details/List";
 import MatrixDetailForm from "./pages/matrices/details/Form";
+import Exam from "./views/Exam"; // Importar el componente Exam
+
 
 
 function App() {
@@ -48,6 +50,8 @@ function App() {
           <Route path="matrices/:matrixId/details" element={<MatrixDetailsList />} />
     <Route path="matrices/:matrixId/details/new" element={<MatrixDetailForm />} />
           <Route path="/collaborators" element={<Collaborator />} />
+            <Route path="/exams" element={<Exam />} /> {/* Nueva ruta para exámenes */}
+
           </Route>
         </Routes>
       </BrowserRouter>
