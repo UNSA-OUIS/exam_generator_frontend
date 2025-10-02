@@ -13,6 +13,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import SchoolIcon from '@mui/icons-material/School';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import QuizIcon from '@mui/icons-material/Quiz';
 import AssignmentAddIcon from '@mui/icons-material/AssignmentAdd';
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -158,7 +159,7 @@ export default function Sidebar() {
               sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
             >
               <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
-                <SchoolIcon />
+                <QuizIcon />
               </ListItemIcon>
               <ListItemText primary="Examenes" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
