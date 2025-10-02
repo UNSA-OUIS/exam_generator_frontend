@@ -152,28 +152,7 @@ export default function Form({
       </FormControl>
     </Box>
 
-    {/* Total de alternativas */}
-    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-      <TextField
-        label="Total de alternativas"
-        type="number"
-        value={totalAlternatives || ""}
-        onChange={(e) => setTotalAlternatives(Number(e.target.value))}
-        required
-        fullWidth
-        variant="outlined"
-        size="medium"
-        inputProps={{ min: 1 }}
-        error={!!error && (!totalAlternatives || totalAlternatives < 1)}
-        helperText={
-          error && (!totalAlternatives || totalAlternatives < 1)
-            ? "Debe ser mayor a 0"
-            : ""
-        }
-        disabled={loading || loadingData}
-      />
-    </Box>
-
+    
     {/* Modalidad */}
     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
       <FormControl
@@ -201,16 +180,35 @@ export default function Form({
         </Select>
       </FormControl>
     </Box>
+{/* Total de alternativas */}
+    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+      <TextField
+        label="Total de alternativas"
+        type="number"
+        value={totalAlternatives || ""}
+        onChange={(e) => setTotalAlternatives(Number(e.target.value))}
+        required
+        fullWidth
+        variant="outlined"
+        size="medium"
+        inputProps={{ min: 1 }}
+        error={!!error && (!totalAlternatives || totalAlternatives < 1)}
+        helperText={
+          error && (!totalAlternatives || totalAlternatives < 1)
+            ? "Debe ser mayor a 0"
+            : ""
+        }
+        disabled={loading || loadingData}
+      />
+    </Box>
 
     {/* Botón */}
     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-      <Button
+     <Button
         type="submit"
         variant="contained"
         size="large"
-        disabled={
-          loading || loadingData || !year || !totalAlternatives || !modalityId
-        }
+        disabled={loading || loadingData} // 🔹 solo por carga, no por inputs
         fullWidth
         startIcon={
           loading ? (
@@ -234,6 +232,7 @@ export default function Form({
       >
         {matrixId ? "Actualizar" : "Crear matriz"}
       </Button>
+
     </Box>
   </Box>
 </form>

@@ -75,7 +75,7 @@ export default function Form({
             variant="outlined"
             size="medium"
             error={!!error && !name.trim()}
-            helperText={error && !name.trim() ? "Este campo es requerido" : ""}
+            helperText={!name.trim() ? " Debes ingresar un nombre para continuar" : ""} // 🔹 mensaje personalizado
             disabled={loading}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -88,7 +88,7 @@ export default function Form({
             type="submit" 
             variant="contained" 
             size="large"
-            disabled={loading || !name.trim()}
+            disabled={loading} // 🔹 ya no depende de name
             startIcon={
               loading ? (
                 <CircularProgress size={20} color="inherit" />
@@ -112,6 +112,7 @@ export default function Form({
           >
             {modalityId ? "Actualizar" : "Crear"}
           </Button>
+
         </Box>
       </form>
     </Box>

@@ -8,6 +8,7 @@ export interface Block {
   updated_at: string;
   level?: Level;
   parentBlock?: Block;
+  has_text: boolean;
 }
 
 export interface Level {

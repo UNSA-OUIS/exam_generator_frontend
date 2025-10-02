@@ -102,8 +102,7 @@ export default function Form({
         type="submit"
         variant="contained"
         size="large"
-        disabled={loading || !name.trim()}
-        fullWidth
+          fullWidth
         startIcon={
           loading ? (
             <CircularProgress size={20} color="inherit" />

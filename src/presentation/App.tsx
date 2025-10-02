@@ -12,10 +12,13 @@ import Matrix from "./views/Matrix";
 import Confinement from "./views/Confinement";
 import RequirementForm from "./pages/confinements/requirements/Form";
 import RequirementsList from "./pages/confinements/requirements/List";
-// 🔹 Importar los nuevos componentes de textos
 import ConfinementTextsList from "./pages/confinements/texts/List";
 import ConfinementTextForm from "./pages/confinements/texts/Form";
 import Collaborator from "./pages/collaborators/List";
+import MatrixDetailsList from "./pages/matrices/details/List";
+import MatrixDetailForm from "./pages/matrices/details/Form";
+import Exam from "./views/Exam"; // Importar el componente Exam
+
 
 
 function App() {
@@ -44,7 +47,11 @@ function App() {
           <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
           <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
           <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
+          <Route path="matrices/:matrixId/details" element={<MatrixDetailsList />} />
+    <Route path="matrices/:matrixId/details/new" element={<MatrixDetailForm />} />
           <Route path="/collaborators" element={<Collaborator />} />
+            <Route path="/exams" element={<Exam />} /> {/* Nueva ruta para exámenes */}
+
           </Route>
         </Routes>
       </BrowserRouter>
