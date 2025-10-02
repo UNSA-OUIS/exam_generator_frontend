@@ -206,6 +206,18 @@ export default function Sidebar() {
               <ListItem disablePadding>
                 <ListItemButton
                   sx={{ pl: 4, ...selectedItemSx }}
+                  selected={location.pathname === "/block"}
+                  onClick={() => navigate("/block")}
+                >
+                  <ListItemIcon>
+                    <AssignmentAddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Bloques" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedItemSx }}
                   selected={location.pathname === "/level"}
                   onClick={() => navigate("/level")}
                 >
@@ -216,18 +228,7 @@ export default function Sidebar() {
                 </ListItemButton>
               </ListItem>
 
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedItemSx }}
-                  selected={location.pathname === "/block"}
-                  onClick={() => navigate("/block")}
-                >
-                  <ListItemIcon>
-                    <AssignmentAddIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Bloques" />
-                </ListItemButton>
-              </ListItem>
+              
             </List>
           </Collapse>
         </List>
