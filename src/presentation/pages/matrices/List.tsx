@@ -169,13 +169,12 @@ const List = forwardRef<ListRef>((_, ref) => {
         </Box>
       ) : (
         <TableContainer>
-          <Table sx={{ minWidth: 650 }}>
+          <Table sx={{ minWidth: 650,}}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 100 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>Año</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180,}}>Matriz</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}>Alternativas</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>Modalidad</TableCell>
+                
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>Creado</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 240 }}>
                   Acciones
@@ -191,10 +190,8 @@ const List = forwardRef<ListRef>((_, ref) => {
                     backgroundColor: index % 2 === 0 ? "transparent" : "grey.25"
                   }}
                 >
-                  <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>#{matrix.id}</TableCell>
-                  <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{matrix.year}</TableCell>
+                  <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{getModalityName(matrix.modality_id)} - {matrix.year}</TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{matrix.total_alternatives}</TableCell>
-                  <TableCell sx={{ fontSize: "0.875rem" }}>{getModalityName(matrix.modality_id)}</TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                     {new Date(matrix.created_at).toLocaleDateString()}
                   </TableCell>

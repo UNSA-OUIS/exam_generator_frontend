@@ -195,9 +195,7 @@ const List = forwardRef<ListRef>((_, ref) => {
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 100 }}>
-                  ID
-                </TableCell>
+                
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>
                   Matrix ID
                 </TableCell>
@@ -232,9 +230,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                     backgroundColor: index % 2 === 0 ? "transparent" : "grey.25",
                   }}
                 >
-                  <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
-                    #{exam.id}
-                  </TableCell>
+                  
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
                     {exam.matrix_id}
                   </TableCell>
@@ -299,7 +295,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                           color="primary"
                           onClick={() =>
                             window.open(
-                              `https://desaoti.unsa.edu.pe/exam_generator_backend/api/exams/${exam.id}/master/SOCIALES/generate`,
+                              `https://desaoti.unsa.edu.pe/exam_generator_backend/api/exams/0199a62b-0045-7290-b19b-a601f43f4b5e/master/SOCIALES/generate`,
                               "_blank"
                             )
                           }
