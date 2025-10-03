@@ -233,7 +233,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem" }}>
                     {block.level
-                      ? `${block.level.name} (Stage ${block.level.stage})`
+                      ? `${block.level.name} (Nivel ${block.level.stage})`
                       : "N/A"}
                   </TableCell>
                   <TableCell
