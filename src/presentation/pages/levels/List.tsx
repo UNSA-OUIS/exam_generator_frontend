@@ -204,7 +204,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                 <TableCell
                   sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}
                 >
-                  Stage
+                  Nivel
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
                   Nombre del Nivel
