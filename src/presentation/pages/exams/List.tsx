@@ -290,8 +290,26 @@ const List = forwardRef<ListRef>((_, ref) => {
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+
+                      {/* Nuevo botón para generar master */}
+                      <Tooltip title="Generar Master">
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="primary"
+                          onClick={() =>
+                            window.open(
+                              `https://desaoti.unsa.edu.pe/exam_generator_backend/api/exams/${exam.id}/master/SOCIALES/generate`,
+                              "_blank"
+                            )
+                          }
+                        >
+                         Master
+                        </Button>
+                      </Tooltip>
                     </Box>
                   </TableCell>
+
                 </TableRow>
               ))}
             </TableBody>
