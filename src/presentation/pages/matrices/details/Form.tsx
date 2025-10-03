@@ -19,14 +19,12 @@ import {
 
 // Datos de prueba para bloques
 const mockBlocks = [
-  { id: 1, name: "Álgebra", parent_block_id: null },
-  { id: 2, name: "Geometría", parent_block_id: null },
-  { id: 3, name: "Trigonometría", parent_block_id: null },
-  { id: 4, name: "Aritmética", parent_block_id: null },
-  { id: 5, name: "Ecuaciones", parent_block_id: 1 },
-  { id: 6, name: "Polinomios", parent_block_id: 1 },
-  { id: 7, name: "Geometría Plana", parent_block_id: 2 },
-  { id: 8, name: "Geometría Espacial", parent_block_id: 2 },
+  { id: 1, name: "APTITUD ACADEMICA	", parent_block_id: null },
+  { id: 2, name: "MATEMATICA", parent_block_id: null },
+  { id: 5, name: "RAZONAMIENTO LOGICO	", parent_block_id: 1 },
+  { id: 6, name: "GEOMETRIA", parent_block_id: 1 },
+  { id: 7, name: "TRIGONOMETRIA", parent_block_id: 2 },
+
 ];
 
 // Opciones de dificultad y su mapeo a cantidad de alternativas

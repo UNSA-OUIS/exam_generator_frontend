@@ -28,10 +28,9 @@ import {
 
 // Datos de prueba
 const mockMatrixDetails = [
-  { id: 1, block: { name: "Álgebra" }, questions_count: 10, alternatives_count: 4 },
-  { id: 2, block: { name: "Geometría" }, questions_count: 8, alternatives_count: 5 },
-  { id: 3, block: { name: "Trigonometría" }, questions_count: 12, alternatives_count: 4 },
-  { id: 4, block: { name: "Aritmética" }, questions_count: 15, alternatives_count: 3 },
+  { id: 1, block: { name: "RAZONAMIENTO LOGICO	" }, questions_count: 6, alternatives_count: 4 },
+  { id: 2, block: { name: "GEOMETRIA" }, questions_count: 5, alternatives_count: 5 },
+  { id: 3, block: { name: "TRIGONOMETRIA" }, questions_count: 5, alternatives_count: 4 },
 ];
 
 export default function MatrixDetailsList() {
