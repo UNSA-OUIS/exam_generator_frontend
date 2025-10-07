@@ -169,12 +169,12 @@ const List = forwardRef<ListRef>((_, ref) => {
         </Box>
       ) : (
         <TableContainer>
-          <Table sx={{ minWidth: 650,}}>
+          <Table sx={{ minWidth: 650, }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180,}}>Matriz</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180, }}>Matriz</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}>Alternativas</TableCell>
-                
+
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>Creado</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 240 }}>
                   Acciones
@@ -197,20 +197,21 @@ const List = forwardRef<ListRef>((_, ref) => {
                   </TableCell>
                   <TableCell align="center">
                     <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                      <Tooltip title="Ver detalles">
+                      {/*<Tooltip title="Ver detalles">
                         <IconButton size="small" sx={{ color: "info.main", "&:hover": { backgroundColor: "info.lighter" } }}>
                           <DetailsIcon fontSize="small" />
                         </IconButton>
+                      </Tooltip>*/}
+                      <Tooltip title="Agregar detalles">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/matrices/${matrix.id}/details`)}
+                          sx={{ color: "primary.main", "&:hover": { backgroundColor: "primary.lighter" } }}
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
                       </Tooltip>
-                    <Tooltip title="Agregar detalles">
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/matrices/${matrix.id}/details`)}
-                        sx={{ color: "primary.main", "&:hover": { backgroundColor: "primary.lighter" } }}
-                      >
-                        <AddIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                      {/*}
                       <Tooltip title="Exportar bloques">
                         <IconButton
                           size="small"
@@ -224,7 +225,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                             <DownloadIcon fontSize="small" />
                           )}
                         </IconButton>
-                      </Tooltip>
+                      </Tooltip>*/}
                       <Tooltip title="Editar matriz">
                         <IconButton
                           size="small"

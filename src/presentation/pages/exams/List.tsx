@@ -203,7 +203,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                   Descripción
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>
-                  Variaciones
+                  Temas
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>
                   Creado

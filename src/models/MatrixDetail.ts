@@ -20,6 +20,7 @@ export interface Block {
   level_id: number;
   code: string;
   name: string;
+  has_text: boolean;
   parent_block_id: number | null;
   created_at: string;
   updated_at: string;

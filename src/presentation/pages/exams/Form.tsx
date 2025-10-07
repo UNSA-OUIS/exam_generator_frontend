@@ -161,7 +161,7 @@ export default function Form({
           {/* Número de variaciones */}
           <TextField
             type="number"
-            label="Variaciones"
+            label="N° Temas"
             value={totalVariations}
             onChange={(e) => setTotalVariations(Number(e.target.value))}
             required
