@@ -17,9 +17,8 @@ import ConfinementTextForm from "./pages/confinements/texts/Form";
 import Collaborator from "./pages/collaborators/List";
 import MatrixDetailsList from "./pages/matrices/details/List";
 import MatrixDetailForm from "./pages/matrices/details/Form";
-import Exam from "./views/Exam"; // Importar el componente Exam
-
-
+import Exam from "./views/Exam";
+import Sorter from "./views/Sorter";
 
 function App() {
   return (
@@ -44,14 +43,14 @@ function App() {
               path="/confinements/:confinementId/requirements/new"
               element={<RequirementForm />}
             />
-          <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
-          <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
-          <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
-          <Route path="matrices/:matrixId/details" element={<MatrixDetailsList />} />
-    <Route path="matrices/:matrixId/details/new" element={<MatrixDetailForm />} />
-          <Route path="/collaborators" element={<Collaborator />} />
-            <Route path="/exams" element={<Exam />} /> {/* Nueva ruta para exámenes */}
-
+            <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
+            <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
+            <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
+            <Route path="matrices/:matrixId/details" element={<MatrixDetailsList />} />
+            <Route path="matrices/:matrixId/details/new" element={<MatrixDetailForm />} />
+            <Route path="/collaborators" element={<Collaborator />} />
+            <Route path="/exams" element={<Exam />} /> 
+            <Route path="/sorter" element={<Sorter />} /> 
           </Route>
         </Routes>
       </BrowserRouter>
