@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
-import type {Matrix}  from "../../../models/Matrix";
+import type { Matrix } from "../../../models/Matrix";
 
 type Props = {
   examId?: number;
@@ -97,12 +97,12 @@ export default function Form({
         setDescription("");
         setTotalVariations(1);
       }
-      
+
       onSuccess();
     } catch (err: any) {
       setError(
         err.response?.data?.error ||
-          "Error al guardar el examen. Inténtalo nuevamente."
+        "Error al guardar el examen. Inténtalo nuevamente."
       );
     } finally {
       setLoading(false);
@@ -118,91 +118,91 @@ export default function Form({
       )}
 
       <form onSubmit={handleSubmit}>
-  <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "flex-start" }}>
-    {/* Selección de Matriz */}
-    <TextField
-      select
-      label="Matriz"
-      value={matrixId}
-      onChange={(e) => setMatrixId(Number(e.target.value))}
-      required
-      variant="outlined"
-      size="medium"
-      error={!!error && !matrixId}
-      helperText={error && !matrixId ? "Este campo es requerido" : ""}
-      disabled={loading || loadingMatrices}
-      sx={{ flex: 1 }}
-    >
-      <MenuItem value={0}>
-        {loadingMatrices ? "Cargando matrices..." : "Selecciona una matriz"}
-      </MenuItem>
-      {matrices.map((matrix) => (
-        <MenuItem key={matrix.id} value={matrix.id}>
-          {matrix.id}
-        </MenuItem>
-      ))}
-    </TextField>
+        <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "flex-start" }}>
+          {/* Selección de Matriz */}
+          <TextField
+            select
+            label="Matriz"
+            value={matrixId}
+            onChange={(e) => setMatrixId(Number(e.target.value))}
+            required
+            variant="outlined"
+            size="medium"
+            error={!!error && !matrixId}
+            helperText={error && !matrixId ? "Este campo es requerido" : ""}
+            disabled={loading || loadingMatrices}
+            sx={{ flex: 1 }}
+          >
+            <MenuItem value={0}>
+              {loadingMatrices ? "Cargando matrices..." : "Selecciona una matriz"}
+            </MenuItem>
+            {matrices.map((matrix) => (
+              <MenuItem key={matrix.id} value={matrix.id}>
+                {matrix.modality?.name} - {matrix.year}
+              </MenuItem>
+            ))}
+          </TextField>
 
-    {/* Descripción del examen */}
-    <TextField
-      label="Descripción"
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
-      required
-      variant="outlined"
-      size="medium"
-      error={!!error && !description.trim()}
-      helperText={error && !description.trim() ? "Este campo es requerido" : ""}
-      disabled={loading}
-      placeholder="Ingresa la descripción"
-      sx={{ flex: 2 }}
-    />
+          {/* Descripción del examen */}
+          <TextField
+            label="Descripción"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            variant="outlined"
+            size="medium"
+            error={!!error && !description.trim()}
+            helperText={error && !description.trim() ? "Este campo es requerido" : ""}
+            disabled={loading}
+            placeholder="Ingresa la descripción"
+            sx={{ flex: 2 }}
+          />
 
-    {/* Número de variaciones */}
-    <TextField
-      type="number"
-      label="Variaciones"
-      value={totalVariations}
-      onChange={(e) => setTotalVariations(Number(e.target.value))}
-      required
-      variant="outlined"
-      size="medium"
-      inputProps={{ min: 1, max: 100 }}
-      error={!!error && (!totalVariations || totalVariations < 1)}
-      helperText={error && (!totalVariations || totalVariations < 1) ? "Debe ser mayor a 0" : ""}
-      disabled={loading}
-      sx={{ flex: 0.7 }}
-    />
+          {/* Número de variaciones */}
+          <TextField
+            type="number"
+            label="N° Temas"
+            value={totalVariations}
+            onChange={(e) => setTotalVariations(Number(e.target.value))}
+            required
+            variant="outlined"
+            size="medium"
+            inputProps={{ min: 1, max: 100 }}
+            error={!!error && (!totalVariations || totalVariations < 1)}
+            helperText={error && (!totalVariations || totalVariations < 1) ? "Debe ser mayor a 0" : ""}
+            disabled={loading}
+            sx={{ flex: 0.7 }}
+          />
 
-    {/* Botón */}
-    <Button
-      type="submit"
-      variant="contained"
-      size="large"
-      disabled={loadingMatrices}
-      startIcon={
-        loading ? (
-          <CircularProgress size={20} color="inherit" />
-        ) : examId ? (
-          <EditIcon />
-        ) : (
-          <AddIcon />
-        )
-      }
-      sx={{
-        height: 56,
-        borderRadius: 2,
-        fontWeight: 600,
-        textTransform: "none",
-        boxShadow: 2,
-        whiteSpace: "nowrap",
-        "&:hover": { boxShadow: 4 },
-      }}
-    >
-      {loadingMatrices ? "Cargando..." : examId ? "Actualizar" : "Crear"}
-    </Button>
-  </Box>
-</form>
+          {/* Botón */}
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={loadingMatrices}
+            startIcon={
+              loading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : examId ? (
+                <EditIcon />
+              ) : (
+                <AddIcon />
+              )
+            }
+            sx={{
+              height: 56,
+              borderRadius: 2,
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: 2,
+              whiteSpace: "nowrap",
+              "&:hover": { boxShadow: 4 },
+            }}
+          >
+            {loadingMatrices ? "Cargando..." : examId ? "Actualizar" : "Crear"}
+          </Button>
+        </Box>
+      </form>
 
     </Box>
   );
