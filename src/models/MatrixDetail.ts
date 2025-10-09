@@ -4,7 +4,7 @@ import type { Matrix } from "./Matrix";
 export interface MatrixDetail {
   id: number;
   matrix_id: number;
-  area: 'BIOMEDICAS' | 'SOCIALES' | 'INGENIERIAS' | 'TODAS';
+  area: 'BIOMEDICAS' | 'SOCIALES' | 'INGENIERIAS' | 'UNICA';
   block_id: number;
   difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
   questions_required: number;

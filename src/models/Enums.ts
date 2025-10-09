@@ -2,7 +2,7 @@ export enum AreaEnum {
   BIOMEDICAS = 'BIOMEDICAS',
   SOCIALES = 'SOCIALES',
   INGENIERIAS = 'INGENIERIAS',
-  TODAS = 'TODAS'
+  UNICA = 'UNICA'
 }
 
 export enum DifficultyEnum {

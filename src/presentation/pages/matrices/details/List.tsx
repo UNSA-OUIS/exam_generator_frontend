@@ -111,7 +111,7 @@ export default function MatrixDetailsList() {
       case 'INGENIERIAS': return 'primary';
       case 'BIOMEDICAS': return 'secondary';
       case 'SOCIALES': return 'info';
-      case 'TODAS': return 'default';
+      case 'UNICA': return 'default';
       default: return 'default';
     }
   };

@@ -33,7 +33,7 @@ export default function MatrixDetailForm() {
 
   const [form, setForm] = useState({
     block_id: "",
-    area: "TODAS" as MatrixDetail['area'],
+    area: "UNICA" as MatrixDetail['area'],
     difficulty: "MEDIO" as MatrixDetail['difficulty'],
     questions_required: 1,
     questions_to_do: 0,
@@ -245,7 +245,7 @@ export default function MatrixDetailForm() {
                   onChange={(e) => setForm(prev => ({ ...prev, area: e.target.value as MatrixDetail['area'] }))}
                   label="Área"
                 >
-                  <MenuItem value="TODAS">Todas las áreas</MenuItem>
+                  <MenuItem value="UNICA">Todas las áreas</MenuItem>
                   <MenuItem value="INGENIERIAS">Ingenierías</MenuItem>
                   <MenuItem value="BIOMEDICAS">Biomédicas</MenuItem>
                   <MenuItem value="SOCIALES">Sociales</MenuItem>

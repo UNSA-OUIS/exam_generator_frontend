@@ -295,7 +295,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                           color="primary"
                           onClick={() =>
                             window.open(
-                              `https://desaoti.unsa.edu.pe/exam_generator_backend/api/exams/0199a62b-0045-7290-b19b-a601f43f4b5e/master/SOCIALES/generate`,
+                              `https://desaoti.unsa.edu.pe/exam_generator_backend/exams/${exam.id}/master/SOCIALES/pdf`,
                               "_blank"
                             )
                           }
