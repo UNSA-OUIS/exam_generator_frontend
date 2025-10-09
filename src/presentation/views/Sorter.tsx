@@ -404,7 +404,7 @@ export default function Sorter() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {importSummary.map((row, index) => (
+                  {importSummary.map((row) => (
                     <TableRow 
                       key={row.id}
                       sx={{ 
