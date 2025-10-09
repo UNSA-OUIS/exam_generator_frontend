@@ -413,33 +413,29 @@ const handleExportTextsClick = async (confinement: Confinement) => {
 
       {/* Dialog para editar internamiento */}
       <Dialog
+  open={editDialog.open}
+  onClose={handleEditClose}
+  maxWidth="md"
+  fullWidth
+>
+  <DialogTitle sx={{ fontWeight: 600 }}>
+    Editar internamiento
+  </DialogTitle>
+  <DialogContent>
+    {editDialog.confinement && (
+      <Form
         open={editDialog.open}
         onClose={handleEditClose}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Editar internamiento
-        </DialogTitle>
-        <DialogContent>
-          {editDialog.confinement && (
-            <Form
-                confinementId={editDialog.confinement.id}
-                initialName={editDialog.confinement.name}
-                initialTotal={editDialog.confinement.total}
-                initialStartDate={new Date(editDialog.confinement.start_date)}
-                initialEndDate={new Date(editDialog.confinement.end_date)}
-                onSuccess={handleEditSuccess}
-            />
-            )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleEditClose}>
-            Cancelar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
+        onSuccess={handleEditSuccess}
+        confinementId={editDialog.confinement.id}
+        initialName={editDialog.confinement.name}
+        initialTotal={editDialog.confinement.total}
+        initialStartDate={new Date(editDialog.confinement.start_date)}
+        initialEndDate={new Date(editDialog.confinement.end_date)}
+      />
+    )}
+  </DialogContent>
+</Dialog>
       {/* Dialog para ver detalles del internamiento */}
       <Dialog
         open={viewDialog.open}

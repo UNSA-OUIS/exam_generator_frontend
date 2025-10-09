@@ -1,3 +1,4 @@
+
 import { styled, useTheme } from "@mui/material/styles";
 import type { Theme, CSSObject } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
@@ -21,6 +22,7 @@ import FormatListNumberedSharpIcon from '@mui/icons-material/FormatListNumberedS
 import SpellcheckSharpIcon from '@mui/icons-material/SpellcheckSharp';
 import HomeIcon from '@mui/icons-material/Home';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ShuffleIcon from '@mui/icons-material/Shuffle'; // 🔹 Nuevo icono para Sorteador
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
@@ -165,6 +167,19 @@ export default function Sidebar() {
             </ListItemButton>
           </ListItem>
 
+          {/* 🔹 Nuevo: Sorteador */}
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/sorter")}>
+            <ListItemButton
+              selected={location.pathname === "/sorter"}
+              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
+                <ShuffleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Sorteador" sx={{ opacity: open ? 1 : 0 }} />
+            </ListItemButton>
+          </ListItem>
+
           {/* Configuración */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpenConfig(!openConfig)}>
@@ -227,8 +242,6 @@ export default function Sidebar() {
                   <ListItemText primary="Niveles" />
                 </ListItemButton>
               </ListItem>
-
-              
             </List>
           </Collapse>
         </List>

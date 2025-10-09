@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Matrix } from "../../../models/Matrix";
 import type { Modality } from "../../../models/Modality";
-import { getMatrices, deleteMatrix, exportBlocks } from "../../../infrastructure/api/MatrixApi";
+import { getMatrices, deleteMatrix } from "../../../infrastructure/api/MatrixApi";
 import { GetModalities } from "../../../application/modality/GetModalities";
 import {
   Table,
@@ -29,8 +29,6 @@ import {
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
-  List as DetailsIcon,
-  Download as DownloadIcon,
   Add as AddIcon
 } from "@mui/icons-material";
 import Form from "./Form";
@@ -45,7 +43,6 @@ const List = forwardRef<ListRef>((_, ref) => {
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingModalities, setLoadingModalities] = useState(true);
-  const [exporting, setExporting] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; matrix: Matrix | null }>({ open: false, matrix: null });
@@ -80,26 +77,7 @@ const List = forwardRef<ListRef>((_, ref) => {
     }
   };
 
-  const handleExport = async (matrixId: number) => {
-    setExporting(matrixId);
-    try {
-      const blob = await exportBlocks(matrixId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `blocks_${matrixId}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      setSuccessMessage("Archivo exportado correctamente");
-    } catch {
-      setError("Error al exportar los bloques");
-    } finally {
-      setExporting(null);
-    }
-  };
-
+ 
   const handleDeleteConfirm = async () => {
     if (!deleteDialog.matrix) return;
     setDeleting(true);
