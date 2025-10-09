@@ -47,7 +47,7 @@ const Bank = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBlockPath, setSelectedBlockPath] = useState<number[]>([]);
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -175,38 +175,38 @@ const navigate = useNavigate();
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box
-  sx={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    mb: 3,
-  }}
->
-  <Typography
-    variant="h4"
-    component="h1"
-    sx={{
-      fontWeight: "bold",
-      color: "primary.main",
-    }}
-  >
-    Banco de preguntas
-  </Typography>
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            fontWeight: "bold",
+            color: "primary.main",
+          }}
+        >
+          Banco de preguntas
+        </Typography>
 
-  <Button
-    variant="contained"
-    color="primary"
-    startIcon={<CloudUploadIcon />}
-    onClick={() => navigate("/question-import")}
-    sx={{
-      textTransform: "none",
-      fontWeight: 600,
-      borderRadius: 2,
-    }}
-  >
-    Importar preguntas
-  </Button>
-</Box>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<CloudUploadIcon />}
+          onClick={() => navigate("/question-import")}
+          sx={{
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: 2,
+          }}
+        >
+          Importar preguntas
+        </Button>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -215,7 +215,7 @@ const navigate = useNavigate();
       )}
 
       {/* Filtros - Barra de Búsqueda y Bloques */}
-      <Card sx={{ mb: 3 , background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"}} >
+      <Card sx={{ mb: 3, background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)" }} >
         <CardContent>
           <Box
             sx={{
@@ -224,7 +224,7 @@ const navigate = useNavigate();
               flexWrap: "wrap", // 🔹 Permite que se acomode si no hay espacio
               alignItems: "center",
               gap: 2,
-              
+
             }}
           >
             {/* Barra de búsqueda */}
@@ -255,7 +255,7 @@ const navigate = useNavigate();
               <Select
                 value={selectedBlockPath[0] ?? ""}
                 onChange={(e) => {
-                  const value =  Number(e.target.value);
+                  const value = Number(e.target.value);
                   setSelectedBlockPath(value ? [value] : []); // 🔹 Limpia todo si no hay nivel 1
                 }}
                 label="Nivel 1"
@@ -383,16 +383,24 @@ const navigate = useNavigate();
 
                     <TableCell>
                       <Chip
-                        label={question.status}
+                        label={
+                          {
+                            AVAILABLE: "Disponible",
+                            UNAVAILABLE: "No disponible",
+                            USED: "Usada",
+                            RETIRED: "Retirada"
+                          }[question.status] || question.status
+                        }
                         color={getStatusColor(question.status)}
                         size="small"
-                        variant={question.status === 'AVAILABLE' ? 'filled' : 'outlined'}
+                        variant={question.status === "AVAILABLE" ? "filled" : "outlined"}
                       />
                     </TableCell>
 
+
                     <TableCell>
                       <Box sx={{ display: 'flex', marginLeft: 1.5 }}>
-                       
+
                         <Tooltip title="Editar pregunta">
                           <IconButton
                             size="small"
