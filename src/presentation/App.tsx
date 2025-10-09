@@ -18,7 +18,8 @@ import Collaborator from "./pages/collaborators/List";
 import MatrixDetailsList from "./pages/matrices/details/List";
 import MatrixDetailForm from "./pages/matrices/details/Form";
 import Exam from "./views/Exam";
-import Sorter from "./views/Sorter";
+import Bank from "./views/Bank";
+import QuestionImport from "./views/QuestionImport";
 
 function App() {
   return (
@@ -50,7 +51,9 @@ function App() {
             <Route path="matrices/:matrixId/details/new" element={<MatrixDetailForm />} />
             <Route path="/collaborators" element={<Collaborator />} />
             <Route path="/exams" element={<Exam />} /> 
-            <Route path="/sorter" element={<Sorter />} /> 
+            <Route path="/bank" element={<Bank />} /> 
+            <Route path="/question-import" element={<QuestionImport />} />
+
           </Route>
         </Routes>
       </BrowserRouter>

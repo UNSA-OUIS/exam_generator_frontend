@@ -6,38 +6,31 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
   FormControl,
   InputLabel,
   Select,
   MenuItem
 } from "@mui/material";
-import { CloudUpload as CloudUploadIcon, Description as DescriptionIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
+import {
+  CloudUpload as CloudUploadIcon,
+  Description as DescriptionIcon,
+  CheckCircle as CheckCircleIcon,
+  ArrowBack as ArrowBackIcon
+} from "@mui/icons-material";
 import { importQuestions } from "../../infrastructure/api/QuestionImportApi";
 import { getConfinements } from "../../infrastructure/api/ConfinementApi";
 import type { Confinement } from "../../models/Confinement";
+import { useNavigate } from "react-router-dom";
 
-interface ImportSummary {
-  id: number;
-  ejeTematico: string;
-  componente: string;
-  total: number;
-}
+export default function QuestionImport() {
+  const navigate = useNavigate();
 
-export default function Sorter() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedConfinement, setSelectedConfinement] = useState<string>("");
   const [confinements, setConfinements] = useState<Confinement[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loadingConfinements, setLoadingConfinements] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [importSummary, setImportSummary] = useState<ImportSummary[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Cargar lista de Internamientos
@@ -91,30 +84,19 @@ export default function Sorter() {
     setShowSuccess(false);
 
     try {
-      // Usar la API real para importar preguntas
       const result = await importQuestions(selectedConfinement, selectedFile);
 
       if (result.success) {
-        // Mostrar mensaje de éxito
         setShowSuccess(true);
         setMessage({ 
           type: 'success', 
           text: `¡Importación exitosa! El archivo "${selectedFile.name}" ha sido procesado correctamente. ${result.message}` 
         });
-        
-        // Simular datos de resumen (puedes reemplazar con datos reales del backend)
-        setImportSummary([
-          { id: 1, ejeTematico: "Álgebra", componente: "Ecuaciones lineales", total: 15 },
-          { id: 2, ejeTematico: "Geometría", componente: "Triángulos y cuadriláteros", total: 12 },
-          { id: 3, ejeTematico: "Estadística", componente: "Medidas de tendencia central", total: 8 },
-        ]);
-        
-        // Limpiar formulario después de éxito
+
         setTimeout(() => {
           handleRemoveFile();
           setSelectedConfinement("");
         }, 2000);
-        
       } else {
         setMessage({ 
           type: 'error', 
@@ -140,9 +122,8 @@ export default function Sorter() {
     }
   };
 
-  const getSelectedConfinementName = () => {
-    const confinement = confinements.find(c => c.id === selectedConfinement);
-    return confinement ? confinement.name : '';
+  const handleBack = () => {
+    navigate("/bank");
   };
 
   // Función para formatear fechas
@@ -156,6 +137,23 @@ export default function Sorter() {
 
   return (
     <Box sx={{ py: 3, px: 2, maxWidth: 1200, margin: '0 auto' }}>
+      
+      {/* Botón de regresar */}
+      <Button
+        variant="text"
+        startIcon={<ArrowBackIcon />}
+        onClick={handleBack}
+        sx={{
+          mb: 2,
+          textTransform: 'none',
+          fontWeight: 500,
+          color: 'primary.main',
+          '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.08)' }
+        }}
+      >
+        Regresar al Banco
+      </Button>
+
       <Typography 
         variant="h4" 
         component="h1" 
@@ -169,21 +167,14 @@ export default function Sorter() {
         Banco de preguntas
       </Typography>
 
-      {/* Mensaje de éxito destacado */}
+      {/* Resto del código igual */}
       {showSuccess && (
         <Alert 
           severity="success" 
           icon={<CheckCircleIcon fontSize="inherit" />}
-          sx={{ 
-            mb: 3,
-            fontSize: '1rem',
-            fontWeight: 500,
-            '& .MuiAlert-message': {
-              width: '100%'
-            }
-          }}
+          sx={{ mb: 3, fontSize: '1rem', fontWeight: 500 }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
               ¡Importación completada con éxito!
             </Typography>
@@ -256,18 +247,6 @@ export default function Sorter() {
               </Typography>
             </Box>
           </Box>
-
-          {/* Información del Internamiento seleccionado */}
-          {selectedConfinement && (
-            <Alert 
-              severity="info" 
-              sx={{ mb: 2 }}
-              onClose={() => setSelectedConfinement("")}
-            >
-              Internamiento seleccionado: <strong>{getSelectedConfinementName()}</strong>
-            </Alert>
-          )}
-
           {/* Área de carga */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <Button
@@ -365,84 +344,6 @@ export default function Sorter() {
           )}
         </Paper>
 
-        {/* Sección de lista de datos - Solo se muestra después de una importación exitosa */}
-        {importSummary.length > 0 && (
-          <Paper 
-            elevation={1} 
-            sx={{ 
-              borderRadius: 2,
-              overflow: 'hidden'
-            }}
-          >
-            <Box sx={{ p: 2, pb: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Resumen de Preguntas Importadas
-                </Typography>
-                <Chip 
-                  label={`${importSummary.length} componente${importSummary.length !== 1 ? 's' : ''}`}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                />
-              </Box>
-            </Box>
-
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>
-                      Eje Temático
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>
-                      Componente
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 600 }}>
-                      Total
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {importSummary.map((row) => (
-                    <TableRow 
-                      key={row.id}
-                      sx={{ 
-                        '&:hover': { 
-                          backgroundColor: 'action.hover' 
-                        }
-                      }}
-                    >
-                      <TableCell>
-                        {row.ejeTematico}
-                      </TableCell>
-                      <TableCell>
-                        {row.componente}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.total}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {/* Resumen total */}
-            <Box sx={{ p: 1.5, backgroundColor: 'grey.50', borderTop: 1, borderColor: 'divider' }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  fontWeight: 600, 
-                  textAlign: 'center',
-                  color: 'primary.main'
-                }}
-              >
-                Total general: {importSummary.reduce((sum, row) => sum + row.total, 0)} preguntas
-              </Typography>
-            </Box>
-          </Paper>
-        )}
       </Box>
     </Box>
   );
