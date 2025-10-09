@@ -177,7 +177,7 @@ export default function Form({
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {/* Nombre */}
               <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-                <Box sx={{ flex: 3 }}>
+                <Box sx={{ flex: 3, paddingTop: 1 }}>
                   <TextField
                     label="Nombre del internamiento"
                     value={name}
@@ -193,7 +193,7 @@ export default function Form({
                   />
                 </Box>
                 {/* Total */}
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{ flex: 1, paddingTop: 1 }}>
                   <TextField
                     label="Total"
                     type="number"
