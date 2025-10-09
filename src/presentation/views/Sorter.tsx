@@ -1,10 +1,8 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Container,
+  Box,
   Typography,
   Paper,
-  Box,
   Button,
   Alert,
   CircularProgress,
@@ -14,34 +12,53 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@mui/material";
-import { CloudUpload as CloudUploadIcon, Description as DescriptionIcon } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+import { CloudUpload as CloudUploadIcon, Description as DescriptionIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
+import { importQuestions } from "../../infrastructure/api/QuestionImportApi";
+import { getConfinements } from "../../infrastructure/api/ConfinementApi";
+import type { Confinement } from "../../models/Confinement";
 
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
-
-// Datos de prueba para la tabla
-const testData = [
-  { id: 1, ejeTematico: "Álgebra", componente: "Ecuaciones lineales", total: 15 },
-  { id: 2, ejeTematico: "Geometría", componente: "Triángulos y cuadriláteros", total: 12 },
-  { id: 3, ejeTematico: "Estadística", componente: "Medidas de tendencia central", total: 8 },
-];
+interface ImportSummary {
+  id: number;
+  ejeTematico: string;
+  componente: string;
+  total: number;
+}
 
 export default function Sorter() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedConfinement, setSelectedConfinement] = useState<string>("");
+  const [confinements, setConfinements] = useState<Confinement[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loadingConfinements, setLoadingConfinements] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [importSummary, setImportSummary] = useState<ImportSummary[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Cargar lista de Internamientos
+  useEffect(() => {
+    const fetchConfinements = async () => {
+      setLoadingConfinements(true);
+      try {
+        const confinementsData = await getConfinements();
+        setConfinements(confinementsData);
+      } catch (error) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Error al cargar la lista de Internamientos' 
+        });
+      } finally {
+        setLoadingConfinements(false);
+      }
+    };
+
+    fetchConfinements();
+  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -50,6 +67,7 @@ export default function Sorter() {
       if (file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip')) {
         setSelectedFile(file);
         setMessage(null);
+        setShowSuccess(false); // Ocultar éxito anterior al seleccionar nuevo archivo
       } else {
         setMessage({ type: 'error', text: 'Por favor, selecciona un archivo ZIP válido.' });
         setSelectedFile(null);
@@ -63,24 +81,54 @@ export default function Sorter() {
       return;
     }
 
+    if (!selectedConfinement) {
+      setMessage({ type: 'error', text: 'Por favor, selecciona un Internamiento.' });
+      return;
+    }
+
     setUploading(true);
     setMessage(null);
+    setShowSuccess(false);
 
-    // Simular proceso de carga (aquí iría la lógica real)
-    setTimeout(() => {
-      setUploading(false);
-      setMessage({ 
-        type: 'success', 
-        text: `Archivo "${selectedFile.name}" procesado correctamente.` 
-      });
-      setSelectedFile(null);
-      
-      // Limpiar el input file
-      const fileInput = document.getElementById('zip-file-input') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
+    try {
+      // Usar la API real para importar preguntas
+      const result = await importQuestions(selectedConfinement, selectedFile);
+
+      if (result.success) {
+        // Mostrar mensaje de éxito
+        setShowSuccess(true);
+        setMessage({ 
+          type: 'success', 
+          text: `¡Importación exitosa! El archivo "${selectedFile.name}" ha sido procesado correctamente. ${result.message}` 
+        });
+        
+        // Simular datos de resumen (puedes reemplazar con datos reales del backend)
+        setImportSummary([
+          { id: 1, ejeTematico: "Álgebra", componente: "Ecuaciones lineales", total: 15 },
+          { id: 2, ejeTematico: "Geometría", componente: "Triángulos y cuadriláteros", total: 12 },
+          { id: 3, ejeTematico: "Estadística", componente: "Medidas de tendencia central", total: 8 },
+        ]);
+        
+        // Limpiar formulario después de éxito
+        setTimeout(() => {
+          handleRemoveFile();
+          setSelectedConfinement("");
+        }, 2000);
+        
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: result.message || 'Error al procesar el archivo.' 
+        });
       }
-    }, 2000);
+    } catch (error: any) {
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Error de conexión al servidor. Inténtalo nuevamente.' 
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -92,8 +140,22 @@ export default function Sorter() {
     }
   };
 
+  const getSelectedConfinementName = () => {
+    const confinement = confinements.find(c => c.id === selectedConfinement);
+    return confinement ? confinement.name : '';
+  };
+
+  // Función para formatear fechas
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Box sx={{ py: 3, px: 2, maxWidth: 1200, margin: '0 auto' }}>
       <Typography 
         variant="h4" 
         component="h1" 
@@ -101,15 +163,80 @@ export default function Sorter() {
         sx={{ 
           fontWeight: 'bold',
           color: 'primary.main',
-          mb: 3,
-          textAlign: 'center'
+          mb: 3
         }}
       >
-        Sorteador - Agregar Preguntas del Alimentador
+        Banco de preguntas
       </Typography>
 
+      {/* Mensaje de éxito destacado */}
+      {showSuccess && (
+        <Alert 
+          severity="success" 
+          icon={<CheckCircleIcon fontSize="inherit" />}
+          sx={{ 
+            mb: 3,
+            fontSize: '1rem',
+            fontWeight: 500,
+            '& .MuiAlert-message': {
+              width: '100%'
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+              ¡Importación completada con éxito!
+            </Typography>
+            <Typography variant="body2">
+              Las preguntas han sido importadas correctamente al sistema.
+            </Typography>
+          </Box>
+        </Alert>
+      )}
+
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {/* Sección de carga de archivos - COMPACTA Y ANCHA */}
+        {/* Sección de selección de Internamiento */}
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #f0f4ff 0%, #e3f2fd 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <DescriptionIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Seleccionar Internamiento
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Elige el Internamiento al que importar las preguntas
+              </Typography>
+            </Box>
+          </Box>
+
+          <FormControl fullWidth>
+            <InputLabel>Internamiento</InputLabel>
+            <Select
+              value={selectedConfinement}
+              onChange={(e) => setSelectedConfinement(e.target.value)}
+              label="Internamiento"
+              disabled={loadingConfinements}
+            >
+              <MenuItem value="">
+                {loadingConfinements ? "Cargando Internamientos..." : "Selecciona un Internamiento"}
+              </MenuItem>
+              {confinements.map((confinement) => (
+                <MenuItem key={confinement.id} value={confinement.id}>
+                  {confinement.name} - {formatDate(confinement.start_date)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Paper>
+
+        {/* Sección de carga de archivos */}
         <Paper 
           elevation={1} 
           sx={{ 
@@ -120,7 +247,7 @@ export default function Sorter() {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <DescriptionIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-            <Box sx={{ flex: 1}}>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Cargar Archivo ZIP
               </Typography>
@@ -130,31 +257,42 @@ export default function Sorter() {
             </Box>
           </Box>
 
-          {/* Área de carga que ocupa todo el ancho */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+          {/* Información del Internamiento seleccionado */}
+          {selectedConfinement && (
+            <Alert 
+              severity="info" 
+              sx={{ mb: 2 }}
+              onClose={() => setSelectedConfinement("")}
+            >
+              Internamiento seleccionado: <strong>{getSelectedConfinementName()}</strong>
+            </Alert>
+          )}
+
+          {/* Área de carga */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <Button
               component="label"
               variant="outlined"
               startIcon={<CloudUploadIcon />}
-              disabled={uploading}
+              disabled={uploading || !selectedConfinement}
               sx={{
                 borderRadius: 1,
                 fontWeight: 500,
                 textTransform: 'none',
-                minWidth: 200,
-                flexShrink: 0
+                minWidth: 200
               }}
             >
               Seleccionar ZIP
-              <VisuallyHiddenInput 
+              <input 
                 id="zip-file-input"
                 type="file" 
                 accept=".zip,application/zip"
                 onChange={handleFileSelect}
+                style={{ display: 'none' }}
               />
             </Button>
 
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1, minWidth: 200 }}>
               {selectedFile ? (
                 <>
                   <Typography 
@@ -192,7 +330,7 @@ export default function Sorter() {
                     fontStyle: 'italic'
                   }}
                 >
-                  Ningún archivo seleccionado
+                  {!selectedConfinement ? 'Selecciona un Internamiento primero' : 'Ningún archivo seleccionado'}
                 </Typography>
               )}
             </Box>
@@ -200,7 +338,7 @@ export default function Sorter() {
             <Button
               variant="contained"
               onClick={handleUpload}
-              disabled={!selectedFile || uploading}
+              disabled={!selectedFile || !selectedConfinement || uploading}
               startIcon={
                 uploading ? <CircularProgress size={16} color="inherit" /> : <CloudUploadIcon />
               }
@@ -208,16 +346,15 @@ export default function Sorter() {
                 borderRadius: 1,
                 fontWeight: 500,
                 textTransform: 'none',
-                minWidth: 140,
-                flexShrink: 0
+                minWidth: 140
               }}
             >
               {uploading ? 'Procesando...' : 'Procesar'}
             </Button>
           </Box>
 
-          {/* Mensajes de alerta compactos */}
-          {message && (
+          {/* Mensajes de alerta normales */}
+          {message && !showSuccess && (
             <Alert 
               severity={message.type} 
               sx={{ mt: 1 }}
@@ -228,77 +365,70 @@ export default function Sorter() {
           )}
         </Paper>
 
-        {/* Sección de lista de datos */}
-        <Paper 
-          elevation={1} 
-          sx={{ 
-            borderRadius: 2,
-            overflow: 'hidden'
-          }}
-        >
-          <Box sx={{ p: 2, pb: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Resumen de Preguntas Cargadas
-              </Typography>
-              <Chip 
-                label={`${testData.length} componente${testData.length !== 1 ? 's' : ''}`}
-                color="primary"
-                variant="outlined"
-                size="small"
-              />
+        {/* Sección de lista de datos - Solo se muestra después de una importación exitosa */}
+        {importSummary.length > 0 && (
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              borderRadius: 2,
+              overflow: 'hidden'
+            }}
+          >
+            <Box sx={{ p: 2, pb: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Resumen de Preguntas Importadas
+                </Typography>
+                <Chip 
+                  label={`${importSummary.length} componente${importSummary.length !== 1 ? 's' : ''}`}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                />
+              </Box>
             </Box>
-          </Box>
 
-          <TableContainer>
-            <Table sx={{ minWidth: 600 }}>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', width: '40%' }}>
-                    Eje Temático
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', width: '40%' }}>
-                    Componente
-                  </TableCell>
-                  <TableCell 
-                    align="center" 
-                    sx={{ fontWeight: 600, fontSize: '0.875rem', width: '20%' }}
-                  >
-                    Total
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {testData.map((row, index) => (
-                  <TableRow 
-                    key={row.id}
-                    sx={{ 
-                      '&:hover': { 
-                        backgroundColor: 'action.hover' 
-                      },
-                      backgroundColor: index % 2 === 0 ? 'transparent' : 'grey.25'
-                    }}
-                  >
-                    <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                      {row.ejeTematico}
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      Eje Temático
                     </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                      {row.componente}
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      Componente
                     </TableCell>
-                    <TableCell 
-                      align="center"
-                      sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'primary.main' }}
-                    >
-                      {row.total}
+                    <TableCell align="center" sx={{ fontWeight: 600 }}>
+                      Total
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {importSummary.map((row, index) => (
+                    <TableRow 
+                      key={row.id}
+                      sx={{ 
+                        '&:hover': { 
+                          backgroundColor: 'action.hover' 
+                        }
+                      }}
+                    >
+                      <TableCell>
+                        {row.ejeTematico}
+                      </TableCell>
+                      <TableCell>
+                        {row.componente}
+                      </TableCell>
+                      <TableCell align="center">
+                        {row.total}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          {/* Resumen total */}
-          {testData.length > 0 && (
+            {/* Resumen total */}
             <Box sx={{ p: 1.5, backgroundColor: 'grey.50', borderTop: 1, borderColor: 'divider' }}>
               <Typography 
                 variant="body2" 
@@ -308,12 +438,12 @@ export default function Sorter() {
                   color: 'primary.main'
                 }}
               >
-                Total general: {testData.reduce((sum, row) => sum + row.total, 0)} preguntas
+                Total general: {importSummary.reduce((sum, row) => sum + row.total, 0)} preguntas
               </Typography>
             </Box>
-          )}
-        </Paper>
+          </Paper>
+        )}
       </Box>
-    </Container>
+    </Box>
   );
 }

@@ -153,7 +153,18 @@ export default function Sidebar() {
               <ListItemText primary="Internamientos" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
-
+          {/* 🔹 Nuevo: Sorteador */}
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/sorter")}>
+            <ListItemButton
+              selected={location.pathname === "/sorter"}
+              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
+                <ShuffleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Banco" sx={{ opacity: open ? 1 : 0 }} />
+            </ListItemButton>
+          </ListItem>
           {/* Examenes */}
           <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/exams")}>
             <ListItemButton
@@ -167,18 +178,7 @@ export default function Sidebar() {
             </ListItemButton>
           </ListItem>
 
-          {/* 🔹 Nuevo: Sorteador */}
-          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/sorter")}>
-            <ListItemButton
-              selected={location.pathname === "/sorter"}
-              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
-                <ShuffleIcon />
-              </ListItemIcon>
-              <ListItemText primary="Sorteador" sx={{ opacity: open ? 1 : 0 }} />
-            </ListItemButton>
-          </ListItem>
+
 
           {/* Configuración */}
           <ListItem disablePadding>
