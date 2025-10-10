@@ -1,6 +1,8 @@
 // pages/exams/List.tsx
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Exam } from "../../../models/Exam";
+import { generateMaster } from "../../../infrastructure/api/MasterApi";
+
 import { GetExams } from "../../../application/exam/GetExams";
 import { DeleteExam } from "../../../application/exam/DeleteExam";
 import {
@@ -89,7 +91,19 @@ const List = forwardRef<ListRef>((_, ref) => {
       setDeleting(false);
     }
   };
+  const handleGenerateMaster = async (examId: string, area: string) => {
 
+    try {
+      setLoading(true);
+      const { data } = await generateMaster(examId, area);
+      alert(data.message || "✅ Master generado exitosamente");
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.message || "❌ Error al generar el Master");
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleDeleteCancel = () => {
     setDeleteDialog({ open: false, exam: null, error: undefined });
   };
@@ -195,7 +209,7 @@ const List = forwardRef<ListRef>((_, ref) => {
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-                
+
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>
                   Matrix ID
                 </TableCell>
@@ -230,7 +244,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                     backgroundColor: index % 2 === 0 ? "transparent" : "grey.25",
                   }}
                 >
-                  
+
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
                     {exam.matrix_id}
                   </TableCell>
@@ -288,21 +302,40 @@ const List = forwardRef<ListRef>((_, ref) => {
                       </Tooltip>
 
                       {/* Nuevo botón para generar master */}
-                      <Tooltip title="Generar Master">
+                      {/* Botón para generar y master */}
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        {/* Botón de generar */}
+                        <Tooltip title="Generar Master">
                         <Button
-                          variant="contained"
+                          variant="outlined"
                           size="small"
-                          color="primary"
-                          onClick={() =>
-                            window.open(
-                              `https://desaoti.unsa.edu.pe/exam_generator_backend/exams/${exam.id}/master/SOCIALES/pdf`,
-                              "_blank"
-                            )
-                          }
+                          color="secondary"
+                          disabled={loading}
+                          onClick={() => handleGenerateMaster(exam.id.toString(), "SOCIALES")}
                         >
-                         Master
+                          {loading ? "Generando..." : "Master"}
                         </Button>
                       </Tooltip>
+
+
+                        {/* Botón Master */}
+                        <Tooltip title="Generar PDF Master">
+                          <Button
+                            variant="contained"
+                            size="small"
+                            color="primary"
+                            onClick={() =>
+                              window.open(
+                                `https://desaoti.unsa.edu.pe/exam_generator_backend/exams/${exam.id}/master/SOCIALES/pdf`,
+                                "_blank"
+                              )
+                            }
+                          >
+                            Master
+                          </Button>
+                        </Tooltip>
+                      </Box>
+
                     </Box>
                   </TableCell>
 
