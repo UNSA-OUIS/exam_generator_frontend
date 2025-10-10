@@ -3,6 +3,7 @@ import { styled, useTheme } from "@mui/material/styles";
 import type { Theme, CSSObject } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
+import WarehouseIcon from '@mui/icons-material/Warehouse';
 import MuiDrawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -22,7 +23,6 @@ import FormatListNumberedSharpIcon from '@mui/icons-material/FormatListNumberedS
 import SpellcheckSharpIcon from '@mui/icons-material/SpellcheckSharp';
 import HomeIcon from '@mui/icons-material/Home';
 import SettingsIcon from '@mui/icons-material/Settings';
-import ShuffleIcon from '@mui/icons-material/Shuffle'; // 🔹 Nuevo icono para Sorteador
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
@@ -137,7 +137,7 @@ export default function Sidebar() {
               <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
                 <HomeIcon />
               </ListItemIcon>
-              <ListItemText primary="Home" sx={{ opacity: open ? 1 : 0 }} />
+              <ListItemText primary="Inicio" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
 
@@ -160,7 +160,7 @@ export default function Sidebar() {
               sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
             >
               <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
-                <ShuffleIcon />
+                <WarehouseIcon />
               </ListItemIcon>
               <ListItemText primary="Banco" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
