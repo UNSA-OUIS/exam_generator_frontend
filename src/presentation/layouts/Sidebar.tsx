@@ -154,9 +154,9 @@ export default function Sidebar() {
             </ListItemButton>
           </ListItem>
           {/* 🔹 Nuevo: Sorteador */}
-          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/sorter")}>
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/bank")}>
             <ListItemButton
-              selected={location.pathname === "/sorter"}
+              selected={location.pathname === "/bank"}
               sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
             >
               <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
