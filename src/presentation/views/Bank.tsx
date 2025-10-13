@@ -32,8 +32,8 @@ import {
   Button,
 } from "@mui/material";
 import {
-  //Visibility as ViewIcon,
-  Edit as EditIcon,
+  Visibility as ViewIcon,
+  //Edit as ViewIcon,
   //CheckCircle as CompletedIcon,
   Search as SearchIcon,
 } from "@mui/icons-material";
@@ -401,12 +401,15 @@ const Bank = () => {
                     <TableCell>
                       <Box sx={{ display: 'flex', marginLeft: 1.5 }}>
 
-                        <Tooltip title="Editar pregunta">
+                        <Tooltip title="Ver detalles">
                           <IconButton
                             size="small"
-                            sx={{ color: 'warning.main' }}
+                            sx={{
+                              color: "info.main",
+                              "&:hover": { backgroundColor: "info.lighter" },
+                            }}
                           >
-                            <EditIcon fontSize="small" />
+                            <ViewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
 

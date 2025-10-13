@@ -99,7 +99,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       alert(data.message || "✅ Master generado exitosamente");
     } catch (error: any) {
       console.error(error);
-      alert(error.response?.data?.message || "❌ Error al generar el Master");
+      //alert(error.response?.data?.message || "❌ Error al generar el Master");
     } finally {
       setLoading(false);
     }
@@ -313,7 +313,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                           disabled={loading}
                           onClick={() => handleGenerateMaster(exam.id.toString(), "SOCIALES")}
                         >
-                          {loading ? "Generando..." : "Master"}
+                          {loading ? "Generando..." : "Generar"}
                         </Button>
                       </Tooltip>
 

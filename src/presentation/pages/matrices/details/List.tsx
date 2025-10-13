@@ -97,7 +97,7 @@ export default function MatrixDetailsList() {
     navigate("/matrices");
   };
 
-  const getDifficultyColor = (difficulty: string) => {
+  /* const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'FACIL': return 'success';
       case 'MEDIO': return 'warning';
@@ -105,7 +105,7 @@ export default function MatrixDetailsList() {
       default: return 'default';
     }
   };
-
+ */
   const getAreaColor = (area: string) => {
     switch (area) {
       case 'INGENIERIAS': return 'primary';
@@ -191,7 +191,7 @@ export default function MatrixDetailsList() {
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>Bloque</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Área</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Dificultad</TableCell>
+              {/* <TableCell sx={{ fontWeight: 'bold' }}>Dificultad</TableCell> */}
               <TableCell sx={{ fontWeight: 'bold' }} align="center">Preguntas Requeridas</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">Preguntas a Realizar</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">Acciones</TableCell>
@@ -223,13 +223,13 @@ export default function MatrixDetailsList() {
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell>
+                {/* <TableCell>
                   <Chip 
                     label={detail.difficulty} 
                     size="small"
                     color={getDifficultyColor(detail.difficulty) as any}
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell align="center">
                   <Typography variant="body2" fontWeight="medium">
                     {detail.questions_required}
