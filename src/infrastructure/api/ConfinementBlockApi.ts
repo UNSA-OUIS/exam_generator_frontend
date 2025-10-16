@@ -3,12 +3,12 @@ import type { ConfinementBlock } from "../../models/ConfinementBlock";
 
 export const ConfinementBlockApi = {
   async getAll(): Promise<ConfinementBlock[]> {
-    const response = await axiosClient.get("/confinement_blocks");
+    const response = await axiosClient.get("/confinement_requirements");
     return response.data;
   },
 
   async get(id: number): Promise<ConfinementBlock> {
-    const response = await axiosClient.get(`/confinement_blocks/${id}`);
+    const response = await axiosClient.get(`/confinement_requirements/${id}`);
     return response.data;
   },
   async getByConfinement(confinementId: string): Promise<ConfinementBlock[]> {
@@ -16,7 +16,7 @@ export const ConfinementBlockApi = {
       return response.data;
     },
   async create(data: Partial<ConfinementBlock>): Promise<ConfinementBlock> {
-    const response = await axiosClient.post("/confinement_blocks", data);
+    const response = await axiosClient.post("/confinement_requirements", data);
     return response.data;
   },
 
@@ -24,11 +24,11 @@ export const ConfinementBlockApi = {
     id: number,
     data: Partial<ConfinementBlock>
   ): Promise<ConfinementBlock> {
-    const response = await axiosClient.patch(`/confinement_blocks/${id}`, data);
+    const response = await axiosClient.patch(`/confinement_requirements/${id}`, data);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await axiosClient.delete(`/confinement_blocks/${id}`);
+    await axiosClient.delete(`/confinement_requirements/${id}`);
   },
 };

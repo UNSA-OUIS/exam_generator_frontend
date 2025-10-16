@@ -134,7 +134,7 @@ const Bank = () => {
 
     setFilteredQuestions(filtered);
   };
-
+  console.log({ selectedBlockPath });
   // Efecto para filtrar cuando cambia el searchTerm o selectedBlockPath
   useEffect(() => {
     filterQuestions(searchTerm, selectedBlockPath);

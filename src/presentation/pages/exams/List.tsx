@@ -1,8 +1,7 @@
 // pages/exams/List.tsx
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Exam } from "../../../models/Exam";
-import { generateMaster } from "../../../infrastructure/api/MasterApi";
-
+import { generateMaster, generateMasterPdf } from "../../../infrastructure/api/MasterApi";
 import { GetExams } from "../../../application/exam/GetExams";
 import { DeleteExam } from "../../../application/exam/DeleteExam";
 import {
@@ -91,6 +90,20 @@ const List = forwardRef<ListRef>((_, ref) => {
       setDeleting(false);
     }
   };
+ const handleGenerateMasterPdf = async (examId: string, area: string) => {
+  try {
+    setLoading(true);
+    console.log("Generando Master PDF...");
+    await generateMasterPdf(examId, area);
+  } catch (error: any) {
+    console.error("Error al generar Master PDF:", error);
+    alert("❌ Error al generar el PDF del Master");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   const handleGenerateMaster = async (examId: string, area: string) => {
 
     try {
@@ -306,32 +319,26 @@ const List = forwardRef<ListRef>((_, ref) => {
                       <Box sx={{ display: "flex", gap: 1 }}>
                         {/* Botón de generar */}
                         <Tooltip title="Generar Master">
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="secondary"
-                          disabled={loading}
-                          onClick={() => handleGenerateMaster(exam.id.toString(), "SOCIALES")}
-                        >
-                          {loading ? "Generando..." : "Generar"}
-                        </Button>
-                      </Tooltip>
-
-
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            disabled={loading}
+                            onClick={() => handleGenerateMaster(exam.id.toString(), "SOCIALES")}
+                          >
+                            {loading ? "Generando..." : "Generar"}
+                          </Button>
+                        </Tooltip>
                         {/* Botón Master */}
                         <Tooltip title="Generar PDF Master">
                           <Button
                             variant="contained"
                             size="small"
                             color="primary"
-                            onClick={() =>
-                              window.open(
-                                `https://desaoti.unsa.edu.pe/exam_generator_backend/exams/${exam.id}/master/SOCIALES/pdf`,
-                                "_blank"
-                              )
-                            }
+                            disabled={loading}
+                            onClick={() => handleGenerateMasterPdf(exam.id.toString(), "SOCIALES")}
                           >
-                            Master
+                            {loading ? "Generando..." : "Master"}
                           </Button>
                         </Tooltip>
                       </Box>
