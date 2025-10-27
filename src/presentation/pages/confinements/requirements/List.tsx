@@ -20,23 +20,24 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    Chip,
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-import { GetConfinementBlocks } from "../../../../application/confinement/GetConfinementBlocks";
-import { DeleteConfinementBlock } from "../../../../application/confinement/DeleteConfinementBlock";
-import type { ConfinementBlock } from "../../../../models/ConfinementBlock";
+import { GetConfinementBlocks } from "../../../../application/confinement/GetConfinementRequirements";
+import { DeleteConfinementBlock } from "../../../../application/confinement/DeleteConfinementRequirements";
+import type { ConfinementRequirement } from "../../../../models/ConfinementRequirement";
 import Form from "./Form";
 
 export default function RequirementsList() {
     const navigate = useNavigate();
     const { confinementId } = useParams<{ confinementId: string }>();
-    const [rows, setRows] = useState<ConfinementBlock[]>([]);
+    const [rows, setRows] = useState<ConfinementRequirement[]>([]);
     const [loading, setLoading] = useState(true);
     const [confinementName, setConfinementName] = useState("");
     const [editDialog, setEditDialog] = useState<{
         open: boolean;
-        confinementBlock: ConfinementBlock | null;
-    }>({ open: false, confinementBlock: null });
+        confinementRequirement: ConfinementRequirement | null;
+    }>({ open: false, confinementRequirement: null });
 
     const load = async (id: string) => {
         setLoading(true);
@@ -44,12 +45,12 @@ export default function RequirementsList() {
             const data = await GetConfinementBlocks(id);
             setRows(data);
 
-            // Obtener el nombre del confinamiento desde el primer bloque (si existe)
+            // Obtener el nombre del confinamiento desde el primer requerimiento (si existe)
             if (data.length > 0 && data[0].confinement) {
                 setConfinementName(data[0].confinement.name);
             }
         } catch (err) {
-            console.error("Error loading confinement blocks:", err);
+            console.error("Error loading confinement requirements:", err);
         } finally {
             setLoading(false);
         }
@@ -63,22 +64,22 @@ export default function RequirementsList() {
 
     const handleDelete = async (id?: number) => {
         if (!id) return;
-        if (!confirm("¿Eliminar este requerimiento?")) return;
+        if (!confirm("¿Está seguro de eliminar este requerimiento?")) return;
         try {
             await DeleteConfinementBlock(id);
             setRows(rows.filter((r) => r.id !== id));
         } catch (err) {
             console.error(err);
-            alert("Error al eliminar");
+            alert("Error al eliminar el requerimiento");
         }
     };
 
-    const handleEditClick = (confinementBlock: ConfinementBlock) => {
-        setEditDialog({ open: true, confinementBlock });
+    const handleEditClick = (confinementRequirement: ConfinementRequirement) => {
+        setEditDialog({ open: true, confinementRequirement });
     };
 
     const handleEditClose = () => {
-        setEditDialog({ open: false, confinementBlock: null });
+        setEditDialog({ open: false, confinementRequirement: null });
     };
 
     const handleEditSuccess = async () => {
@@ -92,6 +93,24 @@ export default function RequirementsList() {
         navigate("/confinements");
     };
 
+    const getDifficultyLabel = (difficulty: string) => {
+        switch (difficulty) {
+            case 'easy': return 'Fácil';
+            case 'medium': return 'Medio';
+            case 'hard': return 'Difícil';
+            default: return difficulty;
+        }
+    };
+
+    const getDifficultyColor = (difficulty: string) => {
+        switch (difficulty) {
+            case 'easy': return 'success';
+            case 'medium': return 'warning';
+            case 'hard': return 'error';
+            default: return 'default';
+        }
+    };
+
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             {/* Breadcrumbs para navegación */}
@@ -103,20 +122,25 @@ export default function RequirementsList() {
                 <Typography color="text.primary">Requerimientos {confinementName && `- ${confinementName}`}</Typography>
             </Breadcrumbs>
 
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 3,
-                }}>
+           // En tu List.tsx, agrega este botón en el Box de acciones:
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h4">📋 Requerimientos {confinementName && `- ${confinementName}`}</Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`new`)}>
-                    Agregar Requerimiento
-                </Button>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`tree`)}>
-                    Ver arbol
-                </Button>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`new`)}>
+                        Agregar Requerimiento
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate(`tree-creator`)}
+                        sx={{ ml: 1 }}
+                    >
+                        Crear con Árbol
+                    </Button>
+                    <Button variant="contained" onClick={() => navigate(`tree`)}>
+                        Ver Árbol
+                    </Button>
+                </Box>
             </Box>
 
             <Paper>
@@ -130,7 +154,9 @@ export default function RequirementsList() {
                             <TableRow>
                                 <TableCell>ID</TableCell>
                                 <TableCell>Bloque</TableCell>
-                                <TableCell>Preguntas a Realizar</TableCell>
+                                <TableCell>Dificultad</TableCell>
+                                <TableCell>N° Preguntas</TableCell>
+                                <TableCell>Padre</TableCell>
                                 <TableCell align="right">Acciones</TableCell>
                             </TableRow>
                         </TableHead>
@@ -138,8 +164,41 @@ export default function RequirementsList() {
                             {rows.map((row) => (
                                 <TableRow key={row.id}>
                                     <TableCell>{row.id}</TableCell>
-                                    <TableCell>{row.block ? row.block.name : ""}</TableCell>
-                                    <TableCell>{row.questions_to_do}</TableCell>
+                                    <TableCell>
+                                        {row.block ? (
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {row.parent_id && "↳ "} {/* Indica que es hijo */}
+                                                    {row.block.name}
+                                                </Typography>
+                                                {row.block.code && (
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Código: {row.block.code}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        ) : "N/A"}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={getDifficultyLabel(row.difficulty)}
+                                            color={getDifficultyColor(row.difficulty) as any}
+                                            size="small"
+                                        />
+                                    </TableCell>
+                                    <TableCell>{row.n_questions}</TableCell>
+                                    <TableCell>
+                                        {row.parent_id ? (
+                                            <Typography variant="body2">
+                                                ID: {row.parent_id}
+                                                {rows.find(r => r.id === row.parent_id)?.block?.name &&
+                                                    ` (${rows.find(r => r.id === row.parent_id)?.block?.name})`
+                                                }
+                                            </Typography>
+                                        ) : (
+                                            <Chip label="Raíz" size="small" color="primary" variant="outlined" />
+                                        )}
+                                    </TableCell>
                                     <TableCell align="right">
                                         <IconButton size="small" onClick={() => handleEditClick(row)}>
                                             <EditIcon />
@@ -150,18 +209,6 @@ export default function RequirementsList() {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {rows.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                                        <Typography variant="body1" color="text.secondary">
-                                            No hay requerimientos para este internamiento
-                                        </Typography>
-                                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => navigate("new")} sx={{ mt: 1 }}>
-                                            Agregar el primer requerimiento
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            )}
                         </TableBody>
                     </Table>
                 )}
@@ -171,7 +218,13 @@ export default function RequirementsList() {
             <Dialog open={editDialog.open} onClose={handleEditClose} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 600 }}>Editar Requerimiento</DialogTitle>
                 <DialogContent>
-                    {editDialog.confinementBlock && <Form initialId={editDialog.confinementBlock.id?.toString()} initialConfinementId={confinementId} onSuccess={handleEditSuccess} />}
+                    {editDialog.confinementRequirement && (
+                        <Form
+                            initialId={editDialog.confinementRequirement.id?.toString()}
+                            initialConfinementId={confinementId}
+                            onSuccess={handleEditSuccess}
+                        />
+                    )}
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
                     <Button onClick={handleEditClose}>Cancelar</Button>

@@ -21,6 +21,7 @@ import Exam from "./views/Exam";
 import Bank from "./views/Bank";
 import QuestionImport from "./views/QuestionImport";
 import TreePage from "./pages/confinements/requirements/TreePage";
+import TreeCreator from "./pages/confinements/requirements/TreeCreator"; // Importa el nuevo componente
 
 function App() {
     return (
@@ -39,7 +40,9 @@ function App() {
                         <Route path="/confinements" element={<Confinement />} />
                         <Route path="/confinements/:confinementId/requirements" element={<RequirementsList />} />
                         <Route path="/confinements/:confinementId/requirements/tree" element={<TreePage />} />
+                        <Route path="/confinements/:confinementId/requirements/tree-creator" element={<TreeCreator />} /> {/* Nueva ruta */}
                         <Route path="/confinements/:confinementId/requirements/new" element={<RequirementForm />} />
+                        <Route path="/confinements/:confinementId/requirements/edit/:id" element={<RequirementForm />} />
                         <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
                         <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
                         <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
