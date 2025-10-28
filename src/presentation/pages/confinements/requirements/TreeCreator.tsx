@@ -15,560 +15,556 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
   Snackbar,
   Alert,
-  Chip,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormLabel,
   Card,
   CardContent,
-  CircularProgress,
+  Chip,
   Menu,
+  MenuItem as MuiMenuItem,
 } from "@mui/material";
-import { Cancel as CancelIcon } from "@mui/icons-material";
 import * as d3 from "d3";
-import { CreateConfinementBlock } from "../../../../application/confinement/CreateConfinementRequirements";
-import { DeleteConfinementBlock } from "../../../../application/confinement/DeleteConfinementRequirements";
 
+import { CreateConfinementBlock } from "../../../../application/confinement/CreateConfinementRequirements";
+import { UpdateConfinementBlock } from "../../../../application/confinement/UpdateConfinementRequirements";
+import { DeleteConfinementBlock } from "../../../../application/confinement/DeleteConfinementRequirements";
 import { GetBlocks } from "../../../../application/block/GetBlocks";
 import { ConfinementRequirementApi } from "../../../../infrastructure/api/ConfinementRequirementApi";
-import type { Block } from "../../../../models/Block";
-import type { ConfinementRequirement } from "../../../../models/ConfinementRequirement";
 
-interface TreeNode {
-  id: string;
+/** ---------- MODELS (tu definición exacta) ---------- */
+export interface Block {
+  id: number;
+  level_id: number;
+  code: string;
+  name: string;
+  parent_block_id: number | null;
+  created_at: string;
+  updated_at: string;
+  level?: Level;
+  parentBlock?: Block;
+  has_text: boolean;
+}
+
+export interface Level {
+  id: number;
+  stage: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConfinementRequirement {
+  id?: number;
+  confinement_id: string;
+  block_id?: number;
+  difficulty: "FACIL" | "MEDIO" | "DIFICIL" | string;
+  n_questions: number;
+  parent_id?: number;
+  created_at?: string;
+  updated_at?: string;
+  block?: Block;
+  confinement?: any;
+  parent?: ConfinementRequirement;
+  children?: ConfinementRequirement[];
+}
+
+/** ---------- NodeData (para D3) ---------- */
+type Condition = "COMPLETE" | "INCOMPLETE" | "INVALID";
+interface NodeData {
+  id: number;
   block: Block | null;
-  difficulty: string;
   n_questions: number;
-  children: TreeNode[];
-  isNew?: boolean;
-  parentId?: string;
-  confinementRequirementId?: number;
+  condition: Condition;
+  difficulty: "FACIL" | "MEDIO" | "DIFICIL" | null;
+  children: NodeData[];
+  parent_id?: number | null;
+  total_questions_required?: number;
 }
 
-interface NodeFormData {
-  block_id: number;
-  difficulty: string;
-  n_questions: number;
+/** ---------- HELPERS para construir / buscar árbol ---------- */
+function buildConfinementTree(requirements: ConfinementRequirement[]): NodeData {
+  const map: Record<number, NodeData> = {};
+
+  requirements.forEach((r) => {
+    if (typeof r.id !== "number") return;
+    map[r.id] = {
+      id: r.id,
+      block: r.block ?? null,
+      n_questions: r.n_questions,
+      condition: "INCOMPLETE",
+      difficulty: (r.difficulty as NodeData["difficulty"]) ?? null,
+      children: [],
+      parent_id: r.parent_id ?? null,
+    };
+  });
+
+  const roots: NodeData[] = [];
+
+  requirements.forEach((r) => {
+    if (typeof r.id !== "number") return;
+    const node = map[r.id];
+    if (r.parent_id && map[r.parent_id]) {
+      map[r.parent_id].children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  const calcTotal = (n: NodeData): number =>
+    n.children.length === 0 ? n.n_questions : n.children.reduce((s, c) => s + calcTotal(c), 0);
+
+  const addTotals = (n: NodeData): NodeData => ({
+    ...n,
+    total_questions_required: calcTotal(n),
+    children: n.children.map(addTotals),
+  });
+
+  let rootNode: NodeData;
+  if (roots.length === 1) rootNode = roots[0];
+  else
+    rootNode = {
+      id: 0,
+      block: null,
+      n_questions: roots.reduce((s, r) => s + r.n_questions, 0),
+      condition: "INCOMPLETE",
+      difficulty: null,
+      children: roots,
+    };
+
+  return addTotals(rootNode);
 }
 
+function findNodeById(root: NodeData, id: number): NodeData | null {
+  if (root.id === id) return root;
+  for (const c of root.children) {
+    const f = findNodeById(c, id);
+    if (f) return f;
+  }
+  return null;
+}
+
+/** ---------- D3 Tree component (sin zoom; tamaños adaptativos) ---------- */
+function Tree({
+  data,
+  onNodeClick,
+  onNodeContext,
+}: {
+  data: NodeData;
+  onNodeClick: (node: NodeData) => void;
+  onNodeContext: (node: NodeData, clientX: number, clientY: number) => void;
+}) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  useEffect(() => {
+    if (!data || !svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = 1200;
+    const height = 3000;
+    const g = svg.append("g");
+const zoomBehavior = d3
+  .zoom<SVGSVGElement, unknown>()
+  .scaleExtent([0.2, 7])
+  .on("zoom", (event) => g.attr("transform", event.transform));
+
+svg.call(zoomBehavior.transform,
+  d3.zoomIdentity.translate(600, 50).scale(7));
+    // Tooltip (cleanup must return void)
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .style("position", "absolute")
+      .style("background", "rgba(0,0,0,0.75)")
+      .style("color", "#fff")
+      .style("padding", "6px 10px")
+      .style("border-radius", "6px")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("opacity", 0)
+      .style("z-index", "9999");
+
+    // No zoom/pan — el contenedor vertical hará scroll al crecer
+
+    const root = d3.hierarchy<NodeData>(data);
+
+    // Decide tamaños según la altura del árbol
+    // height = treeRoot.height (número de niveles desde node hasta leaves)
+    const tempLayout = d3.tree<NodeData>().nodeSize([100, 130]);
+    const tempRoot = tempLayout(root);
+    const depth = tempRoot.height; // número de niveles por debajo del root
+
+    // adaptative sizes
+    let nodeRadius = 28;
+    let nodeSizeX = 100;
+    let nodeSizeY = 130;
+    if (depth <= 3) {
+      nodeRadius = 28;
+      nodeSizeX = 100;
+      nodeSizeY = 130;
+    } else if (depth <= 6) {
+      nodeRadius = 22;
+      nodeSizeX = 80;
+      nodeSizeY = 110;
+    } else {
+      nodeRadius = 18;
+      nodeSizeX = 60;
+      nodeSizeY = 90;
+    }
+
+    const layout = d3.tree<NodeData>().nodeSize([nodeSizeX, nodeSizeY]);
+    const treeRoot = layout(root);
+
+    const linkGen = d3.linkVertical<any, any>().x((d: any) => d.x).y((d: any) => d.y);
+
+    g.selectAll("path.link")
+      .data(treeRoot.links())
+      .join("path")
+      .attr("class", "link")
+      .attr("fill", "none")
+      .attr("stroke", "#bbb")
+      .attr("stroke-width", 1.2)
+      .attr("d", (d: any) => linkGen(d));
+
+    const node = g
+      .selectAll("g.node")
+      .data(treeRoot.descendants())
+      .join("g")
+      .attr("class", "node")
+      .attr("transform", (d: any) => `translate(${d.x},${d.y})`)
+      .attr("cursor", "pointer")
+      .on("click", (_, d: any) => onNodeClick(d.data))
+      .on("contextmenu", (event: any, d: any) => {
+        event.preventDefault();
+        onNodeContext(d.data, event.clientX, event.clientY);
+      })
+      .on("mouseover", (event: any, d: any) => {
+        const nd: NodeData = d.data;
+        let html = `<strong>${nd.block?.name ?? "Total"}</strong><br/>Preguntas: ${nd.n_questions}`;
+        if (nd.difficulty) html += ` | Dificultad: ${nd.difficulty}`;
+        if (nd.block) html += ` | Código: ${nd.block.code} | Nivel: ${nd.block.level_id}`;
+        tooltip.style("opacity", 1).html(html).style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`);
+      })
+      .on("mousemove", (event: any) => tooltip.style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`))
+      .on("mouseout", () => tooltip.style("opacity", 0));
+
+    // Circle: tamaño dinámico
+    node
+      .append("circle")
+      .attr("r", nodeRadius)
+      .attr("fill", (d: any) => {
+        if (!d.data.block) return "#e5e7eb";
+        if (!d.data.difficulty) {
+          const level = d.data.block.level_id;
+          if (level === 1) return "#3b82f6";
+          if (level === 2) return "#8b5cf6";
+          if (level === 3) return "#ec4899";
+          return "#6b7280";
+        }
+        return "#fbbf24";
+      })
+      .attr("stroke", "#333")
+      .attr("stroke-width", 1.5);
+
+    // Center number (font size adapt to radius)
+    node
+      .append("text")
+      .attr("dy", nodeRadius / 4)
+      .attr("text-anchor", "middle")
+      .style("font-size", nodeRadius > 24 ? "14px" : "12px")
+      .style("font-weight", "700")
+      .attr("fill", "#111")
+      .text((d: any) => d.data.n_questions);
+
+    // block code under node + difficulty initial
+    node
+      .append("text")
+      .attr("dy", nodeRadius + 12)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "#374151")
+      .text((d: any) => {
+        if (!d.data.block) return "(root)";
+        const code = d.data.block.code ?? "";
+        const diffInitial = d.data.difficulty ? ` • ${d.data.difficulty.charAt(0)}` : "";
+        return `${code}${diffInitial}`;
+      });
+
+    // difficulty badge
+    node
+      .filter((d: any) => !!d.data.difficulty)
+      .append("g")
+      .attr("transform", `translate(${-Math.round(nodeRadius * 0.65)},${-Math.round(nodeRadius * 0.6)})`)
+      .call((g: any) => {
+        g.append("rect")
+          .attr("x", -Math.round(nodeRadius * 0.35))
+          .attr("y", -Math.round(nodeRadius * 0.45))
+          .attr("width", Math.round(nodeRadius * 0.7))
+          .attr("height", Math.round(nodeRadius * 0.7))
+          .attr("rx", 4)
+          .attr("fill", "#fff")
+          .attr("stroke", "#333")
+          .attr("stroke-width", 0.5)
+          .attr("opacity", 0.95);
+        g.append("text")
+          .attr("text-anchor", "middle")
+          .attr("x", 0)
+          .attr("y", Math.round(nodeRadius * 0.12))
+          .attr("font-size", Math.round(nodeRadius * 0.35) + "px")
+          .attr("font-weight", "700")
+          .text((d: any) => (d.data.difficulty ? d.data.difficulty.charAt(0) : ""));
+      });
+
+
+    return () => {
+      tooltip.remove();
+    };
+  }, [data, onNodeClick, onNodeContext]);
+
+  return (
+    <div style={{ width: "100%", height: "80vh", overflow: "auto" }}>
+      <svg ref={svgRef} width="100%" height="100%" viewBox={`0 0 800 5000`} className="border rounded-md bg-white shadow" />
+    </div>
+  );
+}
+
+/** ---------- TreeCreator: lógica de UI / creación / edición / eliminación ---------- */
 export default function TreeCreator() {
   const navigate = useNavigate();
   const { confinementId } = useParams<{ confinementId: string }>();
-  const svgRef = useRef<SVGSVGElement | null>(null);
+
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [existingRequirements, setExistingRequirements] = useState<
-    ConfinementRequirement[]
-  >([]);
-  const [treeData, setTreeData] = useState<TreeNode>({
-    id: "root",
-    block: null,
-    difficulty: "MEDIO",
-    n_questions: 0,
-    children: [],
-  });
-  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
-  const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
-  const [nodeForm, setNodeForm] = useState<NodeFormData>({
-    block_id: 0,
-    difficulty: "MEDIO",
-    n_questions: 0,
-  });
+  const [requirements, setRequirements] = useState<ConfinementRequirement[]>([]);
+  const [treeData, setTreeData] = useState<NodeData | null>(null);
+
+  // create modal
+  const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [nodeType, setNodeType] = useState<"block" | "difficulty">("block");
+  const [selectedBlockId, setSelectedBlockId] = useState<number>(0);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<"FACIL" | "MEDIO" | "DIFICIL">("MEDIO");
+  const [nQuestions, setNQuestions] = useState<number>(0);
+
+  // edit (only n_questions)
+  const [editNode, setEditNode] = useState<NodeData | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editQuestions, setEditQuestions] = useState<number>(0);
+
+  // context menu
+  const [contextAnchor, setContextAnchor] = useState<{ mouseX: number; mouseY: number; node: NodeData } | null>(null);
+
+  // ui
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
 
-  // Context menu state
-  const [contextMenu, setContextMenu] = useState<
-    | {
-      mouseX: number;
-      mouseY: number;
-      node: TreeNode | null;
-    }
-    | null
-  >(null);
-
-  // Load blocks and existing requirements
+  // initial load
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       try {
-        const [blocksData, requirementsData] = await Promise.all([
+        setLoading(true);
+        const [blks, reqs] = await Promise.all([
           GetBlocks(),
-          confinementId
-            ? ConfinementRequirementApi.getByConfinement(confinementId)
-            : Promise.resolve([]),
+          confinementId ? ConfinementRequirementApi.getByConfinement(confinementId) : Promise.resolve([]),
         ]);
-
-        setBlocks(blocksData);
-        setExistingRequirements(requirementsData);
-
-        if (requirementsData.length > 0) {
-          const rootNode = buildTreeFromRequirements(
-            requirementsData,
-            blocksData
-          );
-          setTreeData(rootNode);
-        }
+        setBlocks(blks);
+        setRequirements(reqs);
+        setTreeData(buildConfinementTree(reqs));
       } catch (err) {
         console.error(err);
-        setErrorMessage("Error al cargar datos");
+        setErrorMessage("Error cargando datos");
       } finally {
-        setInitialLoading(false);
+        setLoading(false);
       }
     };
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, [confinementId]);
 
-  const buildTreeFromRequirements = (
-    requirements: ConfinementRequirement[],
-    allBlocks: Block[]
-  ): TreeNode => {
-    const root: TreeNode = {
-      id: "root",
-      block: null,
-      difficulty: "MEDIO",
-      n_questions: 0,
-      children: [],
-    };
+  // availability
+  const getAvailableBlocks = (): Block[] => {
+    if (!selectedNode) return blocks.filter((b) => b.level_id === 1 && b.parent_block_id === null);
+    if (!selectedNode.block) return blocks.filter((b) => b.level_id === 1 && b.parent_block_id === null);
 
-    const rootRequirements = requirements.filter((req) => !req.parent_id);
-
-    const buildNode = (requirement: ConfinementRequirement): TreeNode => {
-      const block = allBlocks.find((b) => b.id === requirement.block_id);
-      const childrenRequirements = requirements.filter(
-        (req) => req.parent_id === requirement.id
-      );
-
-      return {
-        id: requirement.id?.toString() || `req-${Date.now()}`,
-        block: block || null,
-        difficulty: requirement.difficulty || "MEDIO",
-        n_questions: requirement.n_questions || 0,
-        children: childrenRequirements.map(buildNode),
-        confinementRequirementId: requirement.id,
-      };
-    };
-
-    root.children = rootRequirements.map(buildNode);
-    return root;
-  };
-
-  // DRAW TREE with D3 - simplified enter/update/exit to avoid TS generics pain
-  useEffect(() => {
-    if (!svgRef.current || initialLoading) return;
-
-    // basic svg and container
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-    const g = svg.append("g");
-
-    // hierarchy and layout
-    const root = d3.hierarchy<TreeNode>(treeData, (d) => d.children);
-    const treeLayout = d3.tree<TreeNode>().nodeSize([140, 160]);
-    const treeRoot = treeLayout(root);
-
-    const linkGenerator = d3
-      .linkVertical()
-      .x((d: any) => d.x)
-      .y((d: any) => d.y);
-
-    // LINKS
-    const linkData = treeRoot.links();
-    const linksSel: any = g.selectAll("path.link").data(linkData, (d: any) => d.target.data.id);
-
-    // enter
-    const linksEnter = linksSel
-      .enter()
-      .append("path")
-      .attr("class", "link")
-      .attr("fill", "none")
-      .attr("stroke", "#94a3b8")
-      .attr("stroke-width", 2)
-      // start collapsed at parent point to animate
-      .attr("d", (d: any) => {
-        const s = { x: d.source.x, y: d.source.y };
-        return linkGenerator({ source: s, target: s } as any);
-      });
-
-    // merge + transition to final
-    linksEnter
-      .merge(linksSel as any)
-      .transition()
-      .duration(350)
-      .attr("d", (d: any) => linkGenerator(d as any) as any);
-
-    // exit
-    linksSel
-      .exit()
-      .transition()
-      .duration(250)
-      .attr("d", (d: any) => {
-        const s = { x: d.source.x, y: d.source.y };
-        return linkGenerator({ source: s, target: s } as any);
-      })
-      .remove();
-
-    // NODES
-    const nodesData = treeRoot.descendants();
-    const nodesSel: any = g.selectAll("g.node").data(nodesData, (d: any) => d.data.id);
-
-    const nodesEnter = nodesSel
-      .enter()
-      .append("g")
-      .attr("class", "node")
-      .attr("transform", (d: any) => `translate(${d.x},${d.y})`)
-      .style("opacity", 0);
-
-    // circle
-    nodesEnter
-      .append("circle")
-      .attr("r", 0)
-      .attr("fill", (d: any) => {
-        if (d.data.isNew) return "#fef3c7";
-        if (d.data.confinementRequirementId) return "#dbeafe";
-        return "#e5e7eb";
-      })
-      .attr("stroke", (d: any) => {
-        if (d.data.isNew) return "#d97706";
-        if (d.data.confinementRequirementId) return "#3b82f6";
-        return "#9ca3af";
-      })
-      .attr("stroke-width", 2)
-      .style("cursor", "pointer");
-
-    // text lines (block name)
-    nodesEnter.each(function (this: SVGGElement, d: any) {
-      const nodeGroup = d3.select(this);
-      if (d.data.id === "root") return;
-      const blockName = d.data.block?.name || "Requerimientos";
-      const words = blockName.split(" ");
-      const maxCharsPerLine = 12;
-      if (words.length > 1 && blockName.length > maxCharsPerLine) {
-        const mid = Math.ceil(words.length / 2);
-        const line1 = words.slice(0, mid).join(" ");
-        const line2 = words.slice(mid).join(" ");
-        nodeGroup
-          .append("text")
-          .attr("dy", -42)
-          .attr("text-anchor", "middle")
-          .style("font-size", "9px")
-          .style("font-weight", "600")
-          .attr("fill", "#1f2937")
-          .text(line1);
-        nodeGroup
-          .append("text")
-          .attr("dy", -32)
-          .attr("text-anchor", "middle")
-          .style("font-size", "9px")
-          .style("font-weight", "600")
-          .attr("fill", "#1f2937")
-          .text(line2);
-      } else {
-        nodeGroup
-          .append("text")
-          .attr("dy", -35)
-          .attr("text-anchor", "middle")
-          .style("font-size", "10px")
-          .style("font-weight", "600")
-          .attr("fill", "#1f2937")
-          .text(blockName);
-      }
-    });
-
-    // n_questions text
-    nodesEnter
-      .append("text")
-      .attr("dy", 5)
-      .attr("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("font-weight", "bold")
-      .attr("fill", "#1f2937")
-      .text((d: any) => d.data.n_questions || 0);
-
-    // difficulty
-    nodesEnter
-      .append("text")
-      .attr("dy", 25)
-      .attr("text-anchor", "middle")
-      .style("font-size", "10px")
-      .style("fill", "#6b7280")
-      .text((d: any) => {
-        switch (d.data.difficulty) {
-          case "FACIL":
-            return "Fácil";
-          case "MEDIO":
-            return "Medio";
-          case "DIFICIL":
-            return "Difícil";
-          default:
-            return d.data.difficulty || "";
-        }
-      });
-
-    // id text
-    nodesEnter
-      .append("text")
-      .attr("dy", 40)
-      .attr("text-anchor", "middle")
-      .style("font-size", "9px")
-      .style("fill", "#9ca3af")
-      .text((d: any) =>
-        d.data.confinementRequirementId ? `ID: ${d.data.confinementRequirementId}` : ""
-      );
-
-    // add-child button (simple circle + text)
-    nodesEnter
-      .filter((d: any) => d.data.id !== "root" && !d.data.isNew)
-      .append("g")
-      .attr("class", "add-child-btn")
-      .attr("transform", `translate(45,-15)`)
-      .style("cursor", "pointer")
-      .on("click", function (event: any, d: any) {
-        event.stopPropagation();
-        handleAddChild(d.data);
-      })
-      .call((gSel: any) => {
-        gSel.append("circle").attr("r", 10).attr("fill", "#10b981").attr("stroke", "#047857").attr("stroke-width", 1);
-        gSel.append("text").attr("y", 4).attr("text-anchor", "middle").style("font-size", "12px").style("font-weight", "bold").attr("fill", "white").text("+");
-      });
-
-    // merge + transition to final positions
-    nodesEnter
-      .merge(nodesSel as any)
-      .transition()
-      .duration(350)
-      .style("opacity", 1)
-      .attr("transform", (d: any) => `translate(${d.x},${d.y})`);
-
-    // circle radius transition
-    g.selectAll("g.node")
-      .select("circle")
-      .transition()
-      .duration(350)
-      .attr("r", (d: any) => (d.data.id === "root" ? 0 : 30));
-
-    // add pointer events for click & contextmenu
-    g.selectAll("g.node")
-      .on("click", function (event: any, d: any) {
-        event.stopPropagation();
-        handleNodeClick(d.data);
-      })
-      .on("contextmenu", function (event: any, d: any) {
-        event.preventDefault();
-        event.stopPropagation();
-        handleRightClick(event, d.data);
-      });
-
-    // exit nodes
-    nodesSel
-      .exit()
-      .transition()
-      .duration(250)
-      .style("opacity", 0)
-      .remove();
-
-    // compute bounds and set viewBox so whole tree fits (no zoom/scroll)
-    const bounds = treeRoot.descendants().reduce(
-      (acc: any, d: any) => {
-        return {
-          minX: Math.min(acc.minX, d.x),
-          maxX: Math.max(acc.maxX, d.x),
-          minY: Math.min(acc.minY, d.y),
-          maxY: Math.max(acc.maxY, d.y),
-        };
-      },
-      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
-    );
-
-    const treeWidth = (bounds.maxX - bounds.minX) || 800;
-    const treeHeight = (bounds.maxY - bounds.minY) || 600;
-    const padding = 60;
-
-    svg.attr(
-      "viewBox",
-      `${bounds.minX - padding} ${bounds.minY - padding} ${treeWidth + padding * 2} ${treeHeight + padding * 2}`
-    );
-  }, [treeData, initialLoading]);
-
-  const handleNodeClick = (node: TreeNode) => {
-    if (node.id !== "root") {
-      setSelectedNode(node);
-      setNodeForm({
-        block_id: node.block?.id || 0,
-        difficulty: node.difficulty || "MEDIO",
-        n_questions: node.n_questions,
-      });
-      setNodeDialogOpen(true);
+    // if parent has difficulty -> child blocks are parent_block_id === parent.block.id and level = parent.level + 1
+    if (selectedNode.difficulty) {
+      return blocks.filter((b) => b.parent_block_id === selectedNode.block!.id && b.level_id === selectedNode.block!.level_id + 1);
     }
+    // if parent has no difficulty -> allow same (you might change rules here)
+    return blocks.filter((b) => b.parent_block_id === selectedNode.block!.id && b.level_id === selectedNode.block!.level_id + 1);
   };
 
-  const handleRightClick = (event: any, node: TreeNode) => {
-    event.preventDefault();
-    setContextMenu({
-      mouseX: event.clientX + 2,
-      mouseY: event.clientY - 6,
-      node,
-    });
+  const difficultyExists = (diff: string) => {
+    if (!selectedNode) return false;
+    return selectedNode.children.some((c) => c.difficulty === diff);
   };
 
-  const closeContextMenu = () => {
-    setContextMenu(null);
+  const siblingHasSameBlockAndDifficulty = (blockId: number | null, difficulty: string | null) => {
+    if (!selectedNode) return false;
+    const block = blocks.find((b) => b.id === blockId);
+    const code = block?.code ?? null;
+    return selectedNode.children.some((c) => c.block?.code === code && c.difficulty === difficulty);
   };
 
-  const handleAddChild = (parent: TreeNode) => {
-    const newChild: TreeNode = {
-      id: `new-${Date.now()}`,
-      block: null,
-      difficulty: "MEDIO",
-      n_questions: 0,
-      children: [],
-      isNew: true,
-      parentId: parent.id,
-    };
+  // handle click open create modal
+  const handleNodeClick = (node: NodeData) => {
+    const used = node.children.reduce((s, c) => s + c.n_questions, 0);
+    const remaining = node.n_questions - used;
 
-    const addChildToNode = (node: TreeNode): TreeNode => {
-      if (node.id === parent.id) {
-        return {
-          ...node,
-          children: [...node.children, newChild],
-        };
-      }
-      return {
-        ...node,
-        children: node.children.map(addChildToNode),
-      };
-    };
-
-    setTreeData((prev) => addChildToNode(prev));
-    closeContextMenu();
-  };
-
-  const handleDeleteNode = async (node: TreeNode) => {
-    try {
-      if (!node.confinementRequirementId) {
-        setErrorMessage("Este nodo no está guardado todavía en el servidor");
-        return;
-      }
-
-      if (!confinementId) {
-        setErrorMessage("No hay confinamiento asociado");
-        return;
-      }
-
-      // 1. Eliminar en el backend
-      await DeleteConfinementBlock(node.confinementRequirementId);
-
-      // 2. Eliminar del árbol (react local state)
-      const deleteNodeRecursively = (current: TreeNode): TreeNode | null => {
-        if (current === node) {
-          return null;
-        }
-        return {
-          ...current,
-          children: current.children
-            .map(deleteNodeRecursively)
-            .filter(Boolean) as TreeNode[],
-        };
-      };
-
-      setTreeData((prev) => deleteNodeRecursively(prev) || prev);
-
-      // 3. Cerrar el menú contextual
-      setContextMenu(null);
-
-      setSuccessOpen(true);
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Error al eliminar el nodo");
+    if (remaining <= 0) {
+      setErrorMessage("❌ No puedes agregar más hijos: las preguntas del padre ya están distribuidas.");
+      return;
     }
+
+    setSelectedNode(node);
+    if (!node.block) setNodeType("block");
+    else if (node.block && !node.difficulty) setNodeType("difficulty");
+    else setNodeType("block");
+
+    setSelectedBlockId(0);
+    setSelectedDifficulty("MEDIO");
+    setNQuestions(remaining);
+    setModalOpen(true);
   };
 
+  // context menu
+  const handleNodeContext = (node: NodeData, mouseX: number, mouseY: number) => {
+    setContextAnchor({ mouseX, mouseY, node });
+  };
+  const closeContext = () => setContextAnchor(null);
 
-  const handleSaveNode = async () => {
+  // create child
+  const handleSave = async () => {
     if (!selectedNode || !confinementId) return;
 
-    setSaving(true);
+    const used = selectedNode.children.reduce((s, c) => s + c.n_questions, 0);
+    const remaining = selectedNode.n_questions - used;
+    if (remaining <= 0) {
+      setErrorMessage("❌ No puedes agregar más hijos: las preguntas del padre ya están distribuidas.");
+      return;
+    }
+
+    if (nQuestions <= 0) {
+      setErrorMessage("Ingresa un número de preguntas mayor que 0");
+      return;
+    }
+
+    if (nQuestions > remaining) {
+      setErrorMessage(`No puedes solicitar más de ${remaining} preguntas (restantes).`);
+      return;
+    }
+
+    if (nodeType === "block" && selectedBlockId === 0) {
+      setErrorMessage("Selecciona un bloque");
+      return;
+    }
+
+    const chosenBlock = blocks.find((b) => b.id === selectedBlockId) ?? null;
+    const chosenDifficulty = nodeType === "difficulty" ? selectedDifficulty : (selectedNode.difficulty ?? null);
+
+    if (nodeType === "block" && siblingHasSameBlockAndDifficulty(selectedBlockId, chosenDifficulty)) {
+      setErrorMessage("⚠️ Ya existe un hijo con el mismo bloque y dificultad");
+      return;
+    }
+
+    const payload: any = {
+      confinement_id: confinementId,
+      n_questions: nQuestions,
+      parent_id: selectedNode.id > 0 ? selectedNode.id : undefined,
+    };
+
+    if (nodeType === "difficulty") {
+      payload.block_id = selectedNode.block?.id ?? null;
+      payload.difficulty = selectedDifficulty;
+    } else {
+      payload.block_id = selectedBlockId;
+      if (selectedNode.difficulty) payload.difficulty = selectedNode.difficulty;
+      else payload.difficulty = null;
+    }
+
     try {
-      if (selectedNode.confinementRequirementId) {
-        // TODO: call API to update existing node
-        console.log("Actualizar nodo existente (backend):", selectedNode.confinementRequirementId);
-      } else {
-        const payload = {
-          confinement_id: confinementId,
-          block_id: nodeForm.block_id,
-          difficulty: nodeForm.difficulty,
-          n_questions: nodeForm.n_questions,
-          parent_id: selectedNode.parentId
-            ? parseInt(selectedNode.parentId.replace("new-", ""))
-            : undefined,
-        };
-
-        // If CreateConfinementBlock returns something useful, you can integrate it here
-        await CreateConfinementBlock(payload);
-      }
-
-      // update local tree
-      const updateNodeInTree = (node: TreeNode): TreeNode => {
-        if (node.id === selectedNode.id) {
-          const block = blocks.find((b) => b.id === nodeForm.block_id);
-          return {
-            ...node,
-            block: block || null,
-            difficulty: nodeForm.difficulty,
-            n_questions: nodeForm.n_questions,
-            isNew: false,
-          };
-        }
-        return {
-          ...node,
-          children: node.children.map(updateNodeInTree),
-        };
-      };
-
-      setTreeData((prev) => updateNodeInTree(prev));
-      setNodeDialogOpen(false);
-      setSelectedNode(null);
+      setSaving(true);
+      await CreateConfinementBlock(payload);
+      const reqs = await ConfinementRequirementApi.getByConfinement(confinementId);
+      setRequirements(reqs);
+      setTreeData(buildConfinementTree(reqs));
+      setModalOpen(false);
       setSuccessOpen(true);
-    } catch (error: any) {
-      const message = error?.response?.data?.error || error?.message || String(error);
-      if (
-        String(message).includes("23505") ||
-        String(message).includes("llave duplicada") ||
-        String(message).includes("unique_confinement_block_difficulty")
-      ) {
-        setErrorMessage("⚠️ Ya existe un requerimiento con este bloque y dificultad.");
-      } else {
-        setErrorMessage(`❌ Error al guardar: ${message}`);
-      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage("Error al crear: " + (err?.message || String(err)));
+      // try to surface specific DB errors if present
     } finally {
       setSaving(false);
     }
   };
 
-  const getAvailableBlocks = (selectedNodeLocal: TreeNode | null): Block[] => {
-    if (!selectedNodeLocal) {
-      return blocks.filter((b) => !b.parent_block_id);
+  // open edit
+  const openEdit = (node: NodeData) => {
+    setEditNode(node);
+    setEditQuestions(node.n_questions);
+    setEditOpen(true);
+    closeContext();
+  };
+
+  // edit save (only n_questions)
+  const handleEditSave = async () => {
+    if (!editNode || !editNode.id || !confinementId) return;
+
+    const usedByChildren = editNode.children.reduce((s, c) => s + c.n_questions, 0);
+    if (editQuestions < usedByChildren) {
+      setErrorMessage(`No puedes reducir a menos de ${usedByChildren} porque los hijos ya ocupan esas preguntas.`);
+      return;
+    }
+    if (editQuestions <= 0) {
+      setErrorMessage("El número de preguntas debe ser mayor a 0");
+      return;
     }
 
-    const findParentNode = (node: TreeNode, targetId: string): TreeNode | null => {
-      if (node.id === targetId) return node;
-      for (const child of node.children) {
-        const found = findParentNode(child, targetId);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    const parentNode = findParentNode(treeData, selectedNodeLocal.parentId || "");
-
-    if (parentNode && parentNode.block) {
-      return blocks.filter((b) => b.parent_block_id === parentNode.block?.id);
-    } else {
-      return blocks.filter((b) => !b.parent_block_id);
+    try {
+      setSaving(true);
+      await UpdateConfinementBlock(editNode.id, { n_questions: editQuestions });
+      const reqs = await ConfinementRequirementApi.getByConfinement(confinementId);
+      setRequirements(reqs);
+      setTreeData(buildConfinementTree(reqs));
+      setEditOpen(false);
+      setSuccessOpen(true);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage("Error al actualizar: " + (err?.message || String(err)));
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (initialLoading) {
+  // delete
+  const handleDelete = async (node: NodeData) => {
+    if (!node.id) return;
+    closeContext();
+    const ok = window.confirm("¿Eliminar este nodo? Esta operación no se puede deshacer.");
+    if (!ok) return;
+    try {
+      setSaving(true);
+      await DeleteConfinementBlock(node.id);
+      const reqs = await ConfinementRequirementApi.getByConfinement(confinementId!);
+      setRequirements(reqs);
+      setTreeData(buildConfinementTree(reqs));
+      setSuccessOpen(true);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage("Error al eliminar: " + (err?.message || String(err)));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading || !treeData) {
     return (
       <Container sx={{ py: 6, display: "flex", justifyContent: "center" }}>
         <CircularProgress />
@@ -580,159 +576,131 @@ export default function TreeCreator() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h4" gutterBottom>
-            🌳 Crear Requerimientos - Vista de Árbol
+          <Typography variant="h4">🌳 Crear Requerimientos - Vista de Árbol</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Haz clic en un nodo para agregar hijos. Click derecho para editar / eliminar.
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-            Haz clic derecho sobre un nodo para ver opciones:{" "}
-            <Chip label="Editar" size="small" /> <Chip label="Eliminar" size="small" />{" "}
-            <Chip label="Crear hijo" size="small" />. También puedes usar el botón{" "}
-            <Chip label="+" size="small" color="success" /> en cada nodo.
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary">
-            Requerimientos existentes: {existingRequirements.length} | Bloques disponibles: {blocks.length}
-          </Typography>
+          <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+            <Chip label="Raíz → Bloques nivel 1" size="small" />
+            <Chip label="Bloque (sin dif) → Puede crear Dificultad o Bloque" size="small" />
+            <Chip label="Bloque (con dif) → Solo crear Bloques (heredan dif.)" size="small" />
+            <Chip label="Regla: hijos total ≤ preguntas del padre" size="small" />
+          </Box>
         </CardContent>
       </Card>
 
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h6">Estructura de Requerimientos</Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate(-1)}>
-              Volver
-            </Button>
-          </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Typography variant="h6">Estructura</Typography>
+          <Button variant="outlined" onClick={() => navigate(-1)}>
+            Volver
+          </Button>
         </Box>
 
-        <svg
-          ref={svgRef}
-          width="100%"
-          height="600"
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            background: "#f8fafc",
-          }}
-        />
+        <Tree data={treeData} onNodeClick={handleNodeClick} onNodeContext={handleNodeContext} />
       </Paper>
 
-      {/* Context menu */}
-      <Menu
-        open={contextMenu !== null}
-        onClose={closeContextMenu}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined
-        }
-      >
-        <MenuItem
-          onClick={() => {
-            if (contextMenu?.node) handleNodeClick(contextMenu.node);
-            closeContextMenu();
-          }}
-        >
-          Editar nodo
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            if (contextMenu?.node) handleAddChild(contextMenu.node);
-            closeContextMenu();
-          }}
-        >
-          Crear nodo hijo
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            if (contextMenu?.node) handleDeleteNode(contextMenu.node);
-            // closeContextMenu is invoked in delete flow
-          }}
-          sx={{ color: "error.main" }}
-        >
-          Eliminar nodo
-        </MenuItem>
-      </Menu>
-
-      {/* Node dialog */}
-      <Dialog open={nodeDialogOpen} onClose={() => setNodeDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {selectedNode?.confinementRequirementId ? "✏️ Editar Nodo" : "⚙️ Configurar Nodo"}{" "}
-          {selectedNode?.parentId && " (Hijo)"}
-        </DialogTitle>
+      {/* Modal crear */}
+      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{selectedNode?.block ? `➕ Agregar Hijo a: ${selectedNode.block.name}` : "➕ Agregar Nodo a Raíz"}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <FormControl fullWidth>
-              <InputLabel>Bloque</InputLabel>
-              <Select
-                value={nodeForm.block_id}
-                onChange={(e) => setNodeForm((prev) => ({ ...prev, block_id: Number(e.target.value) }))}
-                label="Bloque"
-                disabled={!!selectedNode?.confinementRequirementId}
-              >
-                <MenuItem value={0}>Seleccionar bloque</MenuItem>
-                {getAvailableBlocks(selectedNode).map((block) => (
-                  <MenuItem key={block.id} value={block.id}>
-                    {block.name} {block.code && `(${block.code})`}
-                  </MenuItem>
-                ))}
-              </Select>
-              {selectedNode?.parentId && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                  Mostrando solo bloques hijos del bloque padre seleccionado
+            {selectedNode && (
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="subtitle2">Nodo Padre</Typography>
+                <Typography>
+                  {selectedNode.block?.name ?? "Raíz"} {selectedNode.difficulty ? `- ${selectedNode.difficulty}` : ""}
                 </Typography>
-              )}
-              {selectedNode?.confinementRequirementId && (
-                <Typography variant="caption" color="info.main" sx={{ mt: 1 }}>
-                  El bloque no puede ser modificado en requerimientos existentes
+                <Typography variant="caption">
+                  Preguntas padre: {selectedNode.n_questions} | Hijos ocupan: {selectedNode.children.reduce((s, c) => s + c.n_questions, 0)}
                 </Typography>
-              )}
+              </Paper>
+            )}
+
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Tipo de nodo hijo</FormLabel>
+              <RadioGroup value={nodeType} onChange={(e) => setNodeType(e.target.value as any)}>
+                {(!selectedNode?.difficulty) && (
+                  <>
+                    <FormControlLabel value="block" control={<Radio />} label="Bloque" />
+                    <FormControlLabel value="difficulty" control={<Radio />} label="Dificultad" />
+                  </>
+                )}
+                {selectedNode?.difficulty && <FormControlLabel value="block" control={<Radio />} label="Bloque (hereda dificultad)" />}
+              </RadioGroup>
             </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>Dificultad</InputLabel>
-              <Select
-                value={nodeForm.difficulty}
-                onChange={(e) => setNodeForm((prev) => ({ ...prev, difficulty: String(e.target.value) }))}
-                label="Dificultad"
-              >
-                <MenuItem value="">Seleccionar dificultad</MenuItem>
-                <MenuItem value="FACIL">Fácil</MenuItem>
-                <MenuItem value="MEDIO">Medio</MenuItem>
-                <MenuItem value="DIFICIL">Difícil</MenuItem>
-              </Select>
-            </FormControl>
+            {nodeType === "block" && (
+              <FormControl fullWidth>
+                <InputLabel>Bloque</InputLabel>
+                <Select value={selectedBlockId} label="Bloque" onChange={(e) => setSelectedBlockId(Number(e.target.value))}>
+                  <MenuItem value={0}>Seleccionar bloque</MenuItem>
+                  {getAvailableBlocks().map((b) => (
+                    <MenuItem key={b.id} value={b.id}>
+                      {b.name} ({b.code}) - Nivel {b.level_id}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
 
-            <TextField
-              fullWidth
-              type="number"
-              label="Número de Preguntas"
-              value={nodeForm.n_questions}
-              onChange={(e) => setNodeForm((prev) => ({ ...prev, n_questions: parseInt(e.target.value) || 0 }))}
-              inputProps={{ min: 0 }}
-            />
+            {nodeType === "difficulty" && (
+              <FormControl fullWidth>
+                <InputLabel>Dificultad</InputLabel>
+                <Select value={selectedDifficulty} label="Dificultad" onChange={(e) => setSelectedDifficulty(e.target.value as any)}>
+                  <MenuItem value="FACIL">Fácil</MenuItem>
+                  <MenuItem value="MEDIO">Medio</MenuItem>
+                  <MenuItem value="DIFICIL">Difícil</MenuItem>
+                </Select>
+                {selectedNode && <Typography variant="caption">Bloque heredado: {selectedNode.block?.name ?? "N/A"}</Typography>}
+                {selectedNode && difficultyExists(selectedDifficulty) && <Typography variant="caption" color="error">Esta dificultad ya existe entre los hijos</Typography>}
+              </FormControl>
+            )}
+
+            <TextField label="Número de preguntas" type="number" inputProps={{ min: 1 }} value={nQuestions} onChange={(e) => setNQuestions(Number(e.target.value) || 0)} fullWidth />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNodeDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={handleSaveNode} variant="contained" disabled={!nodeForm.block_id || saving}>
-            {saving ? <CircularProgress size={20} /> : selectedNode?.confinementRequirementId ? "Actualizar" : "Guardar"}
+          <Button onClick={() => setModalOpen(false)}>Cancelar</Button>
+          <Button onClick={handleSave} variant="contained">
+            {saving ? <CircularProgress size={18} /> : "Agregar hijo"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-        <Alert severity="success" sx={{ width: "100%" }}>
-          ✅ Acción realizada con éxito
-        </Alert>
+      {/* Modal editar (solo preguntas) */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Editar preguntas del nodo</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Typography variant="body2">{editNode?.block?.name ?? "Raíz"} {editNode?.difficulty ? `- ${editNode.difficulty}` : ""}</Typography>
+            <TextField label="Número de preguntas" type="number" inputProps={{ min: 1 }} value={editQuestions} onChange={(e) => setEditQuestions(Number(e.target.value) || 0)} fullWidth />
+            {editNode && <Typography variant="caption">Hijos ocupan: {editNode.children.reduce((s, c) => s + c.n_questions, 0)}</Typography>}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)}>Cancelar</Button>
+          <Button onClick={handleEditSave} variant="contained" disabled={saving}>{saving ? <CircularProgress size={18} /> : "Guardar"}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Context menu */}
+      <Menu
+        open={Boolean(contextAnchor)}
+        onClose={closeContext}
+        anchorReference="anchorPosition"
+        anchorPosition={contextAnchor ? { top: contextAnchor.mouseY, left: contextAnchor.mouseX } : undefined}
+      >
+        <MuiMenuItem onClick={() => contextAnchor && openEdit(contextAnchor.node)}>Editar preguntas</MuiMenuItem>
+        <MuiMenuItem onClick={() => contextAnchor && handleDelete(contextAnchor.node)}>Eliminar</MuiMenuItem>
+      </Menu>
+
+      <Snackbar open={successOpen} autoHideDuration={2500} onClose={() => setSuccessOpen(false)}>
+        <Alert severity="success">Operación correcta</Alert>
       </Snackbar>
 
-      <Snackbar open={Boolean(errorMessage)} autoHideDuration={6000} onClose={() => setErrorMessage(null)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-        <Alert severity="error" sx={{ width: "100%" }}>
-          {errorMessage}
-        </Alert>
+      <Snackbar open={Boolean(errorMessage)} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
+        <Alert severity="error">{errorMessage}</Alert>
       </Snackbar>
     </Container>
   );
