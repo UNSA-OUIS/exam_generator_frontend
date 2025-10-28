@@ -139,14 +139,6 @@ function buildConfinementTree(requirements: ConfinementRequirement[]): NodeData 
   return addTotals(rootNode);
 }
 
-function findNodeById(root: NodeData, id: number): NodeData | null {
-  if (root.id === id) return root;
-  for (const c of root.children) {
-    const f = findNodeById(c, id);
-    if (f) return f;
-  }
-  return null;
-}
 
 /** ---------- D3 Tree component (sin zoom; tamaños adaptativos) ---------- */
 function Tree({
@@ -166,8 +158,6 @@ function Tree({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 1200;
-    const height = 3000;
     const g = svg.append("g");
 const zoomBehavior = d3
   .zoom<SVGSVGElement, unknown>()
@@ -340,7 +330,6 @@ export default function TreeCreator() {
   const { confinementId } = useParams<{ confinementId: string }>();
 
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [requirements, setRequirements] = useState<ConfinementRequirement[]>([]);
   const [treeData, setTreeData] = useState<NodeData | null>(null);
 
   // create modal
@@ -375,7 +364,6 @@ export default function TreeCreator() {
           confinementId ? ConfinementRequirementApi.getByConfinement(confinementId) : Promise.resolve([]),
         ]);
         setBlocks(blks);
-        setRequirements(reqs);
         setTreeData(buildConfinementTree(reqs));
       } catch (err) {
         console.error(err);
@@ -465,7 +453,6 @@ export default function TreeCreator() {
       return;
     }
 
-    const chosenBlock = blocks.find((b) => b.id === selectedBlockId) ?? null;
     const chosenDifficulty = nodeType === "difficulty" ? selectedDifficulty : (selectedNode.difficulty ?? null);
 
     if (nodeType === "block" && siblingHasSameBlockAndDifficulty(selectedBlockId, chosenDifficulty)) {
@@ -492,7 +479,6 @@ export default function TreeCreator() {
       setSaving(true);
       await CreateConfinementBlock(payload);
       const reqs = await ConfinementRequirementApi.getByConfinement(confinementId);
-      setRequirements(reqs);
       setTreeData(buildConfinementTree(reqs));
       setModalOpen(false);
       setSuccessOpen(true);
@@ -531,7 +517,6 @@ export default function TreeCreator() {
       setSaving(true);
       await UpdateConfinementBlock(editNode.id, { n_questions: editQuestions });
       const reqs = await ConfinementRequirementApi.getByConfinement(confinementId);
-      setRequirements(reqs);
       setTreeData(buildConfinementTree(reqs));
       setEditOpen(false);
       setSuccessOpen(true);
@@ -553,7 +538,6 @@ export default function TreeCreator() {
       setSaving(true);
       await DeleteConfinementBlock(node.id);
       const reqs = await ConfinementRequirementApi.getByConfinement(confinementId!);
-      setRequirements(reqs);
       setTreeData(buildConfinementTree(reqs));
       setSuccessOpen(true);
     } catch (err: any) {
