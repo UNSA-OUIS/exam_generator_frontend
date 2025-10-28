@@ -1,8 +1,22 @@
 export interface Block {
   id: number;
+  level_id: number;
+  code: string;
   name: string;
-  code?: string;
-  parent_id?: number;
+  parent_block_id: number | null;
+  created_at: string;
+  updated_at: string;
+  level?: Level;
+  parentBlock?: Block;
+  has_text: boolean;
+}
+
+export interface Level {
+  id: number;
+  stage: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ConfinementRequirement {

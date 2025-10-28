@@ -39,11 +39,51 @@ export default function RequirementsList() {
         confinementRequirement: ConfinementRequirement | null;
     }>({ open: false, confinementRequirement: null });
 
+    // Función para ordenar los requerimientos en estructura de árbol
+    const sortAsTree = (requirements: ConfinementRequirement[]): ConfinementRequirement[] => {
+        const result: ConfinementRequirement[] = [];
+        const processedIds = new Set<number>();
+
+        // Función recursiva para agregar un nodo y sus hijos
+        const addNodeAndChildren = (parentId: number | null, level: number = 0) => {
+            // Buscar todos los nodos con este parent_id
+            const children = requirements.filter(req => 
+                req.parent_id === parentId && 
+                req.id !== undefined && 
+                !processedIds.has(req.id)
+            );
+
+            // Ordenar hijos por ID para mantener consistencia
+            children.sort((a, b) => (a.id || 0) - (b.id || 0));
+
+            // Agregar cada hijo y sus descendientes
+            children.forEach(child => {
+                if (child.id !== undefined) {
+                    processedIds.add(child.id);
+                    // Agregar una propiedad temporal para el nivel
+                    (child as any).treeLevel = level;
+                    result.push(child);
+                    
+                    // Recursivamente agregar los hijos de este nodo
+                    addNodeAndChildren(child.id, level + 1);
+                }
+            });
+        };
+
+        // Comenzar con los nodos raíz (parent_id = null)
+        addNodeAndChildren(null, 0);
+
+        return result;
+    };
+
     const load = async (id: string) => {
         setLoading(true);
         try {
             const data = await GetConfinementBlocks(id);
-            setRows(data);
+            
+            // Ordenar los datos como árbol
+            const sortedData = sortAsTree(data);
+            setRows(sortedData);
 
             // Obtener el nombre del confinamiento desde el primer requerimiento (si existe)
             if (data.length > 0 && data[0].confinement) {
@@ -67,7 +107,9 @@ export default function RequirementsList() {
         if (!confirm("¿Está seguro de eliminar este requerimiento?")) return;
         try {
             await DeleteConfinementBlock(id);
-            setRows(rows.filter((r) => r.id !== id));
+            if (confinementId) {
+                await load(confinementId);
+            }
         } catch (err) {
             console.error(err);
             alert("Error al eliminar el requerimiento");
@@ -122,7 +164,6 @@ export default function RequirementsList() {
                 <Typography color="text.primary">Requerimientos {confinementName && `- ${confinementName}`}</Typography>
             </Breadcrumbs>
 
-           // En tu List.tsx, agrega este botón en el Box de acciones:
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h4">📋 Requerimientos {confinementName && `- ${confinementName}`}</Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
@@ -137,9 +178,9 @@ export default function RequirementsList() {
                     >
                         Crear con Árbol
                     </Button>
-                    <Button variant="contained" onClick={() => navigate(`tree`)}>
+                    {/*<Button variant="contained" onClick={() => navigate(`tree`)}>
                         Ver Árbol
-                    </Button>
+                    </Button>*/}
                 </Box>
             </Box>
 
@@ -167,17 +208,38 @@ export default function RequirementsList() {
                                     <TableCell>
                                         {row.block ? (
                                             <Box>
-                                                <Typography variant="body2" fontWeight="bold">
-                                                    {row.parent_id && "↳ "} {/* Indica que es hijo */}
+                                                <Typography 
+                                                    variant="body2" 
+                                                    fontWeight="bold"
+                                                    sx={{ 
+                                                        pl: ((row as any).treeLevel || 0) * 3,
+                                                        display: 'flex',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    {(row as any).treeLevel > 0 && (
+                                                        <span style={{ 
+                                                            marginRight: '8px', 
+                                                            color: '#999',
+                                                            fontWeight: 'normal'
+                                                        }}>
+                                                            {'└─ '.repeat((row as any).treeLevel)}
+                                                        </span>
+                                                    )}
                                                     {row.block.name}
                                                 </Typography>
                                                 {row.block.code && (
-                                                    <Typography variant="caption" color="text.secondary">
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        color="text.secondary"
+                                                        sx={{ pl: ((row as any).treeLevel || 0) * 3 }}
+                                                    >
                                                         Código: {row.block.code}
                                                     </Typography>
                                                 )}
                                             </Box>
-                                        ) : "N/A"}
+                                        ) : <Typography variant="body2" 
+                                                    fontWeight="bold">Requerimientos</Typography>}
                                     </TableCell>
                                     <TableCell>
                                         <Chip
