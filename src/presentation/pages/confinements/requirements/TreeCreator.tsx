@@ -282,8 +282,7 @@ svg.call(zoomBehavior.transform,
       .text((d: any) => {
         if (!d.data.block) return "(root)";
         const code = d.data.block.code ?? "";
-        const diffInitial = d.data.difficulty ? ` • ${d.data.difficulty.charAt(0)}` : "";
-        return `${code}${diffInitial}`;
+        return `${code}`;
       });
 
     // difficulty badge
