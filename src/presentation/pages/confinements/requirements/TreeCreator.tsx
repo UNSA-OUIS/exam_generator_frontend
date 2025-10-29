@@ -470,7 +470,6 @@ export default function TreeCreator() {
     closeContext();
   };
 
-  // edit save (only n_questions)
   const handleEditSave = async () => {
     if (!editNode || !editNode.id || !confinementId) return;
 
@@ -499,7 +498,6 @@ export default function TreeCreator() {
     }
   };
 
-  // delete
   const handleDelete = async (node: NodeData) => {
     if (!node.id) return;
     closeContext();
@@ -623,7 +621,6 @@ export default function TreeCreator() {
         </DialogActions>
       </Dialog>
 
-      {/* Modal editar (solo preguntas) */}
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Editar preguntas del nodo</DialogTitle>
         <DialogContent>
@@ -639,7 +636,6 @@ export default function TreeCreator() {
         </DialogActions>
       </Dialog>
 
-      {/* Context menu */}
       <Menu
         open={Boolean(contextAnchor)}
         onClose={closeContext}
