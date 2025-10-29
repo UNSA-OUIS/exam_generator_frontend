@@ -36,7 +36,6 @@ import { DeleteConfinementBlock } from "../../../../application/confinement/Dele
 import { GetBlocks } from "../../../../application/block/GetBlocks";
 import { ConfinementRequirementApi } from "../../../../infrastructure/api/ConfinementRequirementApi";
 
-/** ---------- MODELS (tu definición exacta) ---------- */
 export interface Block {
   id: number;
   level_id: number;
@@ -86,7 +85,6 @@ interface NodeData {
   total_questions_required?: number;
 }
 
-/** ---------- HELPERS para construir / buscar árbol ---------- */
 function buildConfinementTree(requirements: ConfinementRequirement[]): NodeData {
   const map: Record<number, NodeData> = {};
 
@@ -139,8 +137,6 @@ function buildConfinementTree(requirements: ConfinementRequirement[]): NodeData 
   return addTotals(rootNode);
 }
 
-
-/** ---------- D3 Tree component (sin zoom; tamaños adaptativos) ---------- */
 function Tree({
   data,
   onNodeClick,
@@ -159,14 +155,13 @@ function Tree({
     svg.selectAll("*").remove();
 
     const g = svg.append("g");
-const zoomBehavior = d3
-  .zoom<SVGSVGElement, unknown>()
-  .scaleExtent([0.2, 7])
-  .on("zoom", (event) => g.attr("transform", event.transform));
+    const zoomBehavior = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 8])
+      .on("zoom", (event) => g.attr("transform", event.transform));
 
-svg.call(zoomBehavior.transform,
-  d3.zoomIdentity.translate(600, 50).scale(7));
-    // Tooltip (cleanup must return void)
+    svg.call(zoomBehavior.transform,
+      d3.zoomIdentity.translate(600, 500).scale(8));
     const tooltip = d3
       .select("body")
       .append("div")
@@ -180,17 +175,12 @@ svg.call(zoomBehavior.transform,
       .style("opacity", 0)
       .style("z-index", "9999");
 
-    // No zoom/pan — el contenedor vertical hará scroll al crecer
-
     const root = d3.hierarchy<NodeData>(data);
 
-    // Decide tamaños según la altura del árbol
-    // height = treeRoot.height (número de niveles desde node hasta leaves)
     const tempLayout = d3.tree<NodeData>().nodeSize([100, 130]);
     const tempRoot = tempLayout(root);
-    const depth = tempRoot.height; // número de niveles por debajo del root
+    const depth = tempRoot.height; 
 
-    // adaptative sizes
     let nodeRadius = 28;
     let nodeSizeX = 100;
     let nodeSizeY = 130;
@@ -244,7 +234,6 @@ svg.call(zoomBehavior.transform,
       .on("mousemove", (event: any) => tooltip.style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`))
       .on("mouseout", () => tooltip.style("opacity", 0));
 
-    // Circle: tamaño dinámico
     node
       .append("circle")
       .attr("r", nodeRadius)
@@ -262,7 +251,6 @@ svg.call(zoomBehavior.transform,
       .attr("stroke", "#333")
       .attr("stroke-width", 1.5);
 
-    // Center number (font size adapt to radius)
     node
       .append("text")
       .attr("dy", nodeRadius / 4)
@@ -272,7 +260,6 @@ svg.call(zoomBehavior.transform,
       .attr("fill", "#111")
       .text((d: any) => d.data.n_questions);
 
-    // block code under node + difficulty initial
     node
       .append("text")
       .attr("dy", nodeRadius + 12)
@@ -285,7 +272,6 @@ svg.call(zoomBehavior.transform,
         return `${code}`;
       });
 
-    // difficulty badge
     node
       .filter((d: any) => !!d.data.difficulty)
       .append("g")
@@ -317,13 +303,12 @@ svg.call(zoomBehavior.transform,
   }, [data, onNodeClick, onNodeContext]);
 
   return (
-    <div style={{ width: "100%", height: "80vh", overflow: "auto" }}>
+    <div style={{ width: "100%", height: "80vh", overflow: "auto", }}>
       <svg ref={svgRef} width="100%" height="100%" viewBox={`0 0 800 5000`} className="border rounded-md bg-white shadow" />
     </div>
   );
 }
 
-/** ---------- TreeCreator: lógica de UI / creación / edición / eliminación ---------- */
 export default function TreeCreator() {
   const navigate = useNavigate();
   const { confinementId } = useParams<{ confinementId: string }>();
@@ -331,7 +316,6 @@ export default function TreeCreator() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [treeData, setTreeData] = useState<NodeData | null>(null);
 
-  // create modal
   const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [nodeType, setNodeType] = useState<"block" | "difficulty">("block");
@@ -339,21 +323,17 @@ export default function TreeCreator() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<"FACIL" | "MEDIO" | "DIFICIL">("MEDIO");
   const [nQuestions, setNQuestions] = useState<number>(0);
 
-  // edit (only n_questions)
   const [editNode, setEditNode] = useState<NodeData | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editQuestions, setEditQuestions] = useState<number>(0);
 
-  // context menu
   const [contextAnchor, setContextAnchor] = useState<{ mouseX: number; mouseY: number; node: NodeData } | null>(null);
 
-  // ui
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // initial load
   useEffect(() => {
     const load = async () => {
       try {
@@ -374,16 +354,13 @@ export default function TreeCreator() {
     load();
   }, [confinementId]);
 
-  // availability
   const getAvailableBlocks = (): Block[] => {
     if (!selectedNode) return blocks.filter((b) => b.level_id === 1 && b.parent_block_id === null);
     if (!selectedNode.block) return blocks.filter((b) => b.level_id === 1 && b.parent_block_id === null);
 
-    // if parent has difficulty -> child blocks are parent_block_id === parent.block.id and level = parent.level + 1
     if (selectedNode.difficulty) {
       return blocks.filter((b) => b.parent_block_id === selectedNode.block!.id && b.level_id === selectedNode.block!.level_id + 1);
     }
-    // if parent has no difficulty -> allow same (you might change rules here)
     return blocks.filter((b) => b.parent_block_id === selectedNode.block!.id && b.level_id === selectedNode.block!.level_id + 1);
   };
 
@@ -399,7 +376,6 @@ export default function TreeCreator() {
     return selectedNode.children.some((c) => c.block?.code === code && c.difficulty === difficulty);
   };
 
-  // handle click open create modal
   const handleNodeClick = (node: NodeData) => {
     const used = node.children.reduce((s, c) => s + c.n_questions, 0);
     const remaining = node.n_questions - used;
@@ -420,13 +396,11 @@ export default function TreeCreator() {
     setModalOpen(true);
   };
 
-  // context menu
   const handleNodeContext = (node: NodeData, mouseX: number, mouseY: number) => {
     setContextAnchor({ mouseX, mouseY, node });
   };
   const closeContext = () => setContextAnchor(null);
 
-  // create child
   const handleSave = async () => {
     if (!selectedNode || !confinementId) return;
 
@@ -484,13 +458,11 @@ export default function TreeCreator() {
     } catch (err: any) {
       console.error(err);
       setErrorMessage("Error al crear: " + (err?.message || String(err)));
-      // try to surface specific DB errors if present
     } finally {
       setSaving(false);
     }
   };
 
-  // open edit
   const openEdit = (node: NodeData) => {
     setEditNode(node);
     setEditQuestions(node.n_questions);
