@@ -108,7 +108,7 @@ const List = forwardRef<ListRef>((_, ref) => {
 
     try {
       setLoading(true);
-      const { data } = await generateMaster(examId, area);
+      const { data } = await generateMaster("019a4ad7-1127-7276-b90f-3d379c8847cb", area);
       alert(data.message || "✅ Master generado exitosamente");
     } catch (error: any) {
       console.error(error);

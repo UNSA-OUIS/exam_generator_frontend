@@ -42,7 +42,7 @@ export const exportBlocks = async (confinementId: string, confinementName?: stri
   const url = window.URL.createObjectURL(new Blob([response.data]));
   const link = document.createElement('a');
   link.href = url;
-  const fileName = confinementName ? `matriz_${confinementName}.xlsx` : `blocks-${confinementId}.xlsx`;
+  const fileName = confinementName ? `matriz_${confinementName}.csv` : `blocks-${confinementId}.csv`;
   link.setAttribute('download', fileName);
   document.body.appendChild(link);
   link.click();

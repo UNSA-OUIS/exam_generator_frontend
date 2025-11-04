@@ -1,7 +1,7 @@
 import axiosClient from "../lib/axiosClient";
 
 export const generateMaster = async (examId: string, area: string) => {
-  const response = await axiosClient.post("/masters/generate", {
+  const response = await axiosClient.post("/exams/masters", {
     exam_id: examId,
     area,
   });
