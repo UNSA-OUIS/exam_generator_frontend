@@ -27,6 +27,8 @@ import {
   Chip,
   Menu,
   MenuItem as MuiMenuItem,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import * as d3 from "d3";
 
@@ -147,6 +149,31 @@ function Tree({
   onNodeContext: (node: NodeData, clientX: number, clientY: number) => void;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+
+  // Actualizar dimensiones cuando cambia el tamaño de la ventana
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setDimensions({
+          width: Math.max(clientWidth, 400), // Mínimo 400px de ancho
+          height: Math.max(clientHeight, 300), // Mínimo 300px de alto
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, []);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
@@ -155,63 +182,104 @@ function Tree({
     svg.selectAll("*").remove();
 
     const g = svg.append("g");
+    
+    // Configuración de zoom responsiva
     const zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.2, 8])
+      .scaleExtent([0.1, 5])
       .on("zoom", (event) => g.attr("transform", event.transform));
 
-    svg.call(zoomBehavior.transform,
-      d3.zoomIdentity.translate(600, 500).scale(8));
+    svg.call(zoomBehavior);
+
     const tooltip = d3
       .select("body")
       .append("div")
       .style("position", "absolute")
-      .style("background", "rgba(0,0,0,0.75)")
+      .style("background", "rgba(0,0,0,0.85)")
       .style("color", "#fff")
-      .style("padding", "6px 10px")
+      .style("padding", "8px 12px")
       .style("border-radius", "6px")
       .style("pointer-events", "none")
-      .style("font-size", "12px")
+      .style("font-size", isMobile ? "11px" : "12px")
       .style("opacity", 0)
-      .style("z-index", "9999");
+      .style("z-index", "9999")
+      .style("max-width", "250px")
+      .style("word-wrap", "break-word");
 
     const root = d3.hierarchy<NodeData>(data);
 
-    const tempLayout = d3.tree<NodeData>().nodeSize([100, 130]);
-    const tempRoot = tempLayout(root);
-    const depth = tempRoot.height; 
-
-    let nodeRadius = 28;
-    let nodeSizeX = 100;
-    let nodeSizeY = 130;
-    if (depth <= 3) {
+    // Configuración responsiva de tamaños de nodo
+    let nodeRadius, nodeSizeX, nodeSizeY, fontSize, difficultySize;
+    
+    if (isMobile) {
+      nodeRadius = 14;
+      nodeSizeX = 60;
+      nodeSizeY = 80;
+      fontSize = "10px";
+      difficultySize = 8;
+    } else if (isTablet) {
+      nodeRadius = 20;
+      nodeSizeX = 80;
+      nodeSizeY = 100;
+      fontSize = "11px";
+      difficultySize = 10;
+    } else {
       nodeRadius = 28;
       nodeSizeX = 100;
       nodeSizeY = 130;
-    } else if (depth <= 6) {
-      nodeRadius = 22;
-      nodeSizeX = 80;
-      nodeSizeY = 110;
-    } else {
-      nodeRadius = 18;
-      nodeSizeX = 60;
-      nodeSizeY = 90;
+      fontSize = "12px";
+      difficultySize = 12;
+    }
+
+    // Ajustar según la profundidad del árbol
+    const tempLayout = d3.tree<NodeData>().nodeSize([nodeSizeX, nodeSizeY]);
+    const tempRoot = tempLayout(root);
+    const depth = tempRoot.height;
+
+    if (depth > 6) {
+      // Reducir más para árboles muy profundos
+      const scale = isMobile ? 0.7 : isTablet ? 0.8 : 0.9;
+      nodeRadius *= scale;
+      nodeSizeX *= scale;
+      nodeSizeY *= scale;
     }
 
     const layout = d3.tree<NodeData>().nodeSize([nodeSizeX, nodeSizeY]);
     const treeRoot = layout(root);
 
-    const linkGen = d3.linkVertical<any, any>().x((d: any) => d.x).y((d: any) => d.y);
+    // Calcular bounds para el viewBox dinámico
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    
+    treeRoot.each(d => {
+      if (d.x < x0) x0 = d.x;
+      if (d.x > x1) x1 = d.x;
+      if (d.y < y0) y0 = d.y;
+      if (d.y > y1) y1 = d.y;
+    });
 
+    // Agregar márgenes
+    const margin = isMobile ? 40 : 60;
+    const width = x1 - x0 + margin * 2;
+    const height = y1 - y0 + margin * 2;
+
+    // Centrar el árbol
+    g.attr("transform", `translate(${margin - x0},${margin - y0})`);
+
+    const linkGen = d3.linkVertical<any, any>()
+      .x((d: any) => d.x)
+      .y((d: any) => d.y);
+
+    // Dibujar enlaces
     g.selectAll("path.link")
       .data(treeRoot.links())
       .join("path")
       .attr("class", "link")
       .attr("fill", "none")
       .attr("stroke", "#bbb")
-      .attr("stroke-width", 1.2)
+      .attr("stroke-width", isMobile ? 1 : 1.2)
       .attr("d", (d: any) => linkGen(d));
 
+    // Dibujar nodos
     const node = g
       .selectAll("g.node")
       .data(treeRoot.descendants())
@@ -229,11 +297,17 @@ function Tree({
         let html = `<strong>${nd.block?.name ?? "Total"}</strong><br/>Preguntas: ${nd.n_questions}`;
         if (nd.difficulty) html += ` | Dificultad: ${nd.difficulty}`;
         if (nd.block) html += ` | Código: ${nd.block.code} | Nivel: ${nd.block.level_id}`;
-        tooltip.style("opacity", 1).html(html).style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`);
+        tooltip.style("opacity", 1).html(html)
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY - 28}px`);
       })
-      .on("mousemove", (event: any) => tooltip.style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`))
+      .on("mousemove", (event: any) => 
+        tooltip.style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY - 28}px`)
+      )
       .on("mouseout", () => tooltip.style("opacity", 0));
 
+    // Círculo del nodo
     node
       .append("circle")
       .attr("r", nodeRadius)
@@ -249,29 +323,33 @@ function Tree({
         return "#fbbf24";
       })
       .attr("stroke", "#333")
-      .attr("stroke-width", 1.5);
+      .attr("stroke-width", isMobile ? 1 : 1.5);
 
+    // Texto del número de preguntas
     node
       .append("text")
       .attr("dy", nodeRadius / 4)
       .attr("text-anchor", "middle")
-      .style("font-size", nodeRadius > 24 ? "14px" : "12px")
+      .style("font-size", fontSize)
       .style("font-weight", "700")
       .attr("fill", "#111")
       .text((d: any) => d.data.n_questions);
 
+    // Texto del código
     node
       .append("text")
-      .attr("dy", nodeRadius + 12)
+      .attr("dy", nodeRadius + (isMobile ? 8 : 12))
       .attr("text-anchor", "middle")
-      .style("font-size", "12px")
+      .style("font-size", isMobile ? "9px" : "11px")
       .style("fill", "#374151")
       .text((d: any) => {
         if (!d.data.block) return "(root)";
         const code = d.data.block.code ?? "";
-        return `${code}`;
+        // Acortar código si es muy largo en móvil
+        return isMobile && code.length > 8 ? code.substring(0, 6) + "..." : code;
       });
 
+    // Indicador de dificultad
     node
       .filter((d: any) => !!d.data.difficulty)
       .append("g")
@@ -282,7 +360,7 @@ function Tree({
           .attr("y", -Math.round(nodeRadius * 0.45))
           .attr("width", Math.round(nodeRadius * 0.7))
           .attr("height", Math.round(nodeRadius * 0.7))
-          .attr("rx", 4)
+          .attr("rx", 3)
           .attr("fill", "#fff")
           .attr("stroke", "#333")
           .attr("stroke-width", 0.5)
@@ -291,20 +369,50 @@ function Tree({
           .attr("text-anchor", "middle")
           .attr("x", 0)
           .attr("y", Math.round(nodeRadius * 0.12))
-          .attr("font-size", Math.round(nodeRadius * 0.35) + "px")
-          .attr("font-weight", "700")
+          .style("font-size", `${difficultySize}px`)
+          .style("font-weight", "700")
           .text((d: any) => (d.data.difficulty ? d.data.difficulty.charAt(0) : ""));
       });
 
+    // Ajustar viewBox y aplicar zoom inicial
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
+    
+    // Zoom inicial responsivo
+    const initialScale = isMobile ? 0.8 : isTablet ? 1.2 : 1.5;
+    const initialX = width / 2;
+    const initialY = height / 3;
+    
+    svg.call(zoomBehavior.transform, 
+      d3.zoomIdentity.translate(initialX, initialY).scale(initialScale)
+    );
 
     return () => {
       tooltip.remove();
     };
-  }, [data, onNodeClick, onNodeContext]);
+  }, [data, onNodeClick, onNodeContext, dimensions, isMobile, isTablet]);
 
   return (
-    <div style={{ width: "100%", height: "80vh", overflow: "auto", }}>
-      <svg ref={svgRef} width="100%" height="100%" viewBox={`0 0 800 5000`} className="border rounded-md bg-white shadow" />
+    <div 
+      ref={containerRef} 
+      style={{ 
+        width: "100%", 
+        height: "70vh", 
+        minHeight: "400px",
+        overflow: "auto", 
+        border: "1px solid #e0e0e0",
+        borderRadius: "8px",
+        backgroundColor: "#fafafa"
+      }}
+    >
+      <svg 
+        ref={svgRef} 
+        width="100%" 
+        height="100%" 
+        style={{ 
+          minWidth: "400px",
+          minHeight: "300px" 
+        }}
+      />
     </div>
   );
 }
@@ -312,6 +420,8 @@ function Tree({
 export default function TreeCreator() {
   const navigate = useNavigate();
   const { confinementId } = useParams<{ confinementId: string }>();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [treeData, setTreeData] = useState<NodeData | null>(null);
@@ -526,36 +636,71 @@ export default function TreeCreator() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h4">🌳 Crear Requerimientos - Vista de Árbol</Typography>
+    <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>
+      <Card sx={{ mb: 2 }}>
+        <CardContent sx={{ p: isMobile ? 1 : 2 }}>
+          <Typography variant={isMobile ? "h5" : "h4"}>🌳 Crear Requerimientos - Vista de Árbol</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Haz clic en un nodo para agregar hijos. Click derecho para editar / eliminar.
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-            <Chip label="Raíz → Bloques nivel 1" size="small" />
-            <Chip label="Bloque (sin dif) → Puede crear Dificultad o Bloque" size="small" />
-            <Chip label="Bloque (con dif) → Solo crear Bloques (heredan dif.)" size="small" />
-            <Chip label="Regla: hijos total ≤ preguntas del padre" size="small" />
+          <Box sx={{ 
+            display: "flex", 
+            gap: 1, 
+            mt: 1,
+            flexWrap: "wrap" 
+          }}>
+            <Chip 
+              label="Raíz → Bloques nivel 1" 
+              size={isMobile ? "small" : "medium"} 
+            />
+            <Chip 
+              label="Bloque → Dificultad o Bloque" 
+              size={isMobile ? "small" : "medium"} 
+            />
+            <Chip 
+              label="Hijos ≤ preguntas padre" 
+              size={isMobile ? "small" : "medium"} 
+            />
           </Box>
         </CardContent>
       </Card>
 
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Typography variant="h6">Estructura</Typography>
-          <Button variant="outlined" onClick={() => navigate(-1)}>
+      <Paper sx={{ p: isMobile ? 1 : 2, mb: 2 }}>
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          mb: 2,
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 1 : 0
+        }}>
+          <Typography variant={isMobile ? "h6" : "h5"}>Estructura del Árbol</Typography>
+          <Button 
+            variant="outlined" 
+            onClick={() => navigate(-1)}
+            size={isMobile ? "small" : "medium"}
+          >
             Volver
           </Button>
         </Box>
 
-        <Tree data={treeData} onNodeClick={handleNodeClick} onNodeContext={handleNodeContext} />
+        <Tree 
+          data={treeData} 
+          onNodeClick={handleNodeClick} 
+          onNodeContext={handleNodeContext} 
+        />
       </Paper>
 
       {/* Modal crear */}
-      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{selectedNode?.block ? `➕ Agregar Hijo a: ${selectedNode.block.name}` : "➕ Agregar Nodo a Raíz"}</DialogTitle>
+      <Dialog 
+        open={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitle>
+          {selectedNode?.block ? `➕ Agregar Hijo a: ${selectedNode.block.name}` : "➕ Agregar Nodo a Raíz"}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             {selectedNode && (
@@ -584,9 +729,13 @@ export default function TreeCreator() {
             </FormControl>
 
             {nodeType === "block" && (
-              <FormControl fullWidth>
+              <FormControl fullWidth size={isMobile ? "small" : "medium"}>
                 <InputLabel>Bloque</InputLabel>
-                <Select value={selectedBlockId} label="Bloque" onChange={(e) => setSelectedBlockId(Number(e.target.value))}>
+                <Select 
+                  value={selectedBlockId} 
+                  label="Bloque" 
+                  onChange={(e) => setSelectedBlockId(Number(e.target.value))}
+                >
                   <MenuItem value={0}>Seleccionar bloque</MenuItem>
                   {getAvailableBlocks().map((b) => (
                     <MenuItem key={b.id} value={b.id}>
@@ -598,41 +747,81 @@ export default function TreeCreator() {
             )}
 
             {nodeType === "difficulty" && (
-              <FormControl fullWidth>
+              <FormControl fullWidth size={isMobile ? "small" : "medium"}>
                 <InputLabel>Dificultad</InputLabel>
-                <Select value={selectedDifficulty} label="Dificultad" onChange={(e) => setSelectedDifficulty(e.target.value as any)}>
+                <Select 
+                  value={selectedDifficulty} 
+                  label="Dificultad" 
+                  onChange={(e) => setSelectedDifficulty(e.target.value as any)}
+                >
                   <MenuItem value="FACIL">Fácil</MenuItem>
                   <MenuItem value="MEDIO">Medio</MenuItem>
                   <MenuItem value="DIFICIL">Difícil</MenuItem>
                 </Select>
                 {selectedNode && <Typography variant="caption">Bloque heredado: {selectedNode.block?.name ?? "N/A"}</Typography>}
-                {selectedNode && difficultyExists(selectedDifficulty) && <Typography variant="caption" color="error">Esta dificultad ya existe entre los hijos</Typography>}
+                {selectedNode && difficultyExists(selectedDifficulty) && 
+                  <Typography variant="caption" color="error">Esta dificultad ya existe entre los hijos</Typography>
+                }
               </FormControl>
             )}
 
-            <TextField label="Número de preguntas" type="number" inputProps={{ min: 1 }} value={nQuestions} onChange={(e) => setNQuestions(Number(e.target.value) || 0)} fullWidth />
+            <TextField 
+              label="Número de preguntas" 
+              type="number" 
+              inputProps={{ min: 1 }} 
+              value={nQuestions} 
+              onChange={(e) => setNQuestions(Number(e.target.value) || 0)} 
+              fullWidth 
+              size={isMobile ? "small" : "medium"}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setModalOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setModalOpen(false)}>
+            Cancelar
+          </Button>
           <Button onClick={handleSave} variant="contained">
             {saving ? <CircularProgress size={18} /> : "Agregar hijo"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog 
+        open={editOpen} 
+        onClose={() => setEditOpen(false)} 
+        maxWidth="xs" 
+        fullWidth
+        fullScreen={isMobile}
+      >
         <DialogTitle>Editar preguntas del nodo</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Typography variant="body2">{editNode?.block?.name ?? "Raíz"} {editNode?.difficulty ? `- ${editNode.difficulty}` : ""}</Typography>
-            <TextField label="Número de preguntas" type="number" inputProps={{ min: 1 }} value={editQuestions} onChange={(e) => setEditQuestions(Number(e.target.value) || 0)} fullWidth />
-            {editNode && <Typography variant="caption">Hijos ocupan: {editNode.children.reduce((s, c) => s + c.n_questions, 0)}</Typography>}
+            <Typography variant="body2">
+              {editNode?.block?.name ?? "Raíz"} {editNode?.difficulty ? `- ${editNode.difficulty}` : ""}
+            </Typography>
+            <TextField 
+              label="Número de preguntas" 
+              type="number" 
+              inputProps={{ min: 1 }} 
+              value={editQuestions} 
+              onChange={(e) => setEditQuestions(Number(e.target.value) || 0)} 
+              fullWidth 
+              size={isMobile ? "small" : "medium"}
+            />
+            {editNode && 
+              <Typography variant="caption">
+                Hijos ocupan: {editNode.children.reduce((s, c) => s + c.n_questions, 0)}
+              </Typography>
+            }
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditOpen(false)}>Cancelar</Button>
-          <Button onClick={handleEditSave} variant="contained" disabled={saving}>{saving ? <CircularProgress size={18} /> : "Guardar"}</Button>
+          <Button onClick={() => setEditOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleEditSave} variant="contained" disabled={saving}>
+            {saving ? <CircularProgress size={18} /> : "Guardar"}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -642,15 +831,29 @@ export default function TreeCreator() {
         anchorReference="anchorPosition"
         anchorPosition={contextAnchor ? { top: contextAnchor.mouseY, left: contextAnchor.mouseX } : undefined}
       >
-        <MuiMenuItem onClick={() => contextAnchor && openEdit(contextAnchor.node)}>Editar preguntas</MuiMenuItem>
-        <MuiMenuItem onClick={() => contextAnchor && handleDelete(contextAnchor.node)}>Eliminar</MuiMenuItem>
+        <MuiMenuItem onClick={() => contextAnchor && openEdit(contextAnchor.node)}>
+          Editar preguntas
+        </MuiMenuItem>
+        <MuiMenuItem onClick={() => contextAnchor && handleDelete(contextAnchor.node)}>
+          Eliminar
+        </MuiMenuItem>
       </Menu>
 
-      <Snackbar open={successOpen} autoHideDuration={2500} onClose={() => setSuccessOpen(false)}>
+      <Snackbar 
+        open={successOpen} 
+        autoHideDuration={2500} 
+        onClose={() => setSuccessOpen(false)}
+        anchorOrigin={{ vertical: isMobile ? "bottom" : "top", horizontal: "center" }}
+      >
         <Alert severity="success">Operación correcta</Alert>
       </Snackbar>
 
-      <Snackbar open={Boolean(errorMessage)} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
+      <Snackbar 
+        open={Boolean(errorMessage)} 
+        autoHideDuration={6000} 
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: isMobile ? "bottom" : "top", horizontal: "center" }}
+      >
         <Alert severity="error">{errorMessage}</Alert>
       </Snackbar>
     </Container>

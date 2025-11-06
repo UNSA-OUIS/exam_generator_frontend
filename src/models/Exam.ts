@@ -1,5 +1,5 @@
 export interface Exam {
-  id: number;
+  id: string;
   matrix_id: number;
   user_id: number;
   description: string;

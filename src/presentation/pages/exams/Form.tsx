@@ -16,7 +16,7 @@ import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 import type { Matrix } from "../../../models/Matrix";
 
 type Props = {
-  examId?: number;
+  examId?: string;
   initialMatrixId?: number;
   initialDescription?: string;
   initialTotalVariations?: number;

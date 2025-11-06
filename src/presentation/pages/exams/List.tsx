@@ -1,7 +1,12 @@
 // pages/exams/List.tsx
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Exam } from "../../../models/Exam";
-import { generateMaster, generateMasterPdf } from "../../../infrastructure/api/MasterApi";
+import {
+  generateMaster,
+  generateMasterPdf,
+  generateVariations,
+  downloadVariationPdf
+} from "../../../infrastructure/api/MasterApi";
 import { GetExams } from "../../../application/exam/GetExams";
 import { DeleteExam } from "../../../application/exam/DeleteExam";
 import {
@@ -29,6 +34,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 import Form from "./Form";
 
@@ -54,6 +60,11 @@ const List = forwardRef<ListRef>((_, ref) => {
     open: boolean;
     exam: Exam | null;
   }>({ open: false, exam: null });
+  const [themesDialog, setThemesDialog] = useState<{
+    open: boolean;
+    exam: Exam | null;
+  }>({ open: false, exam: null });
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchExams = async () => {
     try {
@@ -90,33 +101,107 @@ const List = forwardRef<ListRef>((_, ref) => {
       setDeleting(false);
     }
   };
- const handleGenerateMasterPdf = async (examId: string, area: string) => {
+
+  const handleGenerateMasterPdf = async (examId: string, area: string) => {
+    try {
+      setActionLoading('masterPdf');
+      console.log("Generando Master PDF...");
+      await generateMasterPdf(examId, area);
+    } catch (error: any) {
+      console.error("Error al generar Master PDF:", error);
+      alert("❌ Error al generar el PDF del Master");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleGenerateMaster = async (examId: string) => {
   try {
-    setLoading(true);
-    console.log("Generando Master PDF...");
-    await generateMasterPdf(examId, area);
+    setActionLoading('generateMaster');
+    console.log("✅ Iniciando generación de master...");
+    
+    const response = await generateMaster(examId);
+    console.log("✅ Respuesta completa:", response);
+    
+    // Verifica la estructura de la respuesta
+    if (response && response.success) {
+      alert(response.message || "✅ Master generado exitosamente");
+    } else {
+      alert(`❌ Respuesta inesperada: ${JSON.stringify(response)}`);
+    }
+    
   } catch (error: any) {
-    console.error("Error al generar Master PDF:", error);
-    alert("❌ Error al generar el PDF del Master");
+    console.error("❌ Error completo:", error);
+    console.error("❌ Response data:", error.response?.data);
+    console.error("❌ Status:", error.response?.status);
+    
+    // Mostrar mensaje más específico
+    if (error.response?.data?.message) {
+      alert(`❌ ${error.response.data.message}`);
+    } else if (error.message) {
+      alert(`❌ ${error.message}`);
+    } else {
+      alert("❌ Error desconocido al generar el Master");
+    }
   } finally {
-    setLoading(false);
+    setActionLoading(null);
   }
 };
 
-
-  const handleGenerateMaster = async (examId: string, area: string) => {
-
+  const handleGenerateVariations = async (examId: string) => {
     try {
-      setLoading(true);
-      const { data } = await generateMaster("019a4ad7-1127-7276-b90f-3d379c8847cb", area);
-      alert(data.message || "✅ Master generado exitosamente");
+      setActionLoading('generateVariations');
+
+      console.log("Generando variaciones para examId:", examId);
+
+      const { data } = await generateVariations(examId);
+
+      if (data.success) {
+        alert(data.message || "✅ Variaciones generadas exitosamente");
+        await fetchExams(); // Recargar la lista de exámenes
+      } else {
+        alert(`❌ ${data.message || 'Error al generar variaciones'}`);
+      }
+
     } catch (error: any) {
-      console.error(error);
-      //alert(error.response?.data?.message || "❌ Error al generar el Master");
+      console.error("Error completo al generar variaciones:", error);
+
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        console.error("Error response:", errorData);
+        alert(`❌ ${errorData.message || errorData.error || 'Error del servidor'}`);
+      } else if (error.request) {
+        alert("❌ No se pudo conectar con el servidor");
+      } 
     } finally {
-      setLoading(false);
+      setActionLoading(null);
     }
   };
+
+  const handleDownloadVariation = async (examId: string, area: string, variation: string) => {
+    try {
+      setActionLoading(`downloadVariation-${variation}`);
+      console.log("Descargando variación:", variation);
+      await downloadVariationPdf(examId, area, variation);
+
+      // Abrir en nueva ventana/pestaña
+      // La función downloadVariationPdf ya maneja la descarga automática
+    } catch (error: any) {
+      console.error("Error al descargar variación:", error);
+      alert("❌ Error al descargar la variación");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleThemesClick = (exam: Exam) => {
+    setThemesDialog({ open: true, exam });
+  };
+
+  const handleThemesClose = () => {
+    setThemesDialog({ open: false, exam: null });
+  };
+
   const handleDeleteCancel = () => {
     setDeleteDialog({ open: false, exam: null, error: undefined });
   };
@@ -222,7 +307,6 @@ const List = forwardRef<ListRef>((_, ref) => {
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>
                   Matrix ID
                 </TableCell>
@@ -240,7 +324,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                 </TableCell>
                 <TableCell
                   align="center"
-                  sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 160 }}
+                  sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 250 }}
                 >
                   Acciones
                 </TableCell>
@@ -257,7 +341,6 @@ const List = forwardRef<ListRef>((_, ref) => {
                     backgroundColor: index % 2 === 0 ? "transparent" : "grey.25",
                   }}
                 >
-
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
                     {exam.matrix_id}
                   </TableCell>
@@ -274,7 +357,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                     {new Date(exam.updated_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell align="center">
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: 'wrap' }}>
                       <Tooltip title="Ver detalles">
                         <IconButton
                           size="small"
@@ -314,38 +397,62 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
 
-                      {/* Nuevo botón para generar master */}
-                      {/* Botón para generar y master */}
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        {/* Botón de generar */}
+                      {/* Botones de generación y descarga */}
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: 'wrap' }}>
+                        {/* Botón Generar Master */}
                         <Tooltip title="Generar Master">
                           <Button
                             variant="outlined"
                             size="small"
                             color="secondary"
-                            disabled={loading}
-                            onClick={() => handleGenerateMaster(exam.id.toString(), "SOCIALES")}
+                            disabled={actionLoading === 'generateMaster'}
+                            onClick={() => handleGenerateMaster(exam.id.toString())}
                           >
-                            {loading ? "Generando..." : "Generar"}
+                            {actionLoading === 'generateMaster' ? <CircularProgress size={16} /> : "Generar"}
                           </Button>
                         </Tooltip>
-                        {/* Botón Master */}
+
+                        {/* Botón PDF Master */}
                         <Tooltip title="Generar PDF Master">
                           <Button
                             variant="contained"
                             size="small"
                             color="primary"
-                            disabled={loading}
-                            onClick={() => handleGenerateMasterPdf(exam.id.toString(), "SOCIALES")}
+                            disabled={actionLoading === 'masterPdf'}
+                            onClick={() => handleGenerateMasterPdf(exam.id.toString(), "UNICA")}
                           >
-                            {loading ? "Generando..." : "Master"}
+                            {actionLoading === 'masterPdf' ? <CircularProgress size={16} /> : "Master"}
+                          </Button>
+                        </Tooltip>
+
+                        {/* Botón Generar Variaciones */}
+                        <Tooltip title="Generar Variaciones">
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="success"
+                            disabled={actionLoading === 'generateVariations'}
+                            onClick={() => handleGenerateVariations(exam.id.toString())}
+                          >
+                            {actionLoading === 'generateVariations' ? <CircularProgress size={16} /> : "Generar temas"}
+                          </Button>
+                        </Tooltip>
+
+                        {/* Botón Descargar Temas */}
+                        <Tooltip title="Descargar Temas">
+                          <Button
+                            variant="contained"
+                            size="small"
+                            color="warning"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => handleThemesClick(exam)}
+                          >
+                            Temas
                           </Button>
                         </Tooltip>
                       </Box>
-
                     </Box>
                   </TableCell>
-
                 </TableRow>
               ))}
             </TableBody>
@@ -462,6 +569,64 @@ const List = forwardRef<ListRef>((_, ref) => {
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={handleViewClose}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog para descargar temas */}
+      <Dialog
+        open={themesDialog.open}
+        onClose={handleThemesClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          Descargar Temas - {themesDialog.exam?.description}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Selecciona el tema que deseas visualizar. Cada tema se abrirá en una nueva ventana.
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {['A', 'B', 'C', 'D'].map((theme) => (
+              <Button
+                key={theme}
+                variant="contained"
+                fullWidth
+                size="large"
+                color="primary"
+                disabled={actionLoading === `downloadVariation-${theme}`}
+                onClick={() => {
+                  if (themesDialog.exam) {
+                    handleDownloadVariation(
+                      themesDialog.exam.id.toString(),
+                      "UNICA",
+                      theme
+                    );
+                  }
+                }}
+                startIcon={
+                  actionLoading === `downloadVariation-${theme}` ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <DownloadIcon />
+                  )
+                }
+                sx={{
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                }}
+              >
+                {actionLoading === `downloadVariation-${theme}` ? 'Abriendo...' : `Abrir Tema ${theme}`}
+              </Button>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleThemesClose} variant="outlined">
+            Cerrar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
