@@ -26,37 +26,35 @@ import {
     MenuItem,
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon, FilterList as FilterIcon } from "@mui/icons-material";
-import { GetMatrixRequirements } from "../../../../application/matrix/GetMatrixRequirements";
-import { DeleteMatrixRequirement } from "../../../../application/matrix/DeleteMatrixRequirement";
-import type { MatrixRequirement } from "../../../../models/MatrixRequirement";
-import MatrixRequirementForm from "./Form";
+import { GetExamRequirements } from "../../../../application/exam/GetExamRequirements";
+import { DeleteExamRequirement } from "../../../../application/exam/DeleteExamRequirement";
+import type { ExamRequirement } from "../../../../models/ExamRequirement";
+import ExamRequirementForm from "./Form";
 
-export default function MatrixRequirementsList() {
+export default function ExamRequirementsList() {
     const navigate = useNavigate();
-    const { matrixId } = useParams<{ matrixId: string }>();
-    const [rows, setRows] = useState<MatrixRequirement[]>([]);
-    const [filteredRows, setFilteredRows] = useState<MatrixRequirement[]>([]);
+    const { examId } = useParams<{ examId: string }>();
+    const [rows, setRows] = useState<ExamRequirement[]>([]);
+    const [filteredRows, setFilteredRows] = useState<ExamRequirement[]>([]);
     const [loading, setLoading] = useState(true);
-    const [matrixName, setMatrixName] = useState("");
+    const [examName, setExamName] = useState("");
     const [selectedArea, setSelectedArea] = useState<string>("all");
     const [editDialog, setEditDialog] = useState<{
         open: boolean;
-        matrixRequirement: MatrixRequirement | null;
-    }>({ open: false, matrixRequirement: null });
+        examRequirement: ExamRequirement | null;
+    }>({ open: false, examRequirement: null });
 
     const load = async (id: string, area?: string) => {
         setLoading(true);
         try {
-            const data = await GetMatrixRequirements(id, area);
+            const data = await GetExamRequirements(id, area);
             
             // Ordenar por parent_id para mostrar padres primero, luego hijos
             const sortedData = data.sort((a, b) => {
-                // Si ambos son raíz o ambos tienen padre, mantener orden original
                 if ((a.parent_id === null && b.parent_id === null) || 
                     (a.parent_id !== null && b.parent_id !== null)) {
                     return (a.id || 0) - (b.id || 0);
                 }
-                // Los que no tienen padre (raíz) van primero
                 if (a.parent_id === null) return -1;
                 if (b.parent_id === null) return 1;
                 return 0;
@@ -65,29 +63,39 @@ export default function MatrixRequirementsList() {
             setRows(sortedData);
             setFilteredRows(sortedData);
 
-            // Obtener el nombre de la matriz desde el primer requerimiento (si existe)
-            if (data.length > 0 && data[0].matrix) {
-                setMatrixName(data[0].matrix.year || "Matriz");
+            // Obtener el nombre del examen desde el primer requerimiento (si existe)
+            if (data.length > 0 && data[0].exam) {
+                setExamName(data[0].exam.description || "Examen");
             }
         } catch (err) {
-            console.error("Error loading matrix requirements:", err);
+            console.error("Error loading exam requirements:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (matrixId) {
-            load(matrixId);
+        if (examId) {
+            load(examId);
         }
-    }, [matrixId]);
+    }, [examId]);
 
-    // Filtrar por área
+    // Filtrar por área manteniendo el orden
     useEffect(() => {
         if (selectedArea === "all") {
             setFilteredRows(rows);
         } else {
-            setFilteredRows(rows.filter(row => row.area === selectedArea));
+            const filtered = rows.filter(row => row.area === selectedArea);
+            const sorted = filtered.sort((a, b) => {
+                if ((a.parent_id === null && b.parent_id === null) || 
+                    (a.parent_id !== null && b.parent_id !== null)) {
+                    return (a.id || 0) - (b.id || 0);
+                }
+                if (a.parent_id === null) return -1;
+                if (b.parent_id === null) return 1;
+                return 0;
+            });
+            setFilteredRows(sorted);
         }
     }, [selectedArea, rows]);
 
@@ -95,7 +103,7 @@ export default function MatrixRequirementsList() {
         if (!id) return;
         if (!confirm("¿Está seguro de eliminar este requerimiento?")) return;
         try {
-            await DeleteMatrixRequirement(id);
+            await DeleteExamRequirement(id);
             setRows(rows.filter((r) => r.id !== id));
         } catch (err) {
             console.error(err);
@@ -103,23 +111,41 @@ export default function MatrixRequirementsList() {
         }
     };
 
-    const handleEditClick = (matrixRequirement: MatrixRequirement) => {
-        setEditDialog({ open: true, matrixRequirement });
+    const handleEditClick = (examRequirement: ExamRequirement) => {
+        setEditDialog({ open: true, examRequirement });
     };
 
     const handleEditClose = () => {
-        setEditDialog({ open: false, matrixRequirement: null });
+        setEditDialog({ open: false, examRequirement: null });
     };
 
     const handleEditSuccess = async () => {
-        if (matrixId) {
-            await load(matrixId);
+        if (examId) {
+            await load(examId);
         }
         handleEditClose();
     };
 
     const handleBack = () => {
-        navigate("/matrices");
+        navigate("/exams");
+    };
+
+    const getDifficultyLabel = (difficulty: string) => {
+        switch (difficulty) {
+            case 'EASY': return 'Fácil';
+            case 'NORMAL': return 'NORMAL';
+            case 'HARD': return 'Difícil';
+            default: return difficulty;
+        }
+    };
+
+    const getDifficultyColor = (difficulty: string) => {
+        switch (difficulty) {
+            case 'EASY': return 'success';
+            case 'NORMAL': return 'warning';
+            case 'HARD': return 'error';
+            default: return 'default';
+        }
     };
 
     const getAreaColor = (area: string) => {
@@ -138,13 +164,13 @@ export default function MatrixRequirementsList() {
             <Breadcrumbs sx={{ mb: 2 }}>
                 <Link color="inherit" onClick={handleBack} sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
                     <ArrowBackIcon sx={{ mr: 0.5, fontSize: 20 }} />
-                    Matrices
+                    Exámenes
                 </Link>
-                <Typography color="text.primary">Requerimientos {matrixName && `- ${matrixName}`}</Typography>
+                <Typography color="text.primary">Requerimientos {examName && `- ${examName}`}</Typography>
             </Breadcrumbs>
 
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                <Typography variant="h4">📋 Requerimientos {matrixName && `- ${matrixName}`}</Typography>
+                <Typography variant="h4">📋 Requerimientos {examName && `- ${examName}`}</Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
                     <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`new`)}>
                         Agregar Requerimiento
@@ -160,8 +186,7 @@ export default function MatrixRequirementsList() {
                     </Button>
                     <Button variant="contained" onClick={() => navigate(`tree`)}>
                         Ver Árbol
-                    </Button>
-*/}
+                    </Button>*/}
                 </Box>
             </Box>
 
@@ -201,6 +226,7 @@ export default function MatrixRequirementsList() {
                                 <TableCell>ID</TableCell>
                                 <TableCell>Área</TableCell>
                                 <TableCell>Bloque</TableCell>
+                                <TableCell>Dificultad</TableCell>
                                 <TableCell>N° Preguntas</TableCell>
                                 <TableCell>Padre</TableCell>
                                 <TableCell align="right">Acciones</TableCell>
@@ -222,7 +248,7 @@ export default function MatrixRequirementsList() {
                                         {row.block ? (
                                             <Box>
                                                 <Typography variant="body2" fontWeight="bold">
-                                                    {row.parent_id && "↳ "} {/* Indica que es hijo */}
+                                                    {row.parent_id && "↳ "}
                                                     {row.block.name}
                                                 </Typography>
                                                 {row.block.code && (
@@ -232,6 +258,13 @@ export default function MatrixRequirementsList() {
                                                 )}
                                             </Box>
                                         ) : "N/A"}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={getDifficultyLabel(row.difficulty)}
+                                            color={getDifficultyColor(row.difficulty) as any}
+                                            size="small"
+                                        />
                                     </TableCell>
                                     <TableCell>{row.n_questions}</TableCell>
                                     <TableCell>
@@ -265,10 +298,10 @@ export default function MatrixRequirementsList() {
             <Dialog open={editDialog.open} onClose={handleEditClose} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 600 }}>Editar Requerimiento</DialogTitle>
                 <DialogContent>
-                    {editDialog.matrixRequirement && (
-                        <MatrixRequirementForm
-                            initialId={editDialog.matrixRequirement.id?.toString()}
-                            initialMatrixId={matrixId}
+                    {editDialog.examRequirement && (
+                        <ExamRequirementForm
+                            initialId={editDialog.examRequirement.id?.toString()}
+                            initialExamId={examId}
                             onSuccess={handleEditSuccess}
                         />
                     )}

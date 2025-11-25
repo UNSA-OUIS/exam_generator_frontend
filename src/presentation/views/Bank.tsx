@@ -153,6 +153,18 @@ const Bank = () => {
       default: return 'default';
     }
   };
+  const translateDifficulty = (difficulty: string) => {
+    const map: Record<string, string> = {
+      easy: "FÁCIL",
+      normal: "MEDIO",
+      hard: "DIFÍCIL",
+      EASY: "FÁCIL",
+      MEDIUM: "MEDIO",
+      HARD: "DIFÍCIL",
+    };
+
+    return map[difficulty] || difficulty;
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -372,14 +384,13 @@ const Bank = () => {
                       </Typography>
                     </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        label={question.difficulty}
-                        color={getDifficultyColor(question.difficulty)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
+                    <Chip
+                      label={translateDifficulty(question.difficulty)}
+                      color={getDifficultyColor(question.difficulty)}
+                      size="small"
+                      variant="outlined"
+                    />
+
 
                     <TableCell>
                       <Chip

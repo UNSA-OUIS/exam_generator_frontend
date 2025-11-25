@@ -1,4 +1,3 @@
-// infrastructure/api/ExamRequirementApi.ts
 import axiosClient from "../lib/axiosClient";
 import type { ExamRequirement } from "../../models/ExamRequirement";
 

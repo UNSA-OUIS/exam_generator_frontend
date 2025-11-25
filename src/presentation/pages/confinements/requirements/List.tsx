@@ -47,23 +47,19 @@ export default function RequirementsList() {
         // Función recursiva para agregar un nodo y sus hijos
         const addNodeAndChildren = (parentId: number | null, level: number = 0) => {
             // Buscar todos los nodos con este parent_id
-            const children = requirements.filter(req => 
-                req.parent_id === parentId && 
-                req.id !== undefined && 
-                !processedIds.has(req.id)
-            );
+            const children = requirements.filter((req) => req.parent_id === parentId && req.id !== undefined && !processedIds.has(req.id));
 
             // Ordenar hijos por ID para mantener consistencia
             children.sort((a, b) => (a.id || 0) - (b.id || 0));
 
             // Agregar cada hijo y sus descendientes
-            children.forEach(child => {
+            children.forEach((child) => {
                 if (child.id !== undefined) {
                     processedIds.add(child.id);
                     // Agregar una propiedad temporal para el nivel
                     (child as any).treeLevel = level;
                     result.push(child);
-                    
+
                     // Recursivamente agregar los hijos de este nodo
                     addNodeAndChildren(child.id, level + 1);
                 }
@@ -80,7 +76,7 @@ export default function RequirementsList() {
         setLoading(true);
         try {
             const data = await GetConfinementBlocks(id);
-            
+
             // Ordenar los datos como árbol
             const sortedData = sortAsTree(data);
             setRows(sortedData);
@@ -137,19 +133,27 @@ export default function RequirementsList() {
 
     const getDifficultyLabel = (difficulty: string) => {
         switch (difficulty) {
-            case 'easy': return 'Fácil';
-            case 'medium': return 'Medio';
-            case 'hard': return 'Difícil';
-            default: return difficulty;
+            case "easy":
+                return "Fácil";
+            case "medium":
+                return "NORMAL";
+            case "hard":
+                return "Difícil";
+            default:
+                return difficulty;
         }
     };
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
-            case 'easy': return 'success';
-            case 'medium': return 'warning';
-            case 'hard': return 'error';
-            default: return 'default';
+            case "easy":
+                return "success";
+            case "medium":
+                return "warning";
+            case "hard":
+                return "error";
+            default:
+                return "default";
         }
     };
 
@@ -168,15 +172,10 @@ export default function RequirementsList() {
                 <Typography variant="h4">📋 Requerimientos {confinementName && `- ${confinementName}`}</Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
                     <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`new`)}>
-                        Agregar Requerimiento
+                        Agregar
                     </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<AddIcon />}
-                        onClick={() => navigate(`tree-creator`)}
-                        sx={{ ml: 1 }}
-                    >
-                        Crear con Árbol
+                    <Button variant="outlined" startIcon={<AddIcon />} onClick={() => navigate(`tree-view`)} sx={{ ml: 1 }}>
+                        Editar con Árbol
                     </Button>
                     {/*<Button variant="contained" onClick={() => navigate(`tree`)}>
                         Ver Árbol
@@ -208,54 +207,47 @@ export default function RequirementsList() {
                                     <TableCell>
                                         {row.block ? (
                                             <Box>
-                                                <Typography 
-                                                    variant="body2" 
+                                                <Typography
+                                                    variant="body2"
                                                     fontWeight="bold"
-                                                    sx={{ 
+                                                    sx={{
                                                         pl: ((row as any).treeLevel || 0) * 3,
-                                                        display: 'flex',
-                                                        alignItems: 'center'
-                                                    }}
-                                                >
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                    }}>
                                                     {(row as any).treeLevel > 0 && (
-                                                        <span style={{ 
-                                                            marginRight: '8px', 
-                                                            color: '#999',
-                                                            fontWeight: 'normal'
-                                                        }}>
-                                                            {'└─ '.repeat((row as any).treeLevel)}
+                                                        <span
+                                                            style={{
+                                                                marginRight: "8px",
+                                                                color: "#999",
+                                                                fontWeight: "normal",
+                                                            }}>
+                                                            {"└─ ".repeat((row as any).treeLevel)}
                                                         </span>
                                                     )}
                                                     {row.block.name}
                                                 </Typography>
                                                 {row.block.code && (
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        color="text.secondary"
-                                                        sx={{ pl: ((row as any).treeLevel || 0) * 3 }}
-                                                    >
+                                                    <Typography variant="caption" color="text.secondary" sx={{ pl: ((row as any).treeLevel || 0) * 3 }}>
                                                         Código: {row.block.code}
                                                     </Typography>
                                                 )}
                                             </Box>
-                                        ) : <Typography variant="body2" 
-                                                    fontWeight="bold">Requerimientos</Typography>}
+                                        ) : (
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Total Requerido
+                                            </Typography>
+                                        )}
                                     </TableCell>
                                     <TableCell>
-                                        <Chip
-                                            label={getDifficultyLabel(row.difficulty)}
-                                            color={getDifficultyColor(row.difficulty) as any}
-                                            size="small"
-                                        />
+                                        <Chip label={getDifficultyLabel(row.difficulty)} color={getDifficultyColor(row.difficulty) as any} size="small" />
                                     </TableCell>
                                     <TableCell>{row.n_questions}</TableCell>
                                     <TableCell>
                                         {row.parent_id ? (
                                             <Typography variant="body2">
                                                 ID: {row.parent_id}
-                                                {rows.find(r => r.id === row.parent_id)?.block?.name &&
-                                                    ` (${rows.find(r => r.id === row.parent_id)?.block?.name})`
-                                                }
+                                                {rows.find((r) => r.id === row.parent_id)?.block?.name && ` (${rows.find((r) => r.id === row.parent_id)?.block?.name})`}
                                             </Typography>
                                         ) : (
                                             <Chip label="Raíz" size="small" color="primary" variant="outlined" />
@@ -280,13 +272,7 @@ export default function RequirementsList() {
             <Dialog open={editDialog.open} onClose={handleEditClose} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 600 }}>Editar Requerimiento</DialogTitle>
                 <DialogContent>
-                    {editDialog.confinementRequirement && (
-                        <Form
-                            initialId={editDialog.confinementRequirement.id?.toString()}
-                            initialConfinementId={confinementId}
-                            onSuccess={handleEditSuccess}
-                        />
-                    )}
+                    {editDialog.confinementRequirement && <Form initialId={editDialog.confinementRequirement.id?.toString()} initialConfinementId={confinementId} onSuccess={handleEditSuccess} />}
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
                     <Button onClick={handleEditClose}>Cancelar</Button>

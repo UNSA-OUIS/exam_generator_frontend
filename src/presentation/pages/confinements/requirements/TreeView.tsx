@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import {
-    Container,
     Typography,
     Button,
     Box,
+    Container,
     Paper,
     Dialog,
     DialogTitle,
@@ -24,388 +24,23 @@ import {
     FormLabel,
     Card,
     CardContent,
-    Chip,
     Menu,
     MenuItem as MuiMenuItem,
     useTheme,
     useMediaQuery,
 } from "@mui/material";
-import * as d3 from "d3";
 
 import { CreateConfinementBlock } from "../../../../application/confinement/CreateConfinementRequirements";
 import { UpdateConfinementBlock } from "../../../../application/confinement/UpdateConfinementRequirements";
 import { DeleteConfinementBlock } from "../../../../application/confinement/DeleteConfinementRequirements";
 import { GetBlocks } from "../../../../application/block/GetBlocks";
 import { ConfinementRequirementApi } from "../../../../infrastructure/api/ConfinementRequirementApi";
+import buildConfinementTree from "./buildConfinementTree";
+import type { Block } from "./types";
+import type { NodeData } from "./d3-tree/types";
+import D3Tree from "./d3-tree/D3Tree";
 
-export interface Block {
-    id: number;
-    level_id: number;
-    code: string;
-    name: string;
-    parent_block_id: number | null;
-    created_at: string;
-    updated_at: string;
-    level?: Level;
-    parentBlock?: Block;
-    has_text: boolean;
-}
-
-export interface Level {
-    id: number;
-    stage: number;
-    name: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface ConfinementRequirement {
-    id?: number;
-    confinement_id: string;
-    block_id?: number;
-    difficulty: "EASY" | "NORMAL" | "HARD" | string;
-    n_questions: number;
-    parent_id?: number;
-    created_at?: string;
-    updated_at?: string;
-    block?: Block;
-    confinement?: any;
-    parent?: ConfinementRequirement;
-    children?: ConfinementRequirement[];
-}
-
-/** ---------- NodeData (para D3) ---------- */
-type Condition = "COMPLETE" | "INCOMPLETE" | "INVALID";
-interface NodeData {
-    id: number;
-    block: Block | null;
-    n_questions: number;
-    condition: Condition;
-    difficulty: "EASY" | "NORMAL" | "HARD" | null;
-    children: NodeData[];
-    parent_id?: number | null;
-    total_questions_required?: number;
-}
-
-function buildConfinementTree(requirements: ConfinementRequirement[]): NodeData {
-    const map: Record<number, NodeData> = {};
-
-    requirements.forEach((r) => {
-        if (typeof r.id !== "number") return;
-        map[r.id] = {
-            id: r.id,
-            block: r.block ?? null,
-            n_questions: r.n_questions,
-            condition: "INCOMPLETE",
-            difficulty: (r.difficulty as NodeData["difficulty"]) ?? null,
-            children: [],
-            parent_id: r.parent_id ?? null,
-        };
-    });
-
-    const roots: NodeData[] = [];
-
-    requirements.forEach((r) => {
-        if (typeof r.id !== "number") return;
-        const node = map[r.id];
-        if (r.parent_id && map[r.parent_id]) {
-            map[r.parent_id].children.push(node);
-        } else {
-            roots.push(node);
-        }
-    });
-
-    const calcTotal = (n: NodeData): number => (n.children.length === 0 ? n.n_questions : n.children.reduce((s, c) => s + calcTotal(c), 0));
-
-    const addTotals = (n: NodeData): NodeData => ({
-        ...n,
-        total_questions_required: calcTotal(n),
-        children: n.children.map(addTotals),
-    });
-
-    let rootNode: NodeData;
-    if (roots.length === 1) rootNode = roots[0];
-    else
-        rootNode = {
-            id: 0,
-            block: null,
-            n_questions: roots.reduce((s, r) => s + r.n_questions, 0),
-            condition: "INCOMPLETE",
-            difficulty: null,
-            children: roots,
-        };
-
-    return addTotals(rootNode);
-}
-
-function Tree({ data, onNodeClick, onNodeContext }: { data: NodeData; onNodeClick: (node: NodeData) => void; onNodeContext: (node: NodeData, clientX: number, clientY: number) => void }) {
-    const svgRef = useRef<SVGSVGElement | null>(null);
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-    const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
-
-    // Actualizar dimensiones cuando cambia el tamaño de la ventana
-    useEffect(() => {
-        const updateDimensions = () => {
-            if (containerRef.current) {
-                const { clientWidth, clientHeight } = containerRef.current;
-                setDimensions({
-                    width: Math.max(clientWidth, 400), // Mínimo 400px de ancho
-                    height: Math.max(clientHeight, 300), // Mínimo 300px de alto
-                });
-            }
-        };
-
-        updateDimensions();
-        window.addEventListener("resize", updateDimensions);
-
-        return () => {
-            window.removeEventListener("resize", updateDimensions);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!data || !svgRef.current) return;
-
-        const svg = d3.select(svgRef.current);
-        svg.selectAll("*").remove();
-
-        const g = svg.append("g");
-
-        // Configuración de zoom responsiva
-        const zoomBehavior = d3
-            .zoom<SVGSVGElement, unknown>()
-            .scaleExtent([0.1, 5])
-            .on("zoom", (event) => g.attr("transform", event.transform));
-
-        svg.call(zoomBehavior);
-
-        const tooltip = d3
-            .select("body")
-            .append("div")
-            .style("position", "absolute")
-            .style("background", "rgba(0,0,0,0.85)")
-            .style("color", "#fff")
-            .style("padding", "8px 12px")
-            .style("border-radius", "6px")
-            .style("pointer-events", "none")
-            .style("font-size", isMobile ? "11px" : "12px")
-            .style("opacity", 0)
-            .style("z-index", "9999")
-            .style("max-width", "250px")
-            .style("word-wrap", "break-word");
-
-        const root = d3.hierarchy<NodeData>(data);
-
-        // Configuración responsiva de tamaños de nodo
-        let nodeRadius, nodeSizeX, nodeSizeY, fontSize, difficultySize;
-
-        if (isMobile) {
-            nodeRadius = 14;
-            nodeSizeX = 60;
-            nodeSizeY = 80;
-            fontSize = "10px";
-            difficultySize = 8;
-        } else if (isTablet) {
-            nodeRadius = 20;
-            nodeSizeX = 80;
-            nodeSizeY = 100;
-            fontSize = "11px";
-            difficultySize = 10;
-        } else {
-            nodeRadius = 28;
-            nodeSizeX = 100;
-            nodeSizeY = 130;
-            fontSize = "12px";
-            difficultySize = 12;
-        }
-
-        // Ajustar según la profundidad del árbol
-        const tempLayout = d3.tree<NodeData>().nodeSize([nodeSizeX, nodeSizeY]);
-        const tempRoot = tempLayout(root);
-        const depth = tempRoot.height;
-
-        if (depth > 6) {
-            // Reducir más para árboles muy profundos
-            const scale = isMobile ? 0.7 : isTablet ? 0.8 : 0.9;
-            nodeRadius *= scale;
-            nodeSizeX *= scale;
-            nodeSizeY *= scale;
-        }
-
-        const layout = d3.tree<NodeData>().nodeSize([nodeSizeX, nodeSizeY]);
-        const treeRoot = layout(root);
-
-        // Calcular bounds para el viewBox dinámico
-        let x0 = Infinity,
-            x1 = -Infinity,
-            y0 = Infinity,
-            y1 = -Infinity;
-
-        treeRoot.each((d) => {
-            if (d.x < x0) x0 = d.x;
-            if (d.x > x1) x1 = d.x;
-            if (d.y < y0) y0 = d.y;
-            if (d.y > y1) y1 = d.y;
-        });
-
-        // Agregar márgenes
-        const margin = isMobile ? 40 : 60;
-        const width = x1 - x0 + margin * 2;
-        const height = y1 - y0 + margin * 2;
-
-        // Centrar el árbol
-        g.attr("transform", `translate(${margin - x0},${margin - y0})`);
-
-        const linkGen = d3
-            .linkVertical<any, any>()
-            .x((d: any) => d.x)
-            .y((d: any) => d.y);
-
-        // Dibujar enlaces
-        g.selectAll("path.link")
-            .data(treeRoot.links())
-            .join("path")
-            .attr("class", "link")
-            .attr("fill", "none")
-            .attr("stroke", "#bbb")
-            .attr("stroke-width", isMobile ? 1 : 1.2)
-            .attr("d", (d: any) => linkGen(d));
-
-        // Dibujar nodos
-        const node = g
-            .selectAll("g.node")
-            .data(treeRoot.descendants())
-            .join("g")
-            .attr("class", "node")
-            .attr("transform", (d: any) => `translate(${d.x},${d.y})`)
-            .attr("cursor", "pointer")
-            .on("click", (_, d: any) => onNodeClick(d.data))
-            .on("contextmenu", (event: any, d: any) => {
-                event.preventDefault();
-                onNodeContext(d.data, event.clientX, event.clientY);
-            })
-            .on("mouseover", (event: any, d: any) => {
-                const nd: NodeData = d.data;
-                let html = `<strong>${nd.block?.name ?? "Total"}</strong><br/>Preguntas: ${nd.n_questions}`;
-                if (nd.difficulty) html += ` | Dificultad: ${nd.difficulty}`;
-                if (nd.block) html += ` | Código: ${nd.block.code} | Nivel: ${nd.block.level_id}`;
-                tooltip
-                    .style("opacity", 1)
-                    .html(html)
-                    .style("left", `${event.pageX + 10}px`)
-                    .style("top", `${event.pageY - 28}px`);
-            })
-            .on("mousemove", (event: any) => tooltip.style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`))
-            .on("mouseout", () => tooltip.style("opacity", 0));
-
-        // Círculo del nodo
-        node.append("circle")
-            .attr("r", nodeRadius)
-            .attr("fill", (d: any) => {
-                if (!d.data.block) return "#e5e7eb";
-                if (!d.data.difficulty) {
-                    const level = d.data.block.level_id;
-                    if (level === 1) return "#3b82f6";
-                    if (level === 2) return "#8b5cf6";
-                    if (level === 3) return "#ec4899";
-                    return "#6b7280";
-                }
-                return "#fbbf24";
-            })
-            .attr("stroke", "#333")
-            .attr("stroke-width", isMobile ? 1 : 1.5);
-
-        // Texto del número de preguntas
-        node.append("text")
-            .attr("dy", nodeRadius / 4)
-            .attr("text-anchor", "middle")
-            .style("font-size", fontSize)
-            .style("font-weight", "700")
-            .attr("fill", "#111")
-            .text((d: any) => d.data.n_questions);
-
-        // Texto del código
-        node.append("text")
-            .attr("dy", nodeRadius + (isMobile ? 8 : 12))
-            .attr("text-anchor", "middle")
-            .style("font-size", isMobile ? "9px" : "11px")
-            .style("fill", "#374151")
-            .text((d: any) => {
-                if (!d.data.block) return "(root)";
-                const code = d.data.block.code ?? "";
-                // Acortar código si es muy largo en móvil
-                return isMobile && code.length > 8 ? code.substring(0, 6) + "..." : code;
-            });
-
-        // Indicador de dificultad
-        node.filter((d: any) => !!d.data.difficulty)
-            .append("g")
-            .attr("transform", `translate(${-Math.round(nodeRadius * 0.65)},${-Math.round(nodeRadius * 0.6)})`)
-            .call((g: any) => {
-                g.append("rect")
-                    .attr("x", -Math.round(nodeRadius * 0.35))
-                    .attr("y", -Math.round(nodeRadius * 0.45))
-                    .attr("width", Math.round(nodeRadius * 0.7))
-                    .attr("height", Math.round(nodeRadius * 0.7))
-                    .attr("rx", 3)
-                    .attr("fill", "#fff")
-                    .attr("stroke", "#333")
-                    .attr("stroke-width", 0.5)
-                    .attr("opacity", 0.95);
-                g.append("text")
-                    .attr("text-anchor", "middle")
-                    .attr("x", 0)
-                    .attr("y", Math.round(nodeRadius * 0.12))
-                    .style("font-size", `${difficultySize}px`)
-                    .style("font-weight", "700")
-                    .text((d: any) => (d.data.difficulty ? d.data.difficulty.charAt(0) : ""));
-            });
-
-        // Ajustar viewBox y aplicar zoom inicial
-        svg.attr("viewBox", `0 0 ${width} ${height}`);
-
-        // Zoom inicial responsivo
-        const initialScale = isMobile ? 0.8 : isTablet ? 1.2 : 1.5;
-        const initialX = width / 2;
-        const initialY = height / 3;
-
-        svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(initialX, initialY).scale(initialScale));
-
-        return () => {
-            tooltip.remove();
-        };
-    }, [data, onNodeClick, onNodeContext, dimensions, isMobile, isTablet]);
-
-    return (
-        <div
-            ref={containerRef}
-            style={{
-                width: "100%",
-                height: "70vh",
-                minHeight: "400px",
-                overflow: "auto",
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                backgroundColor: "#fafafa",
-            }}>
-            <svg
-                ref={svgRef}
-                width="100%"
-                height="100%"
-                style={{
-                    minWidth: "400px",
-                    minHeight: "300px",
-                }}
-            />
-        </div>
-    );
-}
-
-export default function TreeCreator() {
-    const navigate = useNavigate();
+export default function TreeView() {
     const { confinementId } = useParams<{ confinementId: string }>();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -431,7 +66,10 @@ export default function TreeCreator() {
     const [successOpen, setSuccessOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    console.log("TreeView render", { treeData, modalOpen, selectedNode });
+
     useEffect(() => {
+        if (!confinementId) return;
         const load = async () => {
             try {
                 setLoading(true);
@@ -470,7 +108,9 @@ export default function TreeCreator() {
         return selectedNode.children.some((c) => c.block?.code === code && c.difficulty === difficulty);
     };
 
-    const handleNodeClick = (node: NodeData) => {
+    const handleNodeClick = useCallback((node: NodeData) => {
+        console.log("handleNodeClick called");
+
         const used = node.children.reduce((s, c) => s + c.n_questions, 0);
         const remaining = node.n_questions - used;
 
@@ -488,10 +128,14 @@ export default function TreeCreator() {
         setSelectedDifficulty("NORMAL");
         setNQuestions(remaining);
         setModalOpen(true);
-    };
+    }, []);
 
-    const handleNodeContext = (node: NodeData, mouseX: number, mouseY: number) => {
-        setContextAnchor({ mouseX, mouseY, node });
+    const handleNodeContext = (node: NodeData, event: MouseEvent) => {
+        setContextAnchor({
+            mouseX: event.pageX,
+            mouseY: event.pageY,
+            node,
+        });
     };
     const closeContext = () => setContextAnchor(null);
 
@@ -611,52 +255,22 @@ export default function TreeCreator() {
         }
     };
 
-    if (loading || !treeData) {
-        return (
-            <Container sx={{ py: 6, display: "flex", justifyContent: "center" }}>
-                <CircularProgress />
-            </Container>
-        );
-    }
-
     return (
-        <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>
-            <Card sx={{ mb: 2 }}>
-                <CardContent sx={{ p: isMobile ? 1 : 2 }}>
-                    <Typography variant={isMobile ? "h5" : "h4"}>🌳 Crear Requerimientos - Vista de Árbol</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Haz clic en un nodo para agregar hijos. Click derecho para editar / eliminar.
-                    </Typography>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            gap: 1,
-                            mt: 1,
-                            flexWrap: "wrap",
-                        }}>
-                        <Chip label="Raíz → Bloques nivel 1" size={isMobile ? "small" : "medium"} />
-                        <Chip label="Bloque → Dificultad o Bloque" size={isMobile ? "small" : "medium"} />
-                        <Chip label="Hijos ≤ preguntas padre" size={isMobile ? "small" : "medium"} />
-                    </Box>
+        <div>
+            <Card>
+                <CardContent sx={{ p: 1 }}>
+                    <Typography variant={"h5"}>🌳 Requerimientos Internamiento</Typography>
                 </CardContent>
             </Card>
 
             <Paper sx={{ p: isMobile ? 1 : 2, mb: 2 }}>
-                <Box
-                    sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 2,
-                        flexDirection: isMobile ? "column" : "row",
-                        gap: isMobile ? 1 : 0,
-                    }}>
-                    <Typography variant={isMobile ? "h6" : "h5"}>Estructura del Árbol</Typography>
-                    <Button variant="outlined" onClick={() => navigate(-1)} size={isMobile ? "small" : "medium"}>
-                        Volver
-                    </Button>
-                </Box>
+                {loading && (
+                    <Container sx={{ display: "flex", justifyContent: "center" }}>
+                        <CircularProgress />
+                    </Container>
+                )}
 
-                <Tree data={treeData} onNodeClick={handleNodeClick} onNodeContext={handleNodeContext} />
+                {treeData && <D3Tree data={treeData} onNodeClick={handleNodeClick} onNodeContext={handleNodeContext} />}
             </Paper>
 
             {/* Modal crear */}
@@ -770,8 +384,14 @@ export default function TreeCreator() {
                 open={Boolean(contextAnchor)}
                 onClose={closeContext}
                 anchorReference="anchorPosition"
-                anchorPosition={contextAnchor ? { top: contextAnchor.mouseY, left: contextAnchor.mouseX } : undefined}>
-                <MuiMenuItem onClick={() => contextAnchor && openEdit(contextAnchor.node)}>Editar preguntas</MuiMenuItem>
+                anchorPosition={contextAnchor ? { top: contextAnchor.mouseY, left: contextAnchor.mouseX } : undefined}
+                disableAutoFocus
+                disableEnforceFocus
+                disableRestoreFocus
+                disableScrollLock
+                disablePortal
+                transitionDuration={0}>
+                <MuiMenuItem onClick={() => contextAnchor && openEdit(contextAnchor.node)}>Editar</MuiMenuItem>
                 <MuiMenuItem onClick={() => contextAnchor && handleDelete(contextAnchor.node)}>Eliminar</MuiMenuItem>
             </Menu>
 
@@ -782,6 +402,6 @@ export default function TreeCreator() {
             <Snackbar open={Boolean(errorMessage)} autoHideDuration={6000} onClose={() => setErrorMessage(null)} anchorOrigin={{ vertical: isMobile ? "bottom" : "top", horizontal: "center" }}>
                 <Alert severity="error">{errorMessage}</Alert>
             </Snackbar>
-        </Container>
+        </div>
     );
 }

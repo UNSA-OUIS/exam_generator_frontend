@@ -21,7 +21,11 @@ import Exam from "./views/Exam";
 import Bank from "./views/Bank";
 import QuestionImport from "./views/QuestionImport";
 import TreePage from "./pages/confinements/requirements/TreePage";
-import TreeCreator from "./pages/confinements/requirements/TreeCreator"; // Importa el nuevo componente
+import TreeCreator from "./pages/confinements/requirements/TreeCreator";
+import ExamRequirementsList from "./pages/exams/requirements/List";
+import ExamRequirementForm from "./pages/exams/requirements/Form";
+import TreeLayout from "./layouts/TreeLayout";
+import TreeView from "./pages/confinements/requirements/TreeView";
 
 function App() {
     return (
@@ -48,10 +52,15 @@ function App() {
                         <Route path="/confinements/:id/texts/edit/:textId" element={<ConfinementTextForm mode="edit" />} />
                         <Route path="matrices/:matrixId/details" element={<MatrixDetailsList />} />
                         <Route path="matrices/:matrixId/details/new" element={<MatrixDetailForm />} />
+                        <Route path="/exams/:examId/requirements" element={<ExamRequirementsList />} />
+                        <Route path="/exams/:examId/requirements/new" element={<ExamRequirementForm />} />
                         <Route path="/collaborators" element={<Collaborator />} />
                         <Route path="/exams" element={<Exam />} />
                         <Route path="/bank" element={<Bank />} />
                         <Route path="/question-import" element={<QuestionImport />} />
+                    </Route>
+                    <Route element={<TreeLayout />}>
+                        <Route path="/confinements/:confinementId/requirements/tree-view" element={<TreeView />} />
                     </Route>
                 </Routes>
             </BrowserRouter>

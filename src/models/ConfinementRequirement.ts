@@ -23,7 +23,7 @@ export interface ConfinementRequirement {
   id?: number;
   confinement_id: string; // Uuid
   block_id?: number;
-  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL' | string;
+  difficulty: 'EASY' | 'NORMAL' | 'HARD' | string;
   n_questions: number;
   parent_id?: number;
   created_at?: string;

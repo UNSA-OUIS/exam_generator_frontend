@@ -2,7 +2,8 @@ import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Matrix } from "../../../models/Matrix";
 import type { Modality } from "../../../models/Modality";
-import { getMatrices, deleteMatrix } from "../../../infrastructure/api/MatrixApi";
+import { GetMatrices } from "../../../application/matrix/GetMatrices";
+import { DeleteMatrix } from "../../../application/matrix/DeleteMatrix";
 import { GetModalities } from "../../../application/modality/GetModalities";
 import {
   Table,
@@ -58,7 +59,7 @@ const List = forwardRef<ListRef>((_, ref) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getMatrices();
+      const data = await GetMatrices();
       setMatrices(data);
     } catch {
       setError("Error al cargar las matrices");
@@ -77,12 +78,15 @@ const List = forwardRef<ListRef>((_, ref) => {
     }
   };
 
- 
+  const handleDeleteClick = (matrix: Matrix) => {
+    setDeleteDialog({ open: true, matrix });
+  };
+
   const handleDeleteConfirm = async () => {
     if (!deleteDialog.matrix) return;
     setDeleting(true);
     try {
-      await deleteMatrix(deleteDialog.matrix.id);
+      await DeleteMatrix(deleteDialog.matrix.id);
       await fetchMatrices();
       setDeleteDialog({ open: false, matrix: null });
       setSuccessMessage("Matriz eliminada correctamente");
@@ -93,10 +97,22 @@ const List = forwardRef<ListRef>((_, ref) => {
     }
   };
 
+  const handleEditClick = (matrix: Matrix) => {
+    setEditDialog({ open: true, matrix });
+  };
+
+  const handleEditClose = () => {
+    setEditDialog({ open: false, matrix: null });
+  };
+
   const handleEditSuccess = async () => {
     await fetchMatrices();
     setEditDialog({ open: false, matrix: null });
     setSuccessMessage("Matriz actualizada correctamente");
+  };
+
+  const handleDetailsClick = (matrix: Matrix) => {
+    navigate(`/matrices/${matrix.id}/details`);
   };
 
   useImperativeHandle(ref, () => ({
@@ -147,12 +163,11 @@ const List = forwardRef<ListRef>((_, ref) => {
         </Box>
       ) : (
         <TableContainer>
-          <Table sx={{ minWidth: 650, }}>
+          <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180, }}>Matriz</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>Matriz</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}>Alternativas</TableCell>
-
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>Creado</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 240 }}>
                   Acciones
@@ -168,46 +183,30 @@ const List = forwardRef<ListRef>((_, ref) => {
                     backgroundColor: index % 2 === 0 ? "transparent" : "grey.25"
                   }}
                 >
-                  <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{getModalityName(matrix.modality_id)} - {matrix.year}</TableCell>
-                  <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{matrix.total_alternatives}</TableCell>
+                  <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                    {getModalityName(matrix.modality_id)} - {matrix.year}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                    {matrix.total_alternatives}
+                  </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                     {new Date(matrix.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell align="center">
                     <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                      {/*<Tooltip title="Ver detalles">
-                        <IconButton size="small" sx={{ color: "info.main", "&:hover": { backgroundColor: "info.lighter" } }}>
-                          <DetailsIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>*/}
-                      <Tooltip title="Agregar detalles">
+                      <Tooltip title="Ver detalles">
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/matrices/${matrix.id}/details`)}
+                          onClick={() => handleDetailsClick(matrix)}
                           sx={{ color: "primary.main", "&:hover": { backgroundColor: "primary.lighter" } }}
                         >
                           <AddIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      {/*}
-                      <Tooltip title="Exportar bloques">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleExport(matrix.id)}
-                          disabled={exporting === matrix.id}
-                          sx={{ color: "success.main", "&:hover": { backgroundColor: "success.lighter" } }}
-                        >
-                          {exporting === matrix.id ? (
-                            <CircularProgress size={20} color="inherit" />
-                          ) : (
-                            <DownloadIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Tooltip>*/}
                       <Tooltip title="Editar matriz">
                         <IconButton
                           size="small"
-                          onClick={() => setEditDialog({ open: true, matrix })}
+                          onClick={() => handleEditClick(matrix)}
                           sx={{ color: "warning.main", "&:hover": { backgroundColor: "warning.lighter" } }}
                         >
                           <EditIcon fontSize="small" />
@@ -216,7 +215,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                       <Tooltip title="Eliminar matriz">
                         <IconButton
                           size="small"
-                          onClick={() => setDeleteDialog({ open: true, matrix })}
+                          onClick={() => handleDeleteClick(matrix)}
                           sx={{ color: "error.main", "&:hover": { backgroundColor: "error.lighter" } }}
                         >
                           <DeleteIcon fontSize="small" />
@@ -232,13 +231,14 @@ const List = forwardRef<ListRef>((_, ref) => {
       )}
 
       {/* Snackbars */}
-      <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity="success" onClose={() => setSuccessMessage(null)} sx={{ width: "100%" }}>
+      <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
+        <Alert severity="success" onClose={() => setSuccessMessage(null)}>
           {successMessage}
         </Alert>
       </Snackbar>
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity="error" onClose={() => setError(null)} sx={{ width: "100%" }}>
+      
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+        <Alert severity="error" onClose={() => setError(null)}>
           {error}
         </Alert>
       </Snackbar>
@@ -268,7 +268,7 @@ const List = forwardRef<ListRef>((_, ref) => {
       </Dialog>
 
       {/* Dialog editar */}
-      <Dialog open={editDialog.open} onClose={() => setEditDialog({ open: false, matrix: null })} maxWidth="md" fullWidth>
+      <Dialog open={editDialog.open} onClose={handleEditClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>Editar Matriz</DialogTitle>
         <DialogContent>
           {editDialog.matrix && (
@@ -282,7 +282,7 @@ const List = forwardRef<ListRef>((_, ref) => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setEditDialog({ open: false, matrix: null })}>Cancelar</Button>
+          <Button onClick={handleEditClose}>Cancelar</Button>
         </DialogActions>
       </Dialog>
     </Box>

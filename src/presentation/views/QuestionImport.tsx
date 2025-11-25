@@ -84,6 +84,7 @@ export default function QuestionImport() {
     setShowSuccess(false);
 
     try {
+      console.log("Iniciando importación de preguntas...", "Archivo:", selectedFile.name, "Internamiento ID:", selectedConfinement);
       const result = await importQuestions(selectedConfinement, selectedFile);
 
       if (result.success) {

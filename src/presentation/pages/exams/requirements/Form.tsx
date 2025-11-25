@@ -19,40 +19,41 @@ import {
   Divider,
   FormHelperText,
 } from "@mui/material";
-import { CreateMatrixRequirement } from "../../../../application/matrix/CreateMatrixRequirement";
-import { UpdateMatrixRequirement } from "../../../../application/matrix/UpdateMatrixRequirement";
-import { MatrixRequirementApi } from "../../../../infrastructure/api/MatrixRequirementApi";
+import { CreateExamRequirement } from "../../../../application/exam/CreateExamRequirement";
+import { UpdateExamRequirement } from "../../../../application/exam/UpdateExamRequirement";
+import { ExamRequirementApi } from "../../../../infrastructure/api/ExamRequirementApi";
 import { GetBlocks } from "../../../../application/block/GetBlocks";
-import type { MatrixRequirement } from "../../../../models/MatrixRequirement";
+import type { ExamRequirement } from "../../../../models/ExamRequirement";
 import type { Block } from "../../../../models/Block";
 
-export default function MatrixRequirementForm({ 
+export default function ExamRequirementForm({ 
   initialId, 
-  initialMatrixId,
+  initialExamId,
   onSuccess 
 }: {
   initialId?: string;
-  initialMatrixId?: string;
+  initialExamId?: string;
   onSuccess?: () => void;
 } = {}) {
   const navigate = useNavigate();
-  const { id: urlId, matrixId: urlMatrixId } = useParams<{ id?: string; matrixId: string }>();
+  const { id: urlId, examId: urlExamId } = useParams<{ id?: string; examId: string }>();
 
   const id = initialId || urlId;
-  const matrixId = initialMatrixId || urlMatrixId;
+  const examId = initialExamId || urlExamId;
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(Boolean(id));
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [existingRequirements, setExistingRequirements] = useState<MatrixRequirement[]>([]);
+  const [existingRequirements, setExistingRequirements] = useState<ExamRequirement[]>([]);
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Partial<MatrixRequirement>>({
-    matrix_id: matrixId || '',
+  const [form, setForm] = useState<Partial<ExamRequirement>>({
+    exam_id: examId || '',
     area: "UNICA",
     block_id: undefined,
+    difficulty: "NORMAL",
     n_questions: 0,
     parent_id: undefined,
   });
@@ -63,7 +64,7 @@ export default function MatrixRequirementForm({
       try {
         const [blocksData, requirementsData] = await Promise.all([
           GetBlocks(),
-          matrixId ? MatrixRequirementApi.getByMatrix(matrixId) : Promise.resolve([])
+          examId ? ExamRequirementApi.getByExam(examId) : Promise.resolve([])
         ]);
         
         setBlocks(blocksData);
@@ -75,7 +76,7 @@ export default function MatrixRequirementForm({
     };
 
     loadData();
-  }, [matrixId]);
+  }, [examId]);
 
   // Cargar datos del requerimiento si estamos editando
   useEffect(() => {
@@ -84,11 +85,12 @@ export default function MatrixRequirementForm({
     (async () => {
       setInitialLoading(true);
       try {
-        const data = await MatrixRequirementApi.get(Number(id));
+        const data = await ExamRequirementApi.get(Number(id));
         setForm({
-          matrix_id: data.matrix_id,
+          exam_id: data.exam_id,
           area: data.area,
           block_id: data.block_id,
+          difficulty: data.difficulty || "NORMAL",
           n_questions: data.n_questions,
           parent_id: data.parent_id,
         });
@@ -112,26 +114,21 @@ export default function MatrixRequirementForm({
     try {
       const block_id = selectedPath[selectedPath.length - 1];
       if (!block_id) throw new Error("Debe seleccionar un bloque");
-      if (!matrixId) throw new Error("Matrix ID es requerido");
-
-      // Validar que el bloque sea de nivel 1 o 2
-      const selectedBlock = blocks.find(b => b.id === block_id);
-      if (selectedBlock && selectedBlock.level_id !== 1 && selectedBlock.level_id !== 2) {
-        throw new Error("El bloque debe ser de nivel 1 o 2");
-      }
+      if (!examId) throw new Error("Exam ID es requerido");
 
       const payload = {
-        matrix_id: matrixId,
+        exam_id: examId,
         area: form.area,
         block_id: block_id,
+        difficulty: form.difficulty,
         n_questions: form.n_questions,
         parent_id: form.parent_id ?? undefined,
       };
 
       if (id) {
-        await UpdateMatrixRequirement(Number(id), payload);
+        await UpdateExamRequirement(Number(id), payload);
       } else {
-        await CreateMatrixRequirement(payload);
+        await CreateExamRequirement(payload);
       }
 
       setSuccessOpen(true);
@@ -146,7 +143,7 @@ export default function MatrixRequirementForm({
       const message = error.response?.data?.error || error.message;
       
       if (message.includes("23505") || message.includes("llave duplicada") || message.includes("unique")) {
-        setErrorMessage("⚠️ Ya existe un requerimiento con este bloque y área.");
+        setErrorMessage("⚠️ Ya existe un requerimiento con este bloque, área y dificultad.");
       } else {
         setErrorMessage(`❌ ${message}`);
       }
@@ -166,14 +163,15 @@ export default function MatrixRequirementForm({
   };
 
   // Obtener el nombre completo del bloque para un requerimiento
-  const getBlockFullName = (requirement: MatrixRequirement) => {
+  const getBlockFullName = (requirement: ExamRequirement) => {
     if (!requirement.block) return `ID: ${requirement.id}`;
     
     const blockName = requirement.block.name;
     const area = requirement.area ? ` (${requirement.area})` : '';
+    const difficulty = requirement.difficulty ? ` - ${requirement.difficulty}` : '';
     const questions = requirement.n_questions ? ` - ${requirement.n_questions} preguntas` : '';
     
-    return `${blockName}${area}${questions}`;
+    return `${blockName}${area}${difficulty}${questions}`;
   };
 
   if (initialLoading)
@@ -245,7 +243,7 @@ export default function MatrixRequirementForm({
           {/* Selects de bloques en cascada */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
-              Seleccionar Bloque (Nivel 1 o 2 solamente)
+              Seleccionar Bloque
             </Typography>
             
             <TextField
@@ -295,6 +293,20 @@ export default function MatrixRequirementForm({
               );
             })}
           </Box>
+
+          {/* Dificultad */}
+          <TextField
+            select
+            fullWidth
+            label="Dificultad"
+            value={form.difficulty || "NORMAL"}
+            onChange={(e) => setForm(prev => ({ ...prev, difficulty: e.target.value }))}
+            sx={{ mb: 3 }}
+          >
+            <MenuItem value="EASY">Fácil</MenuItem>
+            <MenuItem value="NORMAL">NORMAL</MenuItem>
+            <MenuItem value="HARD">Difícil</MenuItem>
+          </TextField>
 
           {/* Número de preguntas */}
           <TextField

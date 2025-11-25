@@ -6,18 +6,17 @@ export interface Block {
   level_id?: number;
 }
 
-export interface ExamRequirement {
+export interface MatrixRequirement {
   id?: number;
-  exam_id: string; // UUID
+  matrix_id: string; // UUID
   area: 'BIOMEDICAS' | 'SOCIALES' | 'INGENIERIAS' | 'UNICA' | string;
   block_id?: number;
-  difficulty: 'EASY' | 'NORMAL' | 'HARD' | string;
-  n_questions: number;
+   n_questions: number;
   parent_id?: number;
   created_at?: string;
   updated_at?: string;
   block?: Block;
-  exam?: any;
-  parent?: ExamRequirement;
-  children?: ExamRequirement[];
+  matrix?: any;
+  parent?: MatrixRequirement;
+  children?: MatrixRequirement[];
 }

@@ -1,6 +1,6 @@
-import Tree from "./Tree";
+import Tree from "./OldTree";
 //import treeDataRaw from "./tree.json";
-import type { NodeData } from "./Tree";
+import type { NodeData } from "./OldTree";
 
 //const treeData = treeDataRaw as NodeData;
 
@@ -8,7 +8,7 @@ interface ConfinementRequirement {
     id: number;
     confinement_id: string;
     block_id: number | null;
-    difficulty: "FACIL" | "MEDIO" | "DIFICIL" | null;
+    difficulty: "EASY" | "NORMAL" | "HARD" | null;
     n_questions: number;
     parent_id: number | null;
     created_at: string;
@@ -92,7 +92,7 @@ const backendData: ConfinementRequirement[] = [
         id: 15,
         confinement_id: "0199ed34-59f3-72ba-86d4-4729204a2012",
         block_id: 1,
-        difficulty: "DIFICIL",
+        difficulty: "HARD",
         n_questions: 5,
         parent_id: 2,
         created_at: "2025-10-16T15:29:32.000000Z",
@@ -112,7 +112,7 @@ const backendData: ConfinementRequirement[] = [
         id: 12,
         confinement_id: "0199ed34-59f3-72ba-86d4-4729204a2012",
         block_id: 1,
-        difficulty: "FACIL",
+        difficulty: "EASY",
         n_questions: 5,
         parent_id: 2,
         created_at: "2025-10-16T15:27:33.000000Z",
@@ -132,7 +132,7 @@ const backendData: ConfinementRequirement[] = [
         id: 14,
         confinement_id: "0199ed34-59f3-72ba-86d4-4729204a2012",
         block_id: 1,
-        difficulty: "MEDIO",
+        difficulty: "NORMAL",
         n_questions: 10,
         parent_id: 2,
         created_at: "2025-10-16T15:27:48.000000Z",
