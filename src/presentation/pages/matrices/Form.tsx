@@ -17,7 +17,7 @@ import {
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
 type Props = {
-  matrixId?: number;
+  matrixId?: string;
   initialYear?: string;
   initialTotalAlternatives?: number;
   initialModalityId?: number;
@@ -80,13 +80,13 @@ export default function Form({
       if (matrixId) {
         await UpdateMatrix(matrixId, { 
           year,
-          total_alternatives: totalAlternatives,
+          n_alternatives: totalAlternatives,
           modality_id: modalityId
         });
       } else {
         await CreateMatrix({ 
           year,
-          total_alternatives: totalAlternatives,
+          n_alternatives: totalAlternatives,
           modality_id: modalityId
         });
       }
@@ -118,125 +118,94 @@ export default function Form({
       )}
       
       <form onSubmit={handleSubmit}>
-  <Box
-    sx={{
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 2,
-      alignItems: "flex-end",
-    }}
-  >
-    {/* Año */}
-    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-      <FormControl
-        fullWidth
-        size="medium"
-        disabled={loading || loadingData}
-        sx={{ minWidth: 150 }}
-      >
-        <InputLabel id="year-select-label">Año</InputLabel>
-        <Select
-          labelId="year-select-label"
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-          label="Año"
-          required
-        >
-          <MenuItem value="">Seleccionar año</MenuItem>
-          {yearOptions.map((yearOption) => (
-            <MenuItem key={yearOption} value={yearOption.toString()}>
-              {yearOption}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "flex-end" }}>
+          {/* Año */}
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+            <FormControl fullWidth size="medium" disabled={loading || loadingData}>
+              <InputLabel id="year-select-label">Año</InputLabel>
+              <Select
+                labelId="year-select-label"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                label="Año"
+                required
+              >
+                <MenuItem value="">Seleccionar año</MenuItem>
+                {yearOptions.map((yearOption) => (
+                  <MenuItem key={yearOption} value={yearOption.toString()}>
+                    {yearOption}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
-    
-    {/* Modalidad */}
-    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-      <FormControl
-        fullWidth
-        size="medium"
-        disabled={loading || loadingData}
-        sx={{ minWidth: 200 }}
-      >
-        <InputLabel id="modality-select-label">Modalidad</InputLabel>
-        <Select
-          labelId="modality-select-label"
-          value={modalityId}
-          onChange={(e) =>
-            setModalityId( Number(e.target.value))
-          }
-          label="Modalidad"
-          required
-        >
-          <MenuItem value="">Seleccionar Modalidad</MenuItem>
-          {modalities.map((modality) => (
-            <MenuItem key={modality.id} value={modality.id}>
-              {modality.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
-{/* Total de alternativas */}
-    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-      <TextField
-        label="Total de alternativas"
-        type="number"
-        value={totalAlternatives || ""}
-        onChange={(e) => setTotalAlternatives(Number(e.target.value))}
-        required
-        fullWidth
-        variant="outlined"
-        size="medium"
-        inputProps={{ min: 1 }}
-        error={!!error && (!totalAlternatives || totalAlternatives < 1)}
-        helperText={
-          error && (!totalAlternatives || totalAlternatives < 1)
-            ? "Debe ser mayor a 0"
-            : ""
-        }
-        disabled={loading || loadingData}
-      />
-    </Box>
+          {/* Modalidad */}
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+            <FormControl fullWidth size="medium" disabled={loading || loadingData}>
+              <InputLabel id="modality-select-label">Modalidad</InputLabel>
+              <Select
+                labelId="modality-select-label"
+                value={modalityId}
+                onChange={(e) => setModalityId(Number(e.target.value))}
+                label="Modalidad"
+                required
+              >
+                <MenuItem value="">Seleccionar Modalidad</MenuItem>
+                {modalities.map((modality) => (
+                  <MenuItem key={modality.id} value={modality.id}>
+                    {modality.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
-    {/* Botón */}
-    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
-     <Button
-        type="submit"
-        variant="contained"
-        size="large"
-        disabled={loading || loadingData} // 🔹 solo por carga, no por inputs
-        fullWidth
-        startIcon={
-          loading ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : matrixId ? (
-            <EditIcon />
-          ) : (
-            <AddIcon />
-          )
-        }
-        sx={{
-          height: 56,
-          borderRadius: 2,
-          fontWeight: 600,
-          textTransform: "none",
-          boxShadow: 2,
-          "&:hover": {
-            boxShadow: 4,
-          },
-        }}
-      >
-        {matrixId ? "Actualizar" : "Crear matriz"}
-      </Button>
+          {/* Total de alternativas */}
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+            <TextField
+              label="Total de alternativas"
+              type="number"
+              value={totalAlternatives || ""}
+              onChange={(e) => setTotalAlternatives(Number(e.target.value))}
+              required
+              fullWidth
+              variant="outlined"
+              size="medium"
+              inputProps={{ min: 1 }}
+              disabled={loading || loadingData}
+            />
+          </Box>
 
-    </Box>
-  </Box>
-</form>
-
+          {/* Botón */}
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 23%" } }}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={loading || loadingData}
+              fullWidth
+              startIcon={
+                loading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : matrixId ? (
+                  <EditIcon />
+                ) : (
+                  <AddIcon />
+                )
+              }
+              sx={{
+                height: 56,
+                borderRadius: 2,
+                fontWeight: 600,
+                textTransform: "none",
+              }}
+            >
+              {matrixId ? "Actualizar" : "Crear matriz"}
+            </Button>
+          </Box>
+        </Box>
+      </form>
     </Box>
   );
 }

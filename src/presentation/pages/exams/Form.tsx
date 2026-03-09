@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { CreateExam } from "../../../application/exam/CreateExam";
 import { UpdateExam } from "../../../application/exam/UpdateExam";
-import { getMatrices } from "../../../infrastructure/api/MatrixApi"; // Importar la API real
+import { getMatrices } from "../../../infrastructure/api/MatrixApi";
 import {
   TextField,
   Button,
@@ -16,8 +16,8 @@ import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 import type { Matrix } from "../../../models/Matrix";
 
 type Props = {
-  examId?: number;
-  initialMatrixId?: number;
+  examId?: string;
+  initialMatrixId?: string;
   initialDescription?: string;
   initialTotalVariations?: number;
   onSuccess: () => void;
@@ -26,12 +26,12 @@ type Props = {
 export default function Form({
   examId,
   initialDescription = "",
-  initialMatrixId = 0,
+  initialMatrixId,
   initialTotalVariations = 1,
   onSuccess,
 }: Props) {
   const [matrices, setMatrices] = useState<Matrix[]>([]);
-  const [matrixId, setMatrixId] = useState<number>(initialMatrixId);
+  const [matrixId, setMatrixId] = useState<string | "">(initialMatrixId || "");
   const [description, setDescription] = useState(initialDescription);
   const [totalVariations, setTotalVariations] = useState<number>(initialTotalVariations);
   const [loading, setLoading] = useState(false);
@@ -45,6 +45,14 @@ export default function Form({
         setLoadingMatrices(true);
         const matricesData = await getMatrices();
         setMatrices(matricesData);
+        
+        // Si hay un initialMatrixId y se encontraron matrices, verificar que exista
+        if (initialMatrixId && matricesData.length > 0) {
+          const matrixExists = matricesData.some(matrix => matrix.id === initialMatrixId);
+          if (!matrixExists) {
+            setMatrixId(""); // Resetear si no existe
+          }
+        }
       } catch (err) {
         setError("Error al cargar las matrices");
       } finally {
@@ -53,7 +61,7 @@ export default function Form({
     };
 
     fetchMatrices();
-  }, []);
+  }, [initialMatrixId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,13 +87,13 @@ export default function Form({
     try {
       if (examId) {
         await UpdateExam(examId, {
-          matrix_id: matrixId,
+          matrix_id: matrixId ,
           description: description.trim(),
           total_variations: totalVariations,
         });
       } else {
         await CreateExam({
-          matrix_id: matrixId,
+          matrix_id: matrixId ,
           description: description.trim(),
           total_variations: totalVariations,
         });
@@ -93,7 +101,7 @@ export default function Form({
 
       // Solo limpiar el formulario si es creación, no edición
       if (!examId) {
-        setMatrixId(0);
+        setMatrixId("");
         setDescription("");
         setTotalVariations(1);
       }
@@ -124,7 +132,7 @@ export default function Form({
             select
             label="Matriz"
             value={matrixId}
-            onChange={(e) => setMatrixId(Number(e.target.value))}
+            onChange={(e) => setMatrixId(e.target.value === "" ? "" : (e.target.value))}
             required
             variant="outlined"
             size="medium"
@@ -133,7 +141,7 @@ export default function Form({
             disabled={loading || loadingMatrices}
             sx={{ flex: 1 }}
           >
-            <MenuItem value={0}>
+            <MenuItem value="">
               {loadingMatrices ? "Cargando matrices..." : "Selecciona una matriz"}
             </MenuItem>
             {matrices.map((matrix) => (
@@ -179,7 +187,7 @@ export default function Form({
             type="submit"
             variant="contained"
             size="large"
-            disabled={loadingMatrices}
+            disabled={loading || loadingMatrices}
             startIcon={
               loading ? (
                 <CircularProgress size={20} color="inherit" />
@@ -199,11 +207,10 @@ export default function Form({
               "&:hover": { boxShadow: 4 },
             }}
           >
-            {loadingMatrices ? "Cargando..." : examId ? "Actualizar" : "Crear"}
+            {loading ? "Procesando..." : examId ? "Actualizar" : "Crear"}
           </Button>
         </Box>
       </form>
-
     </Box>
   );
 }

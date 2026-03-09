@@ -1,6 +1,6 @@
 export interface Exam {
-  id: number;
-  matrix_id: number;
+  id: string;
+  matrix_id: string;
   user_id: number;
   description: string;
   total_variations: number;

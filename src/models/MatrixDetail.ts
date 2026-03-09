@@ -1,12 +1,11 @@
-import type { Level } from "./Level";
 import type { Matrix } from "./Matrix";
-
+import type { Level } from "./Block";
 export interface MatrixDetail {
   id: number;
   matrix_id: number;
   area: 'BIOMEDICAS' | 'SOCIALES' | 'INGENIERIAS' | 'UNICA';
   block_id: number;
-  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
+  difficulty: 'EASY' | 'NORMAL' | 'HARD';
   questions_required: number;
   questions_to_do: number;
   created_at: string;

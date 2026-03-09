@@ -134,7 +134,7 @@ const Bank = () => {
 
     setFilteredQuestions(filtered);
   };
-
+  console.log({ selectedBlockPath });
   // Efecto para filtrar cuando cambia el searchTerm o selectedBlockPath
   useEffect(() => {
     filterQuestions(searchTerm, selectedBlockPath);
@@ -152,6 +152,18 @@ const Bank = () => {
       case 'RETIRED': return 'default';
       default: return 'default';
     }
+  };
+  const translateDifficulty = (difficulty: string) => {
+    const map: Record<string, string> = {
+      easy: "FÁCIL",
+      normal: "MEDIO",
+      hard: "DIFÍCIL",
+      EASY: "FÁCIL",
+      MEDIUM: "MEDIO",
+      HARD: "DIFÍCIL",
+    };
+
+    return map[difficulty] || difficulty;
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -372,14 +384,13 @@ const Bank = () => {
                       </Typography>
                     </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        label={question.difficulty}
-                        color={getDifficultyColor(question.difficulty)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
+                    <Chip
+                      label={translateDifficulty(question.difficulty)}
+                      color={getDifficultyColor(question.difficulty)}
+                      size="small"
+                      variant="outlined"
+                    />
+
 
                     <TableCell>
                       <Chip

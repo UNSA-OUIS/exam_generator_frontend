@@ -1,9 +1,9 @@
 import type { MatrixDetail } from "./MatrixDetail";
 
 export interface Matrix {
-  id: number;
+  id: string;
   year: string;
-  total_alternatives: number;
+  n_alternatives: number;
   modality_id: number;
   created_at: string;
   updated_at: string;

@@ -1,324 +1,282 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Container,
-  Typography,
-  Button,
-  Paper,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
-  Box,
-  Breadcrumbs,
-  Link,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Chip,
-  CircularProgress,
-  Card,
-  CardContent,
+    Container,
+    Typography,
+    Button,
+    Paper,
+    Table,
+    TableHead,
+    TableRow,
+    TableCell,
+    TableBody,
+    IconButton,
+    CircularProgress,
+    Box,
+    Breadcrumbs,
+    Link,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Chip,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
 } from "@mui/material";
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  ArrowBack as ArrowBackIcon,
-} from "@mui/icons-material";
-import { getMatrixDetails, deleteMatrixDetail } from "../../../../infrastructure/api/MatrixDetailApi";
-import { getMatrix } from "../../../../infrastructure/api/MatrixApi";
-import type { MatrixDetail } from "../../../../models/MatrixDetail";
-import type { Matrix } from "../../../../models/Matrix";
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon, FilterList as FilterIcon } from "@mui/icons-material";
+import { GetMatrixRequirements } from "../../../../application/matrix/GetMatrixRequirements";
+import { DeleteMatrixRequirement } from "../../../../application/matrix/DeleteMatrixRequirement";
+import type { MatrixRequirement } from "../../../../models/MatrixRequirement";
+import MatrixRequirementForm from "./Form";
 
-export default function MatrixDetailsList() {
-  const navigate = useNavigate();
-  const { matrixId } = useParams();
-  const [details, setDetails] = useState<MatrixDetail[]>([]);
-  const [matrix, setMatrix] = useState<Matrix | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    detail: MatrixDetail | null;
-    loading?: boolean;
-  }>({ open: false, detail: null });
+export default function MatrixRequirementsList() {
+    const navigate = useNavigate();
+    const { matrixId } = useParams<{ matrixId: string }>();
+    const [rows, setRows] = useState<MatrixRequirement[]>([]);
+    const [filteredRows, setFilteredRows] = useState<MatrixRequirement[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [matrixName, setMatrixName] = useState("");
+    const [selectedArea, setSelectedArea] = useState<string>("all");
+    const [editDialog, setEditDialog] = useState<{
+        open: boolean;
+        matrixRequirement: MatrixRequirement | null;
+    }>({ open: false, matrixRequirement: null });
 
-  // Cargar detalles y datos de la matriz
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!matrixId) return;
-      
-      setLoading(true);
-      try {
-        // Cargar detalles de la matriz
-        const allDetails = await getMatrixDetails();
-        const matrixDetails = allDetails.filter(detail => detail.matrix_id === parseInt(matrixId));
-        setDetails(matrixDetails);
+    const load = async (id: string, area?: string) => {
+        setLoading(true);
+        try {
+            const data = await GetMatrixRequirements(id, area);
+            
+            // Ordenar por parent_id para mostrar padres primero, luego hijos
+            const sortedData = data.sort((a, b) => {
+                // Si ambos son raíz o ambos tienen padre, mantener orden original
+                if ((a.parent_id === null && b.parent_id === null) || 
+                    (a.parent_id !== null && b.parent_id !== null)) {
+                    return (a.id || 0) - (b.id || 0);
+                }
+                // Los que no tienen padre (raíz) van primero
+                if (a.parent_id === null) return -1;
+                if (b.parent_id === null) return 1;
+                return 0;
+            });
+            
+            setRows(sortedData);
+            setFilteredRows(sortedData);
 
-        // Cargar información de la matriz
-        const matrixData = await getMatrix(parseInt(matrixId));
-        setMatrix(matrixData);
-      } catch (err) {
-        setError("Error al cargar los detalles de la matriz");
-      } finally {
-        setLoading(false);
-      }
+            // Obtener el nombre de la matriz desde el primer requerimiento (si existe)
+            if (data.length > 0 && data[0].matrix) {
+                setMatrixName(data[0].matrix.year || "Matriz");
+            }
+        } catch (err) {
+            console.error("Error loading matrix requirements:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    fetchData();
-  }, [matrixId]);
+    useEffect(() => {
+        if (matrixId) {
+            load(matrixId);
+        }
+    }, [matrixId]);
 
-  const handleDelete = async () => {
-    if (!deleteDialog.detail) return;
+    // Filtrar por área
+    useEffect(() => {
+        if (selectedArea === "all") {
+            setFilteredRows(rows);
+        } else {
+            setFilteredRows(rows.filter(row => row.area === selectedArea));
+        }
+    }, [selectedArea, rows]);
 
-    setDeleteDialog(prev => ({ ...prev, loading: true }));
-    
-    try {
-      await deleteMatrixDetail(deleteDialog.detail.id);
-      setDetails(prev => prev.filter(d => d.id !== deleteDialog.detail!.id));
-      setDeleteDialog({ open: false, detail: null });
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Error al eliminar el detalle");
-    } finally {
-      setDeleteDialog(prev => ({ ...prev, loading: false }));
-    }
-  };
+    const handleDelete = async (id?: number) => {
+        if (!id) return;
+        if (!confirm("¿Está seguro de eliminar este requerimiento?")) return;
+        try {
+            await DeleteMatrixRequirement(id);
+            setRows(rows.filter((r) => r.id !== id));
+        } catch (err) {
+            console.error(err);
+            alert("Error al eliminar el requerimiento");
+        }
+    };
 
-  const handleEdit = (detail: MatrixDetail) => {
-    navigate(`/matrices/${matrixId}/details/${detail.id}/edit`);
-  };
+    const handleEditClick = (matrixRequirement: MatrixRequirement) => {
+        setEditDialog({ open: true, matrixRequirement });
+    };
 
-  const handleBack = () => {
-    navigate("/matrices");
-  };
+    const handleEditClose = () => {
+        setEditDialog({ open: false, matrixRequirement: null });
+    };
 
-  /* const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'FACIL': return 'success';
-      case 'MEDIO': return 'warning';
-      case 'DIFICIL': return 'error';
-      default: return 'default';
-    }
-  };
- */
-  const getAreaColor = (area: string) => {
-    switch (area) {
-      case 'INGENIERIAS': return 'primary';
-      case 'BIOMEDICAS': return 'secondary';
-      case 'SOCIALES': return 'info';
-      case 'UNICA': return 'default';
-      default: return 'default';
-    }
-  };
+    const handleEditSuccess = async () => {
+        if (matrixId) {
+            await load(matrixId);
+        }
+        handleEditClose();
+    };
 
-  if (loading) {
+    const handleBack = () => {
+        navigate("/matrices");
+    };
+
+    const getAreaColor = (area: string) => {
+        switch (area) {
+            case 'BIOMEDICAS': return 'secondary';
+            case 'SOCIALES': return 'info';
+            case 'INGENIERIAS': return 'primary';
+            case 'UNICA': return 'default';
+            default: return 'default';
+        }
+    };
+
     return (
-      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
-        <CircularProgress />
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          Cargando detalles...
-        </Typography>
-      </Container>
-    );
-  }
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            {/* Breadcrumbs para navegación */}
+            <Breadcrumbs sx={{ mb: 2 }}>
+                <Link color="inherit" onClick={handleBack} sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+                    <ArrowBackIcon sx={{ mr: 0.5, fontSize: 20 }} />
+                    Matrices
+                </Link>
+                <Typography color="text.primary">Requerimientos {matrixName && `- ${matrixName}`}</Typography>
+            </Breadcrumbs>
 
-  return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Breadcrumbs para navegación */}
-      <Breadcrumbs sx={{ mb: 3 }}>
-        <Link
-          color="inherit"
-          onClick={handleBack}
-          sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
-        >
-          <ArrowBackIcon sx={{ mr: 0.5, fontSize: 20 }} />
-          Matrices
-        </Link>
-        <Typography color="text.primary">
-          Detalles {matrix && `- ${matrix.modality?.name} ${matrix.year}`}
-        </Typography>
-      </Breadcrumbs>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                <Typography variant="h4">📋 Requerimientos {matrixName && `- ${matrixName}`}</Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`new`)}>
+                        Agregar Requerimiento
+                    </Button>
+                    {/*
+                    <Button
+                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate(`tree-creator`)}
+                        sx={{ ml: 1 }}
+                    >
+                        Crear con Árbol
+                    </Button>
+                    <Button variant="contained" onClick={() => navigate(`tree`)}>
+                        Ver Árbol
+                    </Button>
+*/}
+                </Box>
+            </Box>
 
-      {/* Header con información de la matriz */}
-      {matrix && (
-        <Card sx={{ mb: 3, backgroundColor: 'primary.light', color: 'white' }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Matriz: {matrix.modality?.name} - {matrix.year}
-            </Typography>
-            <Typography variant="body2">
-              Total de alternativas: {matrix.total_alternatives} | 
-              Detalles configurados: {details.length}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
+            {/* Filtro por área */}
+            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <FilterIcon />
+                <FormControl sx={{ minWidth: 200 }}>
+                    <InputLabel>Filtrar por Área</InputLabel>
+                    <Select
+                        value={selectedArea}
+                        onChange={(e) => setSelectedArea(e.target.value)}
+                        label="Filtrar por Área"
+                    >
+                        <MenuItem value="all">Todas las áreas</MenuItem>
+                        <MenuItem value="UNICA">Única</MenuItem>
+                        <MenuItem value="BIOMEDICAS">Biomédicas</MenuItem>
+                        <MenuItem value="SOCIALES">Sociales</MenuItem>
+                        <MenuItem value="INGENIERIAS">Ingenierías</MenuItem>
+                    </Select>
+                </FormControl>
+                <Chip 
+                    label={`${filteredRows.length} requerimiento${filteredRows.length !== 1 ? 's' : ''}`}
+                    color="primary"
+                    variant="outlined"
+                />
+            </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4" component="h1">
-          📋 Detalles de Matriz
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate(`/matrices/${matrixId}/details/new`)}
-        >
-          Agregar Detalle
-        </Button>
-      </Box>
+            <Paper>
+                {loading ? (
+                    <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>ID</TableCell>
+                                <TableCell>Área</TableCell>
+                                <TableCell>Bloque</TableCell>
+                                <TableCell>N° Preguntas</TableCell>
+                                <TableCell>Padre</TableCell>
+                                <TableCell align="right">Acciones</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {filteredRows.map((row) => (
+                                <TableRow key={row.id}>
+                                    <TableCell>{row.id}</TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={row.area}
+                                            color={getAreaColor(row.area) as any}
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        {row.block ? (
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {row.parent_id && "↳ "} {/* Indica que es hijo */}
+                                                    {row.block.name}
+                                                </Typography>
+                                                {row.block.code && (
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Código: {row.block.code}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        ) : "N/A"}
+                                    </TableCell>
+                                    <TableCell>{row.n_questions}</TableCell>
+                                    <TableCell>
+                                        {row.parent_id ? (
+                                            <Typography variant="body2">
+                                                ID: {row.parent_id}
+                                                {rows.find(r => r.id === row.parent_id)?.block?.name &&
+                                                    ` (${rows.find(r => r.id === row.parent_id)?.block?.name})`
+                                                }
+                                            </Typography>
+                                        ) : (
+                                            <Chip label="Raíz" size="small" color="primary" variant="outlined" />
+                                        )}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <IconButton size="small" onClick={() => handleEditClick(row)}>
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </Paper>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper sx={{ overflow: 'hidden' }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: 'grey.50' }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Bloque</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Área</TableCell>
-              {/* <TableCell sx={{ fontWeight: 'bold' }}>Dificultad</TableCell> */}
-              <TableCell sx={{ fontWeight: 'bold' }} align="center">Preguntas Requeridas</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="center">Preguntas a Realizar</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {details.map((detail) => (
-              <TableRow 
-                key={detail.id}
-                sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
-              >
-                <TableCell>
-                  <Box>
-                    <Typography variant="body2" fontWeight="medium">
-                      {detail.block?.name}
-                    </Typography>
-                    {detail.block?.code && (
-                      <Typography variant="caption" color="text.secondary">
-                        Código: {detail.block.code}
-                      </Typography>
+            {/* Dialog para editar requerimiento */}
+            <Dialog open={editDialog.open} onClose={handleEditClose} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 600 }}>Editar Requerimiento</DialogTitle>
+                <DialogContent>
+                    {editDialog.matrixRequirement && (
+                        <MatrixRequirementForm
+                            initialId={editDialog.matrixRequirement.id?.toString()}
+                            initialMatrixId={matrixId}
+                            onSuccess={handleEditSuccess}
+                        />
                     )}
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={detail.area} 
-                    size="small"
-                    color={getAreaColor(detail.area) as any}
-                    variant="outlined"
-                  />
-                </TableCell>
-                {/* <TableCell>
-                  <Chip 
-                    label={detail.difficulty} 
-                    size="small"
-                    color={getDifficultyColor(detail.difficulty) as any}
-                  />
-                </TableCell> */}
-                <TableCell align="center">
-                  <Typography variant="body2" fontWeight="medium">
-                    {detail.questions_required}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" fontWeight="medium">
-                    {detail.questions_to_do}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEdit(detail)}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteDialog({ open: true, detail })}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-            {details.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                  <Typography variant="body1" color="text.secondary" gutterBottom>
-                    No hay detalles configurados para esta matriz
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate(`/matrices/${matrixId}/details/new`)}
-                    sx={{ mt: 1 }}
-                  >
-                    Agregar el primer detalle
-                  </Button>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Paper>
-
-      {/* Dialog de confirmación para eliminar */}
-      <Dialog
-        open={deleteDialog.open}
-        onClose={() => setDeleteDialog({ open: false, detail: null })}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Confirmar Eliminación
-        </DialogTitle>
-        <DialogContent>
-          <Typography>
-            ¿Estás seguro de que deseas eliminar el detalle del bloque{" "}
-            <strong>"{deleteDialog.detail?.block?.name}"</strong>?
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Esta acción no se puede deshacer.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 1 }}>
-          <Button
-            onClick={() => setDeleteDialog({ open: false, detail: null })}
-            variant="outlined"
-            disabled={deleteDialog.loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleDelete}
-            variant="contained"
-            color="error"
-            disabled={deleteDialog.loading}
-            startIcon={deleteDialog.loading ? <CircularProgress size={20} /> : <DeleteIcon />}
-          >
-            {deleteDialog.loading ? "Eliminando..." : "Eliminar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
-  );
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button onClick={handleEditClose}>Cancelar</Button>
+                </DialogActions>
+            </Dialog>
+        </Container>
+    );
 }

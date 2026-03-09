@@ -6,7 +6,7 @@ export enum AreaEnum {
 }
 
 export enum DifficultyEnum {
-  FACIL = 'FACIL',
-  MEDIO = 'MEDIO',
-  DIFICIL = 'DIFICIL'
+  EASY = 'EASY',
+  NORMAL = 'NORMAL',
+  HARD = 'HARD'
 }
