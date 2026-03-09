@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import type { Confinement } from "../../../models/Confinement";
 import { ExportTexts } from "../../../application/confinement/ExportTexts"; // 🔹 Import nuevo
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import SimplifiedRequirementsEditor from "./Simplified";
+import { AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 import { GetConfinements } from "../../../application/confinement/GetConfinements";
 import { DeleteConfinement } from "../../../application/confinement/DeleteConfinement";
 import { ExportBlocks } from "../../../application/confinement/ExportBlocks"; // 🔹 Import nuevo
@@ -60,6 +62,24 @@ const List = forwardRef<ListRef>((_, ref) => {
     }>({ open: false, confinement: null });
 
     const navigate = useNavigate(); // 🔹 Hook para navegación
+    const [simplifiedDialog, setSimplifiedDialog] = useState<{
+        open: boolean;
+        confinement: Confinement | null;
+    }>({ open: false, confinement: null });
+
+    // Handlers
+    const handleSimplifiedRequirementsClick = (confinement: Confinement) => {
+        setSimplifiedDialog({ open: true, confinement });
+    };
+
+    const handleSimplifiedClose = () => {
+        setSimplifiedDialog({ open: false, confinement: null });
+    };
+
+    const handleSimplifiedSuccess = async () => {
+        await fetchConfinements();
+        handleSimplifiedClose();
+    };
 
     const fetchConfinements = async () => {
         try {
@@ -333,6 +353,17 @@ const List = forwardRef<ListRef>((_, ref) => {
                                                     <DeleteIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
+                                            <Tooltip title="Crear requerimientos (Modo Simplificado)">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleSimplifiedRequirementsClick(confinement)}
+                                                    sx={{
+                                                        color: "purple.main",
+                                                        "&:hover": { backgroundColor: "purple.lighter" },
+                                                    }}>
+                                                    <AutoAwesomeIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                         </Box>
                                     </TableCell>
                                 </TableRow>
@@ -412,6 +443,14 @@ const List = forwardRef<ListRef>((_, ref) => {
                     <Button onClick={handleViewClose}>Cerrar</Button>
                 </DialogActions>
             </Dialog>
+            {simplifiedDialog.confinement && (
+                <SimplifiedRequirementsEditor
+                    open={simplifiedDialog.open}
+                    onClose={handleSimplifiedClose}
+                    confinement={simplifiedDialog.confinement}
+                    onSuccess={handleSimplifiedSuccess}
+                />
+            )}
         </Box>
     );
 });

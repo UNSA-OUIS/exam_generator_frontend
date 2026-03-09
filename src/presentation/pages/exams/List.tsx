@@ -2,13 +2,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Exam } from "../../../models/Exam";
 import { useNavigate } from "react-router-dom";
-
-import {
-  generateMaster,
-  generateMasterPdf,
-  generateVariations,
-  downloadVariationPdf
-} from "../../../infrastructure/api/MasterApi";
 import { GetExams } from "../../../application/exam/GetExams";
 import { DeleteExam } from "../../../application/exam/DeleteExam";
 import {
@@ -31,32 +24,19 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  type SelectChangeEvent,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
-  Download as DownloadIcon,
   Assignment as AssignmentIcon,
-  PictureAsPdf as PdfIcon,
+  Shuffle as ShuffleIcon,
 } from "@mui/icons-material";
 import Form from "./Form";
 
 export type ListRef = {
   reload: () => void;
 };
-
-// Definir las áreas disponibles
-const AREAS = [
-  { value: "BIOMEDICAS", label: "Biomédicas" },
-  { value: "INGENIERIAS", label: "Ingenierías" },
-  { value: "SOCIALES", label: "Sociales" },
-];
 
 const List = forwardRef<ListRef>((_, ref) => {
   const navigate = useNavigate();
@@ -77,22 +57,6 @@ const List = forwardRef<ListRef>((_, ref) => {
     open: boolean;
     exam: Exam | null;
   }>({ open: false, exam: null });
-  
-  // Nuevo estado para el modal de Master PDF con selector de área
-  const [masterDialog, setMasterDialog] = useState<{
-    open: boolean;
-    exam: Exam | null;
-    selectedArea: string;
-  }>({ open: false, exam: null, selectedArea: "" });
-
-  // Nuevo estado para el modal de Temas con selector de área
-  const [themesDialog, setThemesDialog] = useState<{
-    open: boolean;
-    exam: Exam | null;
-    selectedArea: string;
-  }>({ open: false, exam: null, selectedArea: "" });
-
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchExams = async () => {
     try {
@@ -130,133 +94,6 @@ const List = forwardRef<ListRef>((_, ref) => {
     }
   };
 
-  // Handler para abrir modal de Master PDF
-  const handleMasterPdfClick = (exam: Exam) => {
-    setMasterDialog({ open: true, exam, selectedArea: "" });
-  };
-
-  // Handler para generar Master PDF con área seleccionada
-  const handleGenerateMasterPdf = async () => {
-    if (!masterDialog.exam || !masterDialog.selectedArea) {
-      alert("Por favor selecciona un área");
-      return;
-    }
-
-    try {
-      setActionLoading('masterPdf');
-      console.log("Generando Master PDF...");
-      await generateMasterPdf(
-        masterDialog.exam.id.toString(), 
-        masterDialog.selectedArea
-      );
-      alert(`✅ Master PDF generado para ${masterDialog.selectedArea}`);
-      setMasterDialog({ open: false, exam: null, selectedArea: "" });
-    } catch (error: any) {
-      console.error("Error al generar Master PDF:", error);
-      alert("❌ Error al generar el PDF del Master");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleGenerateMaster = async (examId: string) => {
-    try {
-      setActionLoading('generateMaster');
-      console.log("✅ Iniciando generación de master...");
-      
-      const response = await generateMaster(examId);
-      console.log("✅ Respuesta completa:", response);
-      
-      if (response && response.success) {
-        alert(response.message || "✅ Master generado exitosamente");
-      } else {
-        alert(`❌ Respuesta inesperada: ${JSON.stringify(response)}`);
-      }
-      
-    } catch (error: any) {
-      console.error("❌ Error completo:", error);
-      console.error("❌ Response data:", error.response?.data);
-      console.error("❌ Status:", error.response?.status);
-      
-      if (error.response?.data?.message) {
-        alert(`❌ ${error.response.data.message}`);
-      } else if (error.message) {
-        alert(`❌ ${error.message}`);
-      } else {
-        alert("❌ Error desconocido al generar el Master");
-      }
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleGenerateVariations = async (examId: string) => {
-    try {
-      setActionLoading('generateVariations');
-
-      console.log("Generando variaciones para examId:", examId);
-
-      const { data } = await generateVariations(examId);
-
-      if (data.success) {
-        alert(data.message || "✅ Variaciones generadas exitosamente");
-        await fetchExams();
-      } else {
-        alert(`❌ ${data.message || 'Error al generar variaciones'}`);
-      }
-
-    } catch (error: any) {
-      console.error("Error completo al generar variaciones:", error);
-
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        console.error("Error response:", errorData);
-        alert(`❌ ${errorData.message || errorData.error || 'Error del servidor'}`);
-      } else if (error.request) {
-        alert("❌ No se pudo conectar con el servidor");
-      } 
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Handler para abrir modal de Temas
-  const handleThemesClick = (exam: Exam) => {
-    setThemesDialog({ open: true, exam, selectedArea: "" });
-  };
-
-  // Handler para descargar variación con área seleccionada
-  const handleDownloadVariation = async (variation: string) => {
-    if (!themesDialog.exam || !themesDialog.selectedArea) {
-      alert("Por favor selecciona un área");
-      return;
-    }
-
-    try {
-      setActionLoading(`downloadVariation-${variation}`);
-      console.log("Descargando variación:", variation);
-      await downloadVariationPdf(
-        themesDialog.exam.id.toString(),
-        themesDialog.selectedArea,
-        variation
-      );
-      alert(`✅ Tema ${variation} descargado para ${themesDialog.selectedArea}`);
-    } catch (error: any) {
-      console.error("Error al descargar variación:", error);
-      alert("❌ Error al descargar la variación");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleThemesClose = () => {
-    setThemesDialog({ open: false, exam: null, selectedArea: "" });
-  };
-
-  const handleMasterClose = () => {
-    setMasterDialog({ open: false, exam: null, selectedArea: "" });
-  };
-
   const handleDeleteCancel = () => {
     setDeleteDialog({ open: false, exam: null, error: undefined });
   };
@@ -284,6 +121,10 @@ const List = forwardRef<ListRef>((_, ref) => {
 
   const handleViewClose = () => {
     setViewDialog({ open: false, exam: null });
+  };
+
+  const handleSorterClick = (examId: string | number) => {
+    navigate(`/exams/sorter/${examId}`);
   };
 
   useImperativeHandle(ref, () => ({
@@ -383,7 +224,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                 </TableCell>
                 <TableCell
                   align="center"
-                  sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 250 }}
+                  sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 200 }}
                 >
                   Acciones
                 </TableCell>
@@ -469,57 +310,18 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
 
-                      <Box sx={{ display: "flex", gap: 1, flexWrap: 'wrap' }}>
-                        <Tooltip title="Generar Master">
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="secondary"
-                            disabled={actionLoading === 'generateMaster'}
-                            onClick={() => handleGenerateMaster(exam.id.toString())}
-                          >
-                            {actionLoading === 'generateMaster' ? <CircularProgress size={16} /> : "Generar"}
-                          </Button>
-                        </Tooltip>
-
-                        {/* Botón Master PDF - Ahora abre modal para seleccionar área */}
-                        <Tooltip title="Generar PDF Master por Área">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            color="primary"
-                            startIcon={<PdfIcon />}
-                            onClick={() => handleMasterPdfClick(exam)}
-                          >
-                            Master
-                          </Button>
-                        </Tooltip>
-
-                        <Tooltip title="Generar Variaciones">
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="success"
-                            disabled={actionLoading === 'generateVariations'}
-                            onClick={() => handleGenerateVariations(exam.id.toString())}
-                          >
-                            {actionLoading === 'generateVariations' ? <CircularProgress size={16} /> : "Generar temas"}
-                          </Button>
-                        </Tooltip>
-
-                        {/* Botón Temas - Ahora abre modal para seleccionar área */}
-                        <Tooltip title="Descargar Temas por Área">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            color="warning"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => handleThemesClick(exam)}
-                          >
-                            Temas
-                          </Button>
-                        </Tooltip>
-                      </Box>
+                      <Tooltip title="Ir al sorteador">
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="primary"
+                          startIcon={<ShuffleIcon />}
+                          onClick={() => handleSorterClick(exam.id)}
+                          sx={{ ml: 1 }}
+                        >
+                          Sorteador
+                        </Button>
+                      </Tooltip>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -528,137 +330,6 @@ const List = forwardRef<ListRef>((_, ref) => {
           </Table>
         </TableContainer>
       )}
-
-      {/* Dialog para Master PDF con selector de área */}
-      <Dialog
-        open={masterDialog.open}
-        onClose={handleMasterClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Generar Master PDF - {masterDialog.exam?.description}
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, mt: 1 }}>
-            Selecciona el área para generar el PDF del Master
-          </Typography>
-          
-          <FormControl fullWidth>
-            <InputLabel id="master-area-label">Área</InputLabel>
-            <Select
-              labelId="master-area-label"
-              value={masterDialog.selectedArea}
-              label="Área"
-              onChange={(e: SelectChangeEvent) =>
-                setMasterDialog({ ...masterDialog, selectedArea: e.target.value })
-              }
-            >
-              {AREAS.map((area) => (
-                <MenuItem key={area.value} value={area.value}>
-                  {area.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 1 }}>
-          <Button onClick={handleMasterClose} variant="outlined">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleGenerateMasterPdf}
-            variant="contained"
-            color="primary"
-            disabled={!masterDialog.selectedArea || actionLoading === 'masterPdf'}
-            startIcon={
-              actionLoading === 'masterPdf' ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <PdfIcon />
-              )
-            }
-          >
-            {actionLoading === 'masterPdf' ? "Generando..." : "Generar PDF"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Dialog para descargar temas con selector de área */}
-      <Dialog
-        open={themesDialog.open}
-        onClose={handleThemesClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Descargar Temas - {themesDialog.exam?.description}
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, mt: 1 }}>
-            Primero selecciona el área, luego el tema que deseas descargar
-          </Typography>
-
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel id="themes-area-label">Área</InputLabel>
-            <Select
-              labelId="themes-area-label"
-              value={themesDialog.selectedArea}
-              label="Área"
-              onChange={(e: SelectChangeEvent) =>
-                setThemesDialog({ ...themesDialog, selectedArea: e.target.value })
-              }
-            >
-              {AREAS.map((area) => (
-                <MenuItem key={area.value} value={area.value}>
-                  {area.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {themesDialog.selectedArea && (
-            <Box>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Área seleccionada: <strong>{AREAS.find(a => a.value === themesDialog.selectedArea)?.label}</strong>
-              </Alert>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {['A', 'B', 'C', 'D'].map((theme) => (
-                  <Button
-                    key={theme}
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    color="primary"
-                    disabled={actionLoading === `downloadVariation-${theme}`}
-                    onClick={() => handleDownloadVariation(theme)}
-                    startIcon={
-                      actionLoading === `downloadVariation-${theme}` ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        <DownloadIcon />
-                      )
-                    }
-                    sx={{
-                      py: 1.5,
-                      fontSize: '1.1rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {actionLoading === `downloadVariation-${theme}` ? 'Descargando...' : `Descargar Tema ${theme}`}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleThemesClose} variant="outlined">
-            Cerrar
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Dialog de confirmación para eliminar */}
       <Dialog

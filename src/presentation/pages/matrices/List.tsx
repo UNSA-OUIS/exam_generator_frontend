@@ -187,7 +187,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                     {getModalityName(matrix.modality_id)} - {matrix.year}
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
-                    {matrix.total_alternatives}
+                    {matrix.n_alternatives}
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                     {new Date(matrix.created_at).toLocaleDateString()}
@@ -275,7 +275,7 @@ const List = forwardRef<ListRef>((_, ref) => {
             <Form
               matrixId={editDialog.matrix.id}
               initialYear={editDialog.matrix.year}
-              initialTotalAlternatives={editDialog.matrix.total_alternatives}
+              initialTotalAlternatives={editDialog.matrix.n_alternatives}
               initialModalityId={editDialog.matrix.modality_id}
               onSuccess={handleEditSuccess}
             />

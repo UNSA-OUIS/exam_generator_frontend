@@ -80,13 +80,13 @@ export default function Form({
       if (matrixId) {
         await UpdateMatrix(matrixId, { 
           year,
-          total_alternatives: totalAlternatives,
+          n_alternatives: totalAlternatives,
           modality_id: modalityId
         });
       } else {
         await CreateMatrix({ 
           year,
-          total_alternatives: totalAlternatives,
+          n_alternatives: totalAlternatives,
           modality_id: modalityId
         });
       }
