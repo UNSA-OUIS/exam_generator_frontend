@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { CreateExam } from "../../../application/exam/CreateExam";
 import { UpdateExam } from "../../../application/exam/UpdateExam";
-import { getMatrices } from "../../../infrastructure/api/MatrixApi"; // Importar la API real
+import { getMatrices } from "../../../infrastructure/api/MatrixApi";
 import {
   TextField,
   Button,
@@ -13,11 +13,11 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 
-import type {Matrix}  from "../../../models/Matrix";
+import type { Matrix } from "../../../models/Matrix";
 
 type Props = {
-  examId?: number;
-  initialMatrixId?: number;
+  examId?: string;
+  initialMatrixId?: string;
   initialDescription?: string;
   initialTotalVariations?: number;
   onSuccess: () => void;
@@ -26,12 +26,12 @@ type Props = {
 export default function Form({
   examId,
   initialDescription = "",
-  initialMatrixId = 0,
+  initialMatrixId,
   initialTotalVariations = 1,
   onSuccess,
 }: Props) {
   const [matrices, setMatrices] = useState<Matrix[]>([]);
-  const [matrixId, setMatrixId] = useState<number>(initialMatrixId);
+  const [matrixId, setMatrixId] = useState<string | "">(initialMatrixId || "");
   const [description, setDescription] = useState(initialDescription);
   const [totalVariations, setTotalVariations] = useState<number>(initialTotalVariations);
   const [loading, setLoading] = useState(false);
@@ -45,6 +45,14 @@ export default function Form({
         setLoadingMatrices(true);
         const matricesData = await getMatrices();
         setMatrices(matricesData);
+        
+        // Si hay un initialMatrixId y se encontraron matrices, verificar que exista
+        if (initialMatrixId && matricesData.length > 0) {
+          const matrixExists = matricesData.some(matrix => matrix.id === initialMatrixId);
+          if (!matrixExists) {
+            setMatrixId(""); // Resetear si no existe
+          }
+        }
       } catch (err) {
         setError("Error al cargar las matrices");
       } finally {
@@ -53,7 +61,7 @@ export default function Form({
     };
 
     fetchMatrices();
-  }, []);
+  }, [initialMatrixId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,13 +87,13 @@ export default function Form({
     try {
       if (examId) {
         await UpdateExam(examId, {
-          matrix_id: matrixId,
+          matrix_id: matrixId ,
           description: description.trim(),
           total_variations: totalVariations,
         });
       } else {
         await CreateExam({
-          matrix_id: matrixId,
+          matrix_id: matrixId ,
           description: description.trim(),
           total_variations: totalVariations,
         });
@@ -93,16 +101,16 @@ export default function Form({
 
       // Solo limpiar el formulario si es creación, no edición
       if (!examId) {
-        setMatrixId(0);
+        setMatrixId("");
         setDescription("");
         setTotalVariations(1);
       }
-      
+
       onSuccess();
     } catch (err: any) {
       setError(
         err.response?.data?.error ||
-          "Error al guardar el examen. Inténtalo nuevamente."
+        "Error al guardar el examen. Inténtalo nuevamente."
       );
     } finally {
       setLoading(false);
@@ -118,92 +126,91 @@ export default function Form({
       )}
 
       <form onSubmit={handleSubmit}>
-  <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "flex-start" }}>
-    {/* Selección de Matriz */}
-    <TextField
-      select
-      label="Matriz"
-      value={matrixId}
-      onChange={(e) => setMatrixId(Number(e.target.value))}
-      required
-      variant="outlined"
-      size="medium"
-      error={!!error && !matrixId}
-      helperText={error && !matrixId ? "Este campo es requerido" : ""}
-      disabled={loading || loadingMatrices}
-      sx={{ flex: 1 }}
-    >
-      <MenuItem value={0}>
-        {loadingMatrices ? "Cargando matrices..." : "Selecciona una matriz"}
-      </MenuItem>
-      {matrices.map((matrix) => (
-        <MenuItem key={matrix.id} value={matrix.id}>
-          {matrix.id}
-        </MenuItem>
-      ))}
-    </TextField>
+        <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "flex-start" }}>
+          {/* Selección de Matriz */}
+          <TextField
+            select
+            label="Matriz"
+            value={matrixId}
+            onChange={(e) => setMatrixId(e.target.value === "" ? "" : (e.target.value))}
+            required
+            variant="outlined"
+            size="medium"
+            error={!!error && !matrixId}
+            helperText={error && !matrixId ? "Este campo es requerido" : ""}
+            disabled={loading || loadingMatrices}
+            sx={{ flex: 1 }}
+          >
+            <MenuItem value="">
+              {loadingMatrices ? "Cargando matrices..." : "Selecciona una matriz"}
+            </MenuItem>
+            {matrices.map((matrix) => (
+              <MenuItem key={matrix.id} value={matrix.id}>
+                {matrix.modality?.name} - {matrix.year}
+              </MenuItem>
+            ))}
+          </TextField>
 
-    {/* Descripción del examen */}
-    <TextField
-      label="Descripción"
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
-      required
-      variant="outlined"
-      size="medium"
-      error={!!error && !description.trim()}
-      helperText={error && !description.trim() ? "Este campo es requerido" : ""}
-      disabled={loading}
-      placeholder="Ingresa la descripción"
-      sx={{ flex: 2 }}
-    />
+          {/* Descripción del examen */}
+          <TextField
+            label="Descripción"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            variant="outlined"
+            size="medium"
+            error={!!error && !description.trim()}
+            helperText={error && !description.trim() ? "Este campo es requerido" : ""}
+            disabled={loading}
+            placeholder="Ingresa la descripción"
+            sx={{ flex: 2 }}
+          />
 
-    {/* Número de variaciones */}
-    <TextField
-      type="number"
-      label="Variaciones"
-      value={totalVariations}
-      onChange={(e) => setTotalVariations(Number(e.target.value))}
-      required
-      variant="outlined"
-      size="medium"
-      inputProps={{ min: 1, max: 100 }}
-      error={!!error && (!totalVariations || totalVariations < 1)}
-      helperText={error && (!totalVariations || totalVariations < 1) ? "Debe ser mayor a 0" : ""}
-      disabled={loading}
-      sx={{ flex: 0.7 }}
-    />
+          {/* Número de variaciones */}
+          <TextField
+            type="number"
+            label="N° Temas"
+            value={totalVariations}
+            onChange={(e) => setTotalVariations(Number(e.target.value))}
+            required
+            variant="outlined"
+            size="medium"
+            inputProps={{ min: 1, max: 100 }}
+            error={!!error && (!totalVariations || totalVariations < 1)}
+            helperText={error && (!totalVariations || totalVariations < 1) ? "Debe ser mayor a 0" : ""}
+            disabled={loading}
+            sx={{ flex: 0.7 }}
+          />
 
-    {/* Botón */}
-    <Button
-      type="submit"
-      variant="contained"
-      size="large"
-      disabled={loadingMatrices}
-      startIcon={
-        loading ? (
-          <CircularProgress size={20} color="inherit" />
-        ) : examId ? (
-          <EditIcon />
-        ) : (
-          <AddIcon />
-        )
-      }
-      sx={{
-        height: 56,
-        borderRadius: 2,
-        fontWeight: 600,
-        textTransform: "none",
-        boxShadow: 2,
-        whiteSpace: "nowrap",
-        "&:hover": { boxShadow: 4 },
-      }}
-    >
-      {loadingMatrices ? "Cargando..." : examId ? "Actualizar" : "Crear"}
-    </Button>
-  </Box>
-</form>
-
+          {/* Botón */}
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={loading || loadingMatrices}
+            startIcon={
+              loading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : examId ? (
+                <EditIcon />
+              ) : (
+                <AddIcon />
+              )
+            }
+            sx={{
+              height: 56,
+              borderRadius: 2,
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: 2,
+              whiteSpace: "nowrap",
+              "&:hover": { boxShadow: 4 },
+            }}
+          >
+            {loading ? "Procesando..." : examId ? "Actualizar" : "Crear"}
+          </Button>
+        </Box>
+      </form>
     </Box>
   );
 }

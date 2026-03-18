@@ -1,7 +1,9 @@
+
 import { styled, useTheme } from "@mui/material/styles";
 import type { Theme, CSSObject } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
+import WarehouseIcon from '@mui/icons-material/Warehouse';
 import MuiDrawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -135,7 +137,7 @@ export default function Sidebar() {
               <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
                 <HomeIcon />
               </ListItemIcon>
-              <ListItemText primary="Home" sx={{ opacity: open ? 1 : 0 }} />
+              <ListItemText primary="Inicio" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
 
@@ -151,7 +153,18 @@ export default function Sidebar() {
               <ListItemText primary="Internamientos" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
-
+          {/* 🔹 Nuevo: Sorteador */}
+          <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/bank")}>
+            <ListItemButton
+              selected={location.pathname === "/bank"}
+              sx={{ minHeight: 48, px: 2.5, ...selectedItemSx }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : "auto", justifyContent: "center" }}>
+                <WarehouseIcon />
+              </ListItemIcon>
+              <ListItemText primary="Banco" sx={{ opacity: open ? 1 : 0 }} />
+            </ListItemButton>
+          </ListItem>
           {/* Examenes */}
           <ListItem disablePadding sx={{ display: "block" }} onClick={() => navigate("/exams")}>
             <ListItemButton
@@ -164,6 +177,8 @@ export default function Sidebar() {
               <ListItemText primary="Examenes" sx={{ opacity: open ? 1 : 0 }} />
             </ListItemButton>
           </ListItem>
+
+
 
           {/* Configuración */}
           <ListItem disablePadding>
@@ -227,8 +242,6 @@ export default function Sidebar() {
                   <ListItemText primary="Niveles" />
                 </ListItemButton>
               </ListItem>
-
-              
             </List>
           </Collapse>
         </List>

@@ -1,6 +1,7 @@
 // pages/exams/List.tsx
 import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import type { Exam } from "../../../models/Exam";
+import { useNavigate } from "react-router-dom";
 import { GetExams } from "../../../application/exam/GetExams";
 import { DeleteExam } from "../../../application/exam/DeleteExam";
 import {
@@ -28,6 +29,8 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
+  Assignment as AssignmentIcon,
+  Shuffle as ShuffleIcon,
 } from "@mui/icons-material";
 import Form from "./Form";
 
@@ -36,6 +39,7 @@ export type ListRef = {
 };
 
 const List = forwardRef<ListRef>((_, ref) => {
+  const navigate = useNavigate();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,8 +115,16 @@ const List = forwardRef<ListRef>((_, ref) => {
     setViewDialog({ open: true, exam });
   };
 
+  const handleRequirementsClick = (exam: Exam) => {
+    navigate(`/exams/${exam.id}/requirements`);
+  };
+
   const handleViewClose = () => {
     setViewDialog({ open: false, exam: null });
+  };
+
+  const handleSorterClick = (examId: string | number) => {
+    navigate(`/exams/sorter/${examId}`);
   };
 
   useImperativeHandle(ref, () => ({
@@ -195,9 +207,6 @@ const List = forwardRef<ListRef>((_, ref) => {
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "grey.50" }}>
-                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 100 }}>
-                  ID
-                </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>
                   Matrix ID
                 </TableCell>
@@ -205,7 +214,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                   Descripción
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 120 }}>
-                  Variaciones
+                  Temas
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 180 }}>
                   Creado
@@ -215,7 +224,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                 </TableCell>
                 <TableCell
                   align="center"
-                  sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 160 }}
+                  sx={{ fontWeight: 600, fontSize: "0.875rem", minWidth: 200 }}
                 >
                   Acciones
                 </TableCell>
@@ -232,9 +241,6 @@ const List = forwardRef<ListRef>((_, ref) => {
                     backgroundColor: index % 2 === 0 ? "transparent" : "grey.25",
                   }}
                 >
-                  <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
-                    #{exam.id}
-                  </TableCell>
                   <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
                     {exam.matrix_id}
                   </TableCell>
@@ -251,7 +257,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                     {new Date(exam.updated_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell align="center">
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: 'wrap' }}>
                       <Tooltip title="Ver detalles">
                         <IconButton
                           size="small"
@@ -262,6 +268,19 @@ const List = forwardRef<ListRef>((_, ref) => {
                           }}
                         >
                           <ViewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Editar requerimientos">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRequirementsClick(exam)}
+                          sx={{
+                            color: "secondary.main",
+                            "&:hover": { backgroundColor: "secondary.lighter" },
+                          }}
+                        >
+                          <AssignmentIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
 
@@ -291,25 +310,20 @@ const List = forwardRef<ListRef>((_, ref) => {
                         </IconButton>
                       </Tooltip>
 
-                      {/* Nuevo botón para generar master */}
-                      <Tooltip title="Generar Master">
+                      <Tooltip title="Ir al sorteador">
                         <Button
                           variant="contained"
                           size="small"
                           color="primary"
-                          onClick={() =>
-                            window.open(
-                              `https://desaoti.unsa.edu.pe/exam_generator_backend/api/exams/${exam.id}/master/SOCIALES/generate`,
-                              "_blank"
-                            )
-                          }
+                          startIcon={<ShuffleIcon />}
+                          onClick={() => handleSorterClick(exam.id)}
+                          sx={{ ml: 1 }}
                         >
-                         Master
+                          Sorteador
                         </Button>
                       </Tooltip>
                     </Box>
                   </TableCell>
-
                 </TableRow>
               ))}
             </TableBody>

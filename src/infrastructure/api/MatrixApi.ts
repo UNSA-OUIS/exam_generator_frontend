@@ -6,33 +6,21 @@ export const getMatrices = async (): Promise<Matrix[]> => {
   return response.data;
 };
 
-export const exportBlocks = async (matrixId: number): Promise<Blob> => {
-  const response = await axiosClient.get(`/matrix/${matrixId}/export`, {
-    responseType: 'blob'
-  });
-  return response.data;
-};
-
-export const createMatrix = async (
-  matrix: Partial<Matrix>
-): Promise<Matrix> => {
+export const createMatrix = async (matrix: Partial<Matrix>): Promise<Matrix> => {
   const response = await axiosClient.post("/matrices", matrix);
   return response.data;
 };
 
-export const updateMatrix = async (
-  id: number,
-  matrix: Partial<Matrix>
-): Promise<Matrix> => {
+export const updateMatrix = async (id: string, matrix: Partial<Matrix>): Promise<Matrix> => {
   const response = await axiosClient.patch(`/matrices/${id}`, matrix);
   return response.data;
 };
 
-export const deleteMatrix = async (id: number): Promise<void> => {
+export const deleteMatrix = async (id: string): Promise<void> => {
   await axiosClient.delete(`/matrices/${id}`);
 };
 
-export const getMatrix = async (id: number): Promise<Matrix> => {
+export const getMatrix = async (id: string): Promise<Matrix> => {
   const response = await axiosClient.get(`/matrices/${id}`);
   return response.data;
 };
