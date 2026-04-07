@@ -82,7 +82,7 @@ const buildNodes = (blocks: Block[]): TreeNode[] => {
 };
 
 // ─── componente principal ─────────────────────────────────────────────────────
-export default function RequirementCascade({
+export default function RequirementList({
   initialConfinementId,
   onSuccess,
 }: {

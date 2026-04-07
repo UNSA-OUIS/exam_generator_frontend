@@ -12,6 +12,7 @@ import Matrix from "./views/Matrix";
 import Confinement from "./views/Confinement";
 import RequirementForm from "./pages/confinements/requirements/Form";
 import RequirementCascade from "./pages/confinements/requirements/FormNew";
+import RequirementList from "./pages/confinements/requirements/RequirementCascade";
 import RequirementsList from "./pages/confinements/requirements/List";
 import ConfinementTextsList from "./pages/confinements/texts/List";
 import ConfinementTextForm from "./pages/confinements/texts/Form";
@@ -49,6 +50,7 @@ function App() {
                         <Route path="/confinements/:confinementId/requirements/tree-creator" element={<TreeCreator />} /> {/* Nueva ruta */}
                         <Route path="/confinements/:confinementId/requirements/new" element={<RequirementForm />} />
                         <Route path="/confinements/:confinementId/requirements/cascada" element={<RequirementCascade />} />
+                        <Route path="/confinements/:confinementId/requirements/lista" element={<RequirementList />} />
                         <Route path="/confinements/:confinementId/requirements/edit/:id" element={<RequirementForm />} />
                         <Route path="/confinements/:id/texts" element={<ConfinementTextsList />} />
                         <Route path="/confinements/:id/texts/create" element={<ConfinementTextForm mode="create" />} />
