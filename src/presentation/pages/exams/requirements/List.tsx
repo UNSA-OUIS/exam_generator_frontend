@@ -300,7 +300,7 @@ export default function ExamRequirementsList() {
                 <DialogContent>
                     {editDialog.examRequirement && (
                         <ExamRequirementForm
-                            initialId={editDialog.examRequirement.id?.toString()}
+                            
                             initialExamId={examId}
                             onSuccess={handleEditSuccess}
                         />

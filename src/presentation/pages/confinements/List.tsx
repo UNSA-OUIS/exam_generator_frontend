@@ -4,7 +4,6 @@ import type { Confinement } from "../../../models/Confinement";
 import { ExportTexts } from "../../../application/confinement/ExportTexts"; // 🔹 Import nuevo
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SimplifiedRequirementsEditor from "./Simplified";
-import { AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 import { GetConfinements } from "../../../application/confinement/GetConfinements";
 import { DeleteConfinement } from "../../../application/confinement/DeleteConfinement";
 import { ExportBlocks } from "../../../application/confinement/ExportBlocks"; // 🔹 Import nuevo
@@ -33,8 +32,8 @@ import {
     Delete as DeleteIcon,
     Edit as EditIcon,
     Visibility as ViewIcon,
-    Assignment as AssignmentIcon, // 🔹 Icono para requerimientos
-    Description as DescriptionIcon, // 🔹 Icono para textos
+    AccountBalance as AccountBalanceIcon, // 🔹 Icono para requerimientos
+    Rtt as RttIcon , // 🔹 Icono para textos
     Download as DownloadIcon, // 🔹 Nuevo icono para exportar
 } from "@mui/icons-material";
 import Form from "./Form";
@@ -68,9 +67,9 @@ const List = forwardRef<ListRef>((_, ref) => {
     }>({ open: false, confinement: null });
 
     // Handlers
-    const handleSimplifiedRequirementsClick = (confinement: Confinement) => {
+    {/*const handleSimplifiedRequirementsClick = (confinement: Confinement) => {
         setSimplifiedDialog({ open: true, confinement });
-    };
+    };*/}
 
     const handleSimplifiedClose = () => {
         setSimplifiedDialog({ open: false, confinement: null });
@@ -237,7 +236,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                     <Table sx={{ minWidth: 650 }}>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: "grey.50" }}>
-                                <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>ID</TableCell>
+                                {/*<TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>ID</TableCell>*/}
                                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>Nombre</TableCell>
                                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}>Fecha Inicio</TableCell>
                                 <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem", width: 150 }}>Fecha Fin</TableCell>
@@ -260,9 +259,9 @@ const List = forwardRef<ListRef>((_, ref) => {
                                         },
                                         backgroundColor: index % 2 === 0 ? "transparent" : "grey.25",
                                     }}>
-                                    <TableCell component="th" scope="row">
+                                    {/*<TableCell component="th" scope="row">
                                         {confinement.id}
-                                    </TableCell>
+                                    </TableCell>*/}
                                     <TableCell sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{confinement.name}</TableCell>
                                     <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>{formatDate(confinement.start_date)}</TableCell>
                                     <TableCell sx={{ fontSize: "0.875rem", color: "text.secondary" }}>{formatDate(confinement.end_date)}</TableCell>
@@ -290,7 +289,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                                                         color: "secondary.main",
                                                         "&:hover": { backgroundColor: "secondary.lighter" },
                                                     }}>
-                                                    <AssignmentIcon fontSize="small" />
+                                                    <AccountBalanceIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
 
@@ -303,7 +302,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                                                         color: "success.main",
                                                         "&:hover": { backgroundColor: "success.lighter" },
                                                     }}>
-                                                    <DescriptionIcon fontSize="small" />
+                                                    <RttIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
 
@@ -353,17 +352,7 @@ const List = forwardRef<ListRef>((_, ref) => {
                                                     <DeleteIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
-                                            <Tooltip title="Crear requerimientos (Modo Simplificado)">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleSimplifiedRequirementsClick(confinement)}
-                                                    sx={{
-                                                        color: "purple.main",
-                                                        "&:hover": { backgroundColor: "purple.lighter" },
-                                                    }}>
-                                                    <AutoAwesomeIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
+                                            
                                         </Box>
                                     </TableCell>
                                 </TableRow>

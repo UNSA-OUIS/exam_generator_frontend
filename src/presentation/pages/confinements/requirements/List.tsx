@@ -54,7 +54,6 @@ export default function RequirementsList() {
         confinementRequirement: null,
     });
 
-    // ── ordenar como árbol ────────────────────────────────────────────────────
     const sortAsTree = (requirements: ConfinementRequirement[]): ConfinementRequirement[] => {
         const result: ConfinementRequirement[] = [];
         const processedIds = new Set<number>();
@@ -78,7 +77,6 @@ export default function RequirementsList() {
         return result;
     };
 
-    // ── carga ─────────────────────────────────────────────────────────────────
     const load = async (id: string) => {
         setLoading(true);
         try {
@@ -124,7 +122,6 @@ export default function RequirementsList() {
         handleEditClose();
     };
 
-    // ── utils ─────────────────────────────────────────────────────────────────
     const getDifficultyLabel = (difficulty: string) => {
         switch (difficulty) {
             case "EASY": case "easy": return "Fácil";
@@ -196,7 +193,7 @@ export default function RequirementsList() {
                     >
                         Vista árbol
                     </Button>
-                    <Button
+                    {/*<Button
                         variant="contained"
                         size="small"
                         startIcon={<AddIcon />}
@@ -204,7 +201,9 @@ export default function RequirementsList() {
                         disableElevation
                     >
                         Agregar en cascada
-                    </Button>
+                    </Button>*/}
+
+                    
                     <Button
                         variant="contained"
                         size="small"
