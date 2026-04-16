@@ -6,4 +6,5 @@ export interface Exam {
   total_variations: number;
   created_at: string;
   updated_at: string;
+  status?: "DRAFT" | "VALIDATED" | "MASTERED" | "VARIATED";
 }

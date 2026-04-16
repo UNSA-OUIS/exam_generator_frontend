@@ -12,13 +12,25 @@ export const ExamTextApi = {
     return response.data;
   },
 
-  async getByExamAndBlock(examId: string, blockId: number, area?: string): Promise<ExamText[]> {
-    const params = new URLSearchParams({ exam_id: examId, block_id: String(blockId) });
-    if (area) params.append("area", area);
-    const response = await axiosClient.get(`/exam_texts?${params.toString()}`);
-    return response.data;
-  },
+  async getByExamAndBlock(
+  examId: string,
+  blockId: number,
+  area?: string
+): Promise<ExamText[]> {
+  const params = new URLSearchParams({
+    block_id: String(blockId),
+  });
 
+  if (area) {
+    params.append("area", area);
+  }
+
+  const response = await axiosClient.get(
+    `/exams/${examId}/texts?${params.toString()}`
+  );
+
+  return response.data;
+},
   async create(data: Partial<ExamText>): Promise<ExamText> {
     const response = await axiosClient.post("/exam_texts", data);
     return response.data;

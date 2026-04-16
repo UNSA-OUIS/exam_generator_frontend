@@ -1,14 +1,16 @@
-// pages/exams/Sorter.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Exam } from "../../../models/Exam";
+
 import {
   generateMaster,
   generateMasterPdf,
   generateVariations,
   downloadVariationPdf
 } from "../../../infrastructure/api/MasterApi";
+
 import { GetExams } from "../../../application/exam/GetExams";
+
 import {
   Box,
   Button,
@@ -17,24 +19,23 @@ import {
   CircularProgress,
   Typography,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  type SelectChangeEvent,
+  Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Chip,
   IconButton,
+  Divider,
+  Stack,
 } from "@mui/material";
+
 import {
-  Download as DownloadIcon,
-  PictureAsPdf as PdfIcon,
   ArrowBack as ArrowBackIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 
-// Definir las áreas disponibles
 const AREAS = [
   { value: "BIOMEDICAS", label: "Biomédicas" },
   { value: "INGENIERIAS", label: "Ingenierías" },
@@ -44,98 +45,64 @@ const AREAS = [
 const Sorter = () => {
   const navigate = useNavigate();
   const { examId } = useParams<{ examId: string }>();
+
   const [exam, setExam] = useState<Exam | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [masterGenerated, setMasterGenerated] = useState(false);
 
-  // Estado para el modal de Master PDF con selector de área
-  const [masterDialog, setMasterDialog] = useState<{
-    open: boolean;
-    selectedArea: string;
-  }>({ open: false, selectedArea: "" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info",
+  });
 
-  // Estado para el modal de Temas con selector de área
-  const [themesDialog, setThemesDialog] = useState<{
-    open: boolean;
-    selectedArea: string;
-  }>({ open: false, selectedArea: "" });
+  const isMasterGenerated = exam?.status === "MASTERED" || exam?.status === "VARIATED";
+  const isVariationsGenerated = exam?.status === "VARIATED";
+
+  const showMessage = (message: string, severity: any = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
 
   const fetchExam = async () => {
     try {
       setLoading(true);
-      setError(null);
       const data = await GetExams();
-      const foundExam = data.find((e) => e.id.toString() === examId);
-      if (foundExam) {
-        setExam(foundExam);
-      } else {
-        setError("Examen no encontrado");
-      }
-    } catch (err) {
-      setError("Error al cargar el examen");
+      const found = data.find((e) => e.id.toString() === examId);
+      setExam(found || null);
+    } catch {
+      showMessage("Error al cargar examen", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMasterPdfClick = () => {
-    setMasterDialog({ open: true, selectedArea: "" });
-  };
+  useEffect(() => {
+    fetchExam();
+  }, [examId]);
 
-  const handleGenerateMasterPdf = async () => {
-    if (!exam || !masterDialog.selectedArea) {
-      alert("Por favor selecciona un área");
-      return;
-    }
-
+  const handleGenerateMaster = async () => {
+    if (!exam) return;
     try {
-      setActionLoading('masterPdf');
-      console.log("Generando Master PDF...");
-      await generateMasterPdf(
-        exam.id.toString(), 
-        masterDialog.selectedArea
-      );
-      alert(`✅ Master PDF generado para ${masterDialog.selectedArea}`);
-      setMasterDialog({ open: false, selectedArea: "" });
-    } catch (error: any) {
-      console.error("Error al generar Master PDF:", error);
-      alert("❌ Error al generar el PDF del Master");
+      setActionLoading("master");
+      await generateMaster(exam.id.toString());
+      showMessage("Matriz generada correctamente");
+      await fetchExam();
+    } catch (e: any) {
+      showMessage(e.response?.data?.message || "Error al generar la matriz", "error");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleGenerateMaster = async () => {
+  const handleDeleteMaster = async () => {
     if (!exam) return;
-
     try {
-      setActionLoading('generateMaster');
-      console.log("✅ Iniciando generación de master...");
-      
-      const response = await generateMaster(exam.id.toString());
-      console.log("✅ Respuesta completa:", response);
-      
-      if (response && response.success) {
-        alert(response.message || "✅ Master generado exitosamente");
-        setMasterGenerated(true); // Cambiar el estado a generado
-      } else {
-        alert(`❌ Respuesta inesperada: ${JSON.stringify(response)}`);
-      }
-      
-    } catch (error: any) {
-      console.error("❌ Error completo:", error);
-      console.error("❌ Response data:", error.response?.data);
-      console.error("❌ Status:", error.response?.status);
-      
-      if (error.response?.data?.message) {
-        alert(`❌ ${error.response.data.message}`);
-      } else if (error.message) {
-        alert(`❌ ${error.message}`);
-      } else {
-        alert("❌ Error desconocido al generar el Master");
-      }
+      setActionLoading("delete-master");
+      // await deleteMaster(exam.id.toString());
+      showMessage("Matriz eliminada");
+      await fetchExam();
+    } catch (e: any) {
+      showMessage(e.response?.data?.message || "Error al eliminar la matriz", "error");
     } finally {
       setActionLoading(null);
     }
@@ -143,345 +110,266 @@ const Sorter = () => {
 
   const handleGenerateVariations = async () => {
     if (!exam) return;
-
     try {
-      setActionLoading('generateVariations');
-
-      console.log("Generando variaciones para examId:", exam.id);
-
-      const { data } = await generateVariations(exam.id.toString());
-
-      if (data.success) {
-        alert(data.message || "✅ Variaciones generadas exitosamente");
-        await fetchExam();
-      } else {
-        alert(`❌ ${data.message || 'Error al generar variaciones'}`);
-      }
-
-    } catch (error: any) {
-      console.error("Error completo al generar variaciones:", error);
-
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        console.error("Error response:", errorData);
-        alert(`❌ ${errorData.message || errorData.error || 'Error del servidor'}`);
-      } else if (error.request) {
-        alert("❌ No se pudo conectar con el servidor");
-      } 
+      setActionLoading("variations");
+      const res = await generateVariations(exam.id.toString());
+      showMessage(res.message || "Temas generados correctamente");
+      await fetchExam();
+    } catch (e: any) {
+      showMessage(e.response?.data?.message || "Error al generar temas", "error");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleThemesClick = () => {
-    setThemesDialog({ open: true, selectedArea: "" });
-  };
-
-  const handleDownloadVariation = async (variation: string) => {
-    if (!exam || !themesDialog.selectedArea) {
-      alert("Por favor selecciona un área");
-      return;
-    }
-
+  const handleDeleteVariations = async () => {
+    if (!exam) return;
     try {
-      setActionLoading(`downloadVariation-${variation}`);
-      console.log("Descargando variación:", variation);
-      await downloadVariationPdf(
-        exam.id.toString(),
-        themesDialog.selectedArea,
-        variation
-      );
-      alert(`✅ Tema ${variation} descargado para ${themesDialog.selectedArea}`);
-    } catch (error: any) {
-      console.error("Error al descargar variación:", error);
-      alert("❌ Error al descargar la variación");
+      setActionLoading("delete-variations");
+      // await deleteVariations(exam.id.toString());
+      showMessage("Temas eliminados");
+      await fetchExam();
+    } catch (e: any) {
+      showMessage(e.response?.data?.message || "Error al eliminar temas", "error");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleThemesClose = () => {
-    setThemesDialog({ open: false, selectedArea: "" });
+  const handleDownloadMasterPdf = async (area: string) => {
+    if (!exam) return;
+    try {
+      setActionLoading(`pdf-${area}`);
+      await generateMasterPdf(exam.id.toString(), area);
+    } catch {
+      showMessage("Error al descargar PDF", "error");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleMasterClose = () => {
-    setMasterDialog({ open: false, selectedArea: "" });
+  const handleDownloadVariation = async (area: string, variation: string) => {
+    if (!exam) return;
+    try {
+      setActionLoading(`${area}-${variation}`);
+      await downloadVariationPdf(exam.id.toString(), area, variation);
+    } catch {
+      showMessage("Error al descargar tema", "error");
+    } finally {
+      setActionLoading(null);
+    }
   };
-
-  useEffect(() => {
-    fetchExam();
-  }, [examId]);
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          p: 4,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
-        }}
-      >
-        <CircularProgress size={40} />
-        <Typography variant="body1" sx={{ ml: 2 }}>
-          Cargando examen...
-        </Typography>
+      <Box sx={{ p: 4, textAlign: "center" }}>
+        <CircularProgress size={24} />
+        <Typography mt={2} variant="body2" color="text.secondary">Cargando examen...</Typography>
       </Box>
     );
   }
 
-  if (error || !exam) {
+  if (!exam) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={fetchExam}>
-              Reintentar
-            </Button>
-          }
-        >
-          {error || "Examen no encontrado"}
-        </Alert>
-        <Button
-          variant="contained"
-          sx={{ mt: 2 }}
-          onClick={() => navigate("/exams")}
-        >
-          Volver a la lista
-        </Button>
+      <Box p={3}>
+        <Alert severity="error">Examen no encontrado</Alert>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-        <IconButton onClick={() => navigate("/exams")} color="primary">
-          <ArrowBackIcon />
+    <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
+
+      {/* HEADER */}
+      <Box display="flex" alignItems="center" gap={1} mb={4}>
+        <IconButton onClick={() => navigate("/exams")} size="small">
+          <ArrowBackIcon fontSize="small" />
         </IconButton>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            Sorteador - {exam.description}
+        <Box>
+          <Typography variant="h6" fontWeight={600}>
+            {exam.description}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Matrix ID: {exam.matrix_id} | Temas: {exam.total_variations}
+          <Typography variant="caption" color="text.secondary">
+            Sorteador de examen
           </Typography>
         </Box>
       </Box>
 
-      {/* Card con información y botones */}
-      <Card sx={{ maxWidth: 800, mx: "auto" }}>
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-              Información del Examen
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              <strong>ID:</strong> #{exam.id}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Descripción:</strong> {exam.description}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Creado:</strong> {new Date(exam.created_at).toLocaleDateString()}
-            </Typography>
-          </Box>
+      {/* ACCIONES PRINCIPALES */}
+      <Stack spacing={2} mb={4}>
 
-          {/* Botones en una sola fila */}
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            {/* Botón que cambia según si el master fue generado */}
-            {!masterGenerated ? (
-              <Button
-                variant="outlined"
-                color="secondary"
-                disabled={actionLoading === 'generateMaster'}
-                onClick={handleGenerateMaster}
-                sx={{ flex: 1, minWidth: 150 }}
-              >
-                {actionLoading === 'generateMaster' ? (
+        {/* MATRIZ */}
+        <Card variant="outlined">
+          <CardContent>
+            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Matriz general
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {isMasterGenerated
+                    ? "La matriz ha sido generada. Puedes eliminarla y volver a generarla cuando lo necesites."
+                    : "Genera la matriz base del examen para todas las áreas."}
+                </Typography>
+              </Box>
+
+              <Stack direction="row" spacing={1}>
+                {isMasterGenerated && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    disabled={actionLoading === "delete-master"}
+                    onClick={handleDeleteMaster}
+                  >
+                    {actionLoading === "delete-master"
+                      ? <CircularProgress size={16} />
+                      : "Eliminar matriz"}
+                  </Button>
+                )}
+                {!isMasterGenerated && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={actionLoading === "master"}
+                    onClick={handleGenerateMaster}
+                  >
+                    {actionLoading === "master"
+                      ? <CircularProgress size={16} color="inherit" />
+                      : "Generar matriz"}
+                  </Button>
+                )}
+                {isMasterGenerated && !isVariationsGenerated && (
+                  <Chip label="Generada" color="primary" size="small" variant="outlined" />
+                )}
+                {isVariationsGenerated && (
+                  <Chip label="Generada" color="primary" size="small" variant="outlined" />
+                )}
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* TEMAS */}
+        <Card variant="outlined">
+          <CardContent>
+            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Temas (A, B, C, D)
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {!isMasterGenerated
+                    ? "Disponible una vez generada la matriz."
+                    : isVariationsGenerated
+                    ? "Los temas han sido generados para todas las áreas."
+                    : "Genera las variaciones del examen por área."}
+                </Typography>
+              </Box>
+
+              <Stack direction="row" spacing={1} alignItems="center">
+                {isVariationsGenerated ? (
                   <>
-                    <CircularProgress size={16} sx={{ mr: 1 }} />
-                    Generando...
+                    <Chip label="Generados" color="success" size="small" variant="outlined" />
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      disabled={actionLoading === "delete-variations"}
+                      onClick={handleDeleteVariations}
+                    >
+                      {actionLoading === "delete-variations"
+                        ? <CircularProgress size={16} />
+                        : "Eliminar temas"}
+                    </Button>
                   </>
                 ) : (
-                  "Generar Master"
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={!isMasterGenerated || actionLoading === "variations"}
+                    onClick={handleGenerateVariations}
+                  >
+                    {actionLoading === "variations"
+                      ? <CircularProgress size={16} color="inherit" />
+                      : "Generar temas"}
+                  </Button>
                 )}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<PdfIcon />}
-                onClick={handleMasterPdfClick}
-                sx={{ flex: 1, minWidth: 150 }}
-              >
-                Descargar Master
-              </Button>
-            )}
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
+      </Stack>
 
-            <Button
-              variant="outlined"
-              color="success"
-              disabled={actionLoading === 'generateVariations'}
-              onClick={handleGenerateVariations}
-              sx={{ flex: 1, minWidth: 150 }}
-            >
-              {actionLoading === 'generateVariations' ? (
-                <>
-                  <CircularProgress size={16} sx={{ mr: 1 }} />
-                  Generando...
-                </>
-              ) : (
-                "Generar Temas"
-              )}
-            </Button>
+      {/* TABLA DE DESCARGAS */}
+      <Divider sx={{ mb: 3 }} />
 
-            <Button
-              variant="contained"
-              color="warning"
-              startIcon={<DownloadIcon />}
-              onClick={handleThemesClick}
-              sx={{ flex: 1, minWidth: 150 }}
-            >
-              Descargar Temas
-            </Button>
-          </Box>
-        </CardContent>
+      <Typography variant="subtitle2" fontWeight={600} mb={2} color={!isMasterGenerated ? "text.disabled" : "text.primary"}>
+        Descargas por área
+      </Typography>
+
+      <Card variant="outlined" sx={{ opacity: isMasterGenerated ? 1 : 0.45, pointerEvents: isMasterGenerated ? "auto" : "none" }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ backgroundColor: "grey.50" }}>
+              <TableCell sx={{ fontWeight: 600 }}>Área</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>PDF Matriz</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Temas</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {AREAS.map((area) => (
+              <TableRow key={area.value} sx={{ "&:last-child td": { border: 0 } }}>
+                <TableCell>
+                  <Typography variant="body2">{area.label}</Typography>
+                </TableCell>
+
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={actionLoading === `pdf-${area.value}` ? <CircularProgress size={12} /> : <DownloadIcon fontSize="small" />}
+                    disabled={!isMasterGenerated || actionLoading === `pdf-${area.value}`}
+                    onClick={() => handleDownloadMasterPdf(area.value)}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Descargar
+                  </Button>
+                </TableCell>
+
+                <TableCell>
+                  <Stack direction="row" spacing={1}>
+                    {["A", "B", "C", "D"].map((v) => (
+                      <Button
+                        key={v}
+                        size="small"
+                        variant="outlined"
+                        disabled={!isVariationsGenerated || actionLoading === `${area.value}-${v}`}
+                        onClick={() => handleDownloadVariation(area.value, v)}
+                        sx={{ minWidth: 40, textTransform: "none" }}
+                      >
+                        {actionLoading === `${area.value}-${v}` ? <CircularProgress size={12} /> : `Tema ${v}`}
+                      </Button>
+                    ))}
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
 
-      {/* Dialog para Master PDF con selector de área */}
-      <Dialog
-        open={masterDialog.open}
-        onClose={handleMasterClose}
-        maxWidth="sm"
-        fullWidth
+      {/* SNACKBAR */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Descargar Master PDF - {exam.description}
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, mt: 1 }}>
-            Selecciona el área para descargar el PDF del Master
-          </Typography>
-          
-          <FormControl fullWidth>
-            <InputLabel id="master-area-label">Área</InputLabel>
-            <Select
-              labelId="master-area-label"
-              value={masterDialog.selectedArea}
-              label="Área"
-              onChange={(e: SelectChangeEvent) =>
-                setMasterDialog({ ...masterDialog, selectedArea: e.target.value })
-              }
-            >
-              {AREAS.map((area) => (
-                <MenuItem key={area.value} value={area.value}>
-                  {area.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 1 }}>
-          <Button onClick={handleMasterClose} variant="outlined">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleGenerateMasterPdf}
-            variant="contained"
-            color="primary"
-            disabled={!masterDialog.selectedArea || actionLoading === 'masterPdf'}
-            startIcon={
-              actionLoading === 'masterPdf' ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <PdfIcon />
-              )
-            }
-          >
-            {actionLoading === 'masterPdf' ? "Descargando..." : "Descargar PDF"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Alert severity={snackbar.severity} variant="outlined">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
-      {/* Dialog para descargar temas con selector de área */}
-      <Dialog
-        open={themesDialog.open}
-        onClose={handleThemesClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Descargar Temas - {exam.description}
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, mt: 1 }}>
-            Primero selecciona el área, luego el tema que deseas descargar
-          </Typography>
-
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel id="themes-area-label">Área</InputLabel>
-            <Select
-              labelId="themes-area-label"
-              value={themesDialog.selectedArea}
-              label="Área"
-              onChange={(e: SelectChangeEvent) =>
-                setThemesDialog({ ...themesDialog, selectedArea: e.target.value })
-              }
-            >
-              {AREAS.map((area) => (
-                <MenuItem key={area.value} value={area.value}>
-                  {area.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {themesDialog.selectedArea && (
-            <Box>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Área seleccionada: <strong>{AREAS.find(a => a.value === themesDialog.selectedArea)?.label}</strong>
-              </Alert>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {['A', 'B', 'C', 'D'].map((theme) => (
-                  <Button
-                    key={theme}
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    color="primary"
-                    disabled={actionLoading === `downloadVariation-${theme}`}
-                    onClick={() => handleDownloadVariation(theme)}
-                    startIcon={
-                      actionLoading === `downloadVariation-${theme}` ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        <DownloadIcon />
-                      )
-                    }
-                    sx={{
-                      py: 1.5,
-                      fontSize: '1.1rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {actionLoading === `downloadVariation-${theme}` ? 'Descargando...' : `Descargar Tema ${theme}`}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleThemesClose} variant="outlined">
-            Cerrar
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

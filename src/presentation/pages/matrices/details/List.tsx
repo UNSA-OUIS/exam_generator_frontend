@@ -267,7 +267,7 @@ export default function MatrixRequirementsList() {
                 <DialogContent>
                     {editDialog.matrixRequirement && (
                         <MatrixRequirementForm
-                            initialId={editDialog.matrixRequirement.id?.toString()}
+                            
                             initialMatrixId={matrixId}
                             onSuccess={handleEditSuccess}
                         />

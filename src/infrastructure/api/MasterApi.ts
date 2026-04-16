@@ -16,7 +16,7 @@ export const generateMaster = async (examId: string) => {
     throw error; // ← Asegúrate de relanzar el error
   }
 };
-
+  
 export const generateMasterPdf = async (examId: string, area: string) => {
   console.log("Generating master PDF for examId:", examId, "area:", area);
   
@@ -25,12 +25,9 @@ export const generateMasterPdf = async (examId: string, area: string) => {
       responseType: "blob",
     });
 
-    // Crear blob y descargar el PDF
     const blob = new Blob([response.data], { type: "application/pdf" });
     const url = window.URL.createObjectURL(blob);  
-    // Abrir en nueva ventana/pestaña
      window.open(url, '_blank');
-    // Crear un enlace para descarga automática
 
     return response;
   } catch (error) {
